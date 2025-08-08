@@ -54,3 +54,105 @@
 2025-08-08 00:27:49 - ArkServerManager - INFO - Iniciando instalación/actualización del servidor...
 2025-08-08 00:27:51 - ArkServerManager - INFO - Iniciando instalación/actualización del servidor...
 2025-08-08 00:27:55 - ArkServerManager - ERROR - Error en la instalación: 
+2025-08-08 00:31:55 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 00:31:55 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 00:31:55 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 00:31:55 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 00:32:01 - ArkServerManager - INFO - Iniciando instalación/actualización del servidor...
+2025-08-08 00:32:36 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 00:32:36 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 00:32:36 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 00:32:36 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 00:34:11 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 00:34:11 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 00:34:11 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 00:34:11 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 00:34:56 - ArkServerManager - INFO - Iniciando instalación/actualización del servidor...
+2025-08-08 14:18:20 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 14:18:20 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 14:18:20 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 14:18:20 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 14:19:26 - ArkServerManager - INFO - Iniciando instalación/actualización del servidor...
+2025-08-08 14:20:16 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 14:20:16 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 14:20:16 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 14:20:16 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 14:23:01 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 14:23:01 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 14:23:01 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 14:23:01 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 14:33:21 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 14:33:21 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 14:33:21 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 14:33:21 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 14:33:47 - ArkServerManager - INFO - Iniciando instalación/actualización del servidor...
+2025-08-08 14:35:34 - ArkServerManager - INFO - Instalación completada exitosamente
+2025-08-08 14:47:55 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 14:47:55 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 14:47:55 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 14:47:55 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 14:48:10 - ArkServerManager - DEBUG - SteamCMD no encontrado en PATH: [WinError 2] El sistema no puede encontrar el archivo especificado
+2025-08-08 14:48:11 - ArkServerManager - INFO - Iniciando instalación/actualización del servidor...
+2025-08-08 14:48:36 - ArkServerManager - INFO - Instalación completada exitosamente
+2025-08-08 14:49:10 - ArkServerManager - ERROR - Ruta del ejecutable del servidor no válida
+2025-08-08 14:55:27 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 14:55:27 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 14:55:27 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 14:55:27 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 15:00:34 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 15:00:34 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 15:00:34 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 15:00:34 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 15:01:13 - ArkServerManager - DEBUG - SteamCMD no encontrado en PATH: [WinError 2] El sistema no puede encontrar el archivo especificado
+2025-08-08 15:01:14 - ArkServerManager - INFO - Iniciando instalación/actualización del servidor...
+2025-08-08 15:14:40 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 15:14:40 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 15:14:40 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 15:14:40 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 15:14:54 - ArkServerManager - DEBUG - SteamCMD no encontrado en PATH: [WinError 2] El sistema no puede encontrar el archivo especificado
+2025-08-08 15:14:54 - ArkServerManager - INFO - Iniciando instalación del servidor...
+2025-08-08 15:15:51 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:15:51 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:15:51 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries
+2025-08-08 15:15:51 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Engine\Binaries\Win64
+2025-08-08 15:15:51 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries\Win64
+2025-08-08 15:15:51 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries
+2025-08-08 15:15:51 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba
+2025-08-08 15:15:51 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Prueba
+2025-08-08 15:15:51 - ArkServerManager - INFO - Ejecutable encontrado recursivamente: D:/ASA\Prueba\steamapps\downloading\2430930\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:15:54 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:15:54 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:15:54 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries
+2025-08-08 15:15:54 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Engine\Binaries\Win64
+2025-08-08 15:15:54 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries\Win64
+2025-08-08 15:15:54 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries
+2025-08-08 15:15:54 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba
+2025-08-08 15:15:54 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Prueba
+2025-08-08 15:15:54 - ArkServerManager - INFO - Ejecutable encontrado recursivamente: D:/ASA\Prueba\steamapps\downloading\2430930\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:15:54 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:15:54 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:15:54 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries
+2025-08-08 15:15:54 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Engine\Binaries\Win64
+2025-08-08 15:15:54 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries\Win64
+2025-08-08 15:15:54 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries
+2025-08-08 15:15:54 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba
+2025-08-08 15:15:54 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Prueba
+2025-08-08 15:15:54 - ArkServerManager - INFO - Ejecutable encontrado recursivamente: D:/ASA\Prueba\steamapps\downloading\2430930\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:16:04 - ArkServerManager - INFO - Iniciando servidor Prueba con mapa TheIsland_WP - comando: D:/ASA\Prueba\steamapps\downloading\2430930\ShooterGame\Binaries\Win64\ArkAscendedServer.exe ?Port=7777 ?MaxPlayers=70 ?ServerName=Mi Servidor Ark -server -log ?Map=TheIsland_WP
+2025-08-08 15:16:04 - ArkServerManager - INFO - Servidor iniciado con PID: 12612
+2025-08-08 15:16:18 - ArkServerManager - INFO - Iniciando servidor Prueba con mapa TheIsland_WP - comando: D:/ASA\Prueba\steamapps\downloading\2430930\ShooterGame\Binaries\Win64\ArkAscendedServer.exe ?Port=7777 ?MaxPlayers=70 ?ServerName=Mi Servidor Ark -server -log ?Map=TheIsland_WP
+2025-08-08 15:16:18 - ArkServerManager - INFO - Servidor iniciado con PID: 19336
+2025-08-08 15:17:06 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:17:06 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:17:06 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries
+2025-08-08 15:17:06 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Engine\Binaries\Win64
+2025-08-08 15:17:06 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries\Win64
+2025-08-08 15:17:06 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries
+2025-08-08 15:17:06 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba
+2025-08-08 15:17:06 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Prueba
+2025-08-08 15:17:06 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-08 15:17:06 - ArkServerManager - INFO - Posible ejecutable encontrado: D:/ASA\Prueba\steamapps\downloading\2430930\ShooterGame\Plugins\sentry\Binaries\Win64\crashpad_handler.exe
+2025-08-08 15:17:06 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 15:17:06 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 15:17:06 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 15:17:06 - ArkServerManager - INFO - Iniciando Ark Server Manager...

@@ -24,8 +24,8 @@ class ArkServerManager:
         # Crear ventana principal
         self.root = ctk.CTk()
         self.root.title("Ark Survival Ascended - Administrador de Servidores")
-        self.root.geometry("1200x800")
-        self.root.minsize(1000, 600)
+        self.root.geometry("1200x900")
+        self.root.minsize(800, 500)
         
         # Verificar si es la primera vez que se ejecuta
         if not self.check_initial_setup():

@@ -16,6 +16,10 @@ class ServerPanel:
         self.logger = logger
         self.server_manager = ServerManager(config_manager, logger)
         
+        # Inicializar variables de selección
+        self.selected_server = None
+        self.selected_map = None
+        
         self.create_widgets()
         self.start_monitoring()
     
@@ -58,6 +62,72 @@ class ServerPanel:
             height=25
         )
         change_path_button.pack(anchor="w", padx=10, pady=(0, 8))
+        
+        # Frame para selección de servidor y mapa
+        selection_frame = ctk.CTkFrame(main_frame, fg_color=("gray90", "gray20"))
+        selection_frame.pack(fill="x", padx=10, pady=(0, 10))
+        
+        selection_label = ctk.CTkLabel(
+            selection_frame,
+            text="🎮 Configuración del Servidor:",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=("blue", "lightblue")
+        )
+        selection_label.pack(anchor="w", padx=10, pady=(8, 5))
+        
+        # Frame para los desplegables
+        dropdowns_frame = ctk.CTkFrame(selection_frame)
+        dropdowns_frame.pack(fill="x", padx=10, pady=(0, 8))
+        
+        # Frame para los desplegables (uno al lado del otro)
+        dropdowns_row_frame = ctk.CTkFrame(dropdowns_frame)
+        dropdowns_row_frame.pack(fill="x", pady=2)
+        
+        # Desplegable para seleccionar servidor (lado izquierdo)
+        server_selection_frame = ctk.CTkFrame(dropdowns_row_frame)
+        server_selection_frame.pack(side="left", fill="x", expand=True, padx=(0, 5))
+        
+        ctk.CTkLabel(
+            server_selection_frame,
+            text="Servidor:",
+            font=ctk.CTkFont(size=12, weight="bold")
+        ).pack(side="left", padx=(10, 5), pady=5)
+        
+        self.server_dropdown = ctk.CTkOptionMenu(
+            server_selection_frame,
+            values=["Seleccionar servidor..."],
+            command=self.on_server_selected,
+            width=200
+        )
+        self.server_dropdown.pack(side="left", padx=5, pady=5)
+        
+        # Botón para refrescar lista de servidores
+        refresh_servers_button = ctk.CTkButton(
+            server_selection_frame,
+            text="🔄",
+            command=self.refresh_servers_list,
+            width=30,
+            height=25
+        )
+        refresh_servers_button.pack(side="left", padx=5, pady=5)
+        
+        # Desplegable para seleccionar mapa (lado derecho)
+        map_selection_frame = ctk.CTkFrame(dropdowns_row_frame)
+        map_selection_frame.pack(side="right", fill="x", expand=True, padx=(5, 0))
+        
+        ctk.CTkLabel(
+            map_selection_frame,
+            text="Mapa:",
+            font=ctk.CTkFont(size=12, weight="bold")
+        ).pack(side="left", padx=(10, 5), pady=5)
+        
+        self.map_dropdown = ctk.CTkOptionMenu(
+            map_selection_frame,
+            values=["Seleccionar mapa..."],
+            command=self.on_map_selected,
+            width=200
+        )
+        self.map_dropdown.pack(side="left", padx=5, pady=5)
         
         # Frame para controles principales
         controls_frame = ctk.CTkFrame(main_frame)
@@ -111,6 +181,25 @@ class ServerPanel:
             height=35
         )
         self.install_button.grid(row=0, column=3, padx=5, pady=5)
+        
+        # Frame para barra de progreso
+        self.progress_frame = ctk.CTkFrame(main_frame)
+        self.progress_frame.pack(fill="x", padx=10, pady=5)
+        
+        # Barra de progreso
+        self.progress_label = ctk.CTkLabel(
+            self.progress_frame,
+            text="",
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        self.progress_label.pack(pady=(5, 2))
+        
+        self.progress_bar = ctk.CTkProgressBar(self.progress_frame)
+        self.progress_bar.pack(fill="x", padx=10, pady=(0, 5))
+        self.progress_bar.set(0)
+        
+        # Ocultar la barra de progreso inicialmente
+        self.progress_frame.pack_forget()
         
         # Frame para información del servidor
         info_frame = ctk.CTkFrame(main_frame)
@@ -284,6 +373,165 @@ class ServerPanel:
                 text="No configurada",
                 text_color=("red", "orange")
             )
+        
+        # Actualizar lista de servidores cuando cambia la ruta
+        self.refresh_servers_list()
+    
+    def refresh_servers_list(self):
+        """Refresca la lista de servidores disponibles"""
+        try:
+            root_path = self.config_manager.get("server", "root_path", "").strip()
+            if not root_path or not os.path.exists(root_path):
+                self.server_dropdown.configure(values=["Seleccionar servidor..."])
+                return
+            
+            # Buscar servidores en el directorio raíz
+            servers = []
+            for item in os.listdir(root_path):
+                item_path = os.path.join(root_path, item)
+                if os.path.isdir(item_path) and item != "SteamCMD":
+                    # Verificar si es un servidor válido buscando el ejecutable
+                    if self.server_manager.find_server_executable(item_path):
+                        servers.append(item)
+            
+            if servers:
+                self.server_dropdown.configure(values=["Seleccionar servidor..."] + servers)
+                self.add_status_message(f"Encontrados {len(servers)} servidor(es)", "info")
+            else:
+                self.server_dropdown.configure(values=["Seleccionar servidor..."])
+                self.add_status_message("No se encontraron servidores instalados", "warning")
+                
+        except Exception as e:
+            self.logger.error(f"Error al refrescar lista de servidores: {e}")
+            self.server_dropdown.configure(values=["Seleccionar servidor..."])
+    
+    def on_server_selected(self, server_name):
+        """Maneja la selección de un servidor"""
+        if server_name and server_name != "Seleccionar servidor...":
+            self.selected_server = server_name
+            self.add_status_message(f"Servidor seleccionado: {server_name}", "info")
+            # Cargar mapas disponibles para este servidor
+            self.load_maps_for_server(server_name)
+            # Actualizar información del servidor
+            self.update_server_info_for_selected()
+            # Mostrar información del servidor en la interfaz
+            self.show_selected_server_info()
+        else:
+            self.selected_server = None
+            self.map_dropdown.configure(values=["Seleccionar mapa..."])
+            self.clear_selected_server_info()
+    
+    def show_selected_server_info(self):
+        """Muestra la información del servidor seleccionado en la interfaz"""
+        server_info = self.get_selected_server_info()
+        if server_info:
+            # Actualizar el título o mostrar información adicional
+            info_text = f"Servidor: {server_info['name']}"
+            if server_info['has_executable']:
+                info_text += " ✅"
+            else:
+                info_text += " ⚠️"
+            
+            # Aquí podrías actualizar un label o mostrar más información
+            self.add_status_message(f"Información del servidor: {info_text}", "info")
+    
+    def clear_selected_server_info(self):
+        """Limpia la información del servidor seleccionado"""
+        # Aquí podrías limpiar la información mostrada
+        pass
+    
+    def update_server_info_for_selected(self):
+        """Actualiza la información del servidor seleccionado"""
+        if not self.selected_server:
+            return
+        
+        try:
+            root_path = self.config_manager.get("server", "root_path", "").strip()
+            if not root_path:
+                return
+            
+            server_path = os.path.join(root_path, self.selected_server)
+            if not os.path.exists(server_path):
+                return
+            
+            # Buscar el ejecutable del servidor
+            server_exe = self.server_manager.find_server_executable(server_path)
+            if server_exe:
+                # Guardar la ruta del ejecutable en la configuración
+                server_key = f"executable_path_{self.selected_server}"
+                self.config_manager.set("server", server_key, server_exe)
+                self.config_manager.save()
+                
+                self.add_status_message(f"✅ Ejecutable encontrado para {self.selected_server}: {server_exe}", "success")
+            else:
+                self.add_status_message(f"⚠️ No se encontró el ejecutable para {self.selected_server}", "warning")
+                
+        except Exception as e:
+            self.logger.error(f"Error al actualizar información del servidor: {e}")
+    
+    def load_maps_for_server(self, server_name):
+        """Carga los mapas disponibles para el servidor seleccionado"""
+        try:
+            root_path = self.config_manager.get("server", "root_path", "").strip()
+            if not root_path or not server_name:
+                self.map_dropdown.configure(values=["Seleccionar mapa..."])
+                return
+            
+            server_path = os.path.join(root_path, server_name)
+            if not os.path.exists(server_path):
+                self.map_dropdown.configure(values=["Seleccionar mapa..."])
+                return
+            
+            # Mapas disponibles para Ark Survival Ascended
+            available_maps = [
+                "TheIsland_WP",           # The Island
+                "ScorchedEarth_WP",       # Scorched Earth
+                "Aberration_P",           # Aberration
+                "Extinction",             # Extinction
+                "Genesis",                # Genesis
+                "Genesis2",               # Genesis Part 2
+                "TheCenter",              # The Center
+                "Ragnarok",               # Ragnarok
+                "Valguero_P",             # Valguero
+                "CrystalIsles",           # Crystal Isles
+                "LostIsland",             # Lost Island
+                "Fjordur",                # Fjordur
+                "ModdedMap"               # Mapa Modded
+            ]
+            
+            # Verificar qué mapas están disponibles en el servidor
+            available_maps_found = []
+            
+            # Buscar archivos de mapa en el servidor
+            for root, dirs, files in os.walk(server_path):
+                for file in files:
+                    if file.lower().endswith('.umap'):
+                        # Extraer el nombre del mapa del archivo
+                        map_name = os.path.splitext(file)[0]
+                        if map_name not in available_maps_found:
+                            available_maps_found.append(map_name)
+            
+            # Si no se encontraron mapas específicos, usar la lista completa
+            if not available_maps_found:
+                available_maps_found = available_maps
+            
+            # Ordenar los mapas encontrados
+            available_maps_found.sort()
+            
+            self.map_dropdown.configure(values=["Seleccionar mapa..."] + available_maps_found)
+            self.add_status_message(f"Cargados {len(available_maps_found)} mapa(s) para {server_name}", "info")
+            
+        except Exception as e:
+            self.logger.error(f"Error al cargar mapas: {e}")
+            self.map_dropdown.configure(values=["Seleccionar mapa..."])
+    
+    def on_map_selected(self, map_name):
+        """Maneja la selección de un mapa"""
+        if map_name and map_name != "Seleccionar mapa...":
+            self.selected_map = map_name
+            self.add_status_message(f"Mapa seleccionado: {map_name}", "info")
+        else:
+            self.selected_map = None
     
     def start_monitoring(self):
         """Inicia el monitoreo del servidor en un hilo separado"""
@@ -316,25 +564,243 @@ class ServerPanel:
             self.uptime_label.configure(text=uptime)
             self.cpu_label.configure(text=f"{stats['cpu']:.1f}%")
             self.memory_label.configure(text=f"{stats['memory_mb']:.1f} MB")
+            
+            # Mostrar información del servidor seleccionado si hay uno
+            if hasattr(self, 'selected_server') and self.selected_server:
+                # Actualizar el título o mostrar información adicional
+                pass
                 
         except Exception as e:
             self.logger.error(f"Error al actualizar información del servidor: {e}")
     
+    def get_selected_server_info(self):
+        """Obtiene información del servidor seleccionado"""
+        if not hasattr(self, 'selected_server') or not self.selected_server:
+            return None
+        
+        try:
+            root_path = self.config_manager.get("server", "root_path", "").strip()
+            if not root_path:
+                return None
+            
+            server_path = os.path.join(root_path, self.selected_server)
+            if not os.path.exists(server_path):
+                return None
+            
+            # Buscar el ejecutable del servidor
+            server_exe = self.server_manager.find_server_executable(server_path)
+            
+            return {
+                "name": self.selected_server,
+                "path": server_path,
+                "executable": server_exe,
+                "exists": os.path.exists(server_path),
+                "has_executable": server_exe is not None
+            }
+        except Exception as e:
+            self.logger.error(f"Error al obtener información del servidor: {e}")
+            return None
+    
     def start_server(self):
         """Inicia el servidor"""
-        self.server_manager.start_server(self.add_status_message)
+        if not hasattr(self, 'selected_server') or not self.selected_server:
+            self.add_status_message("Error: Debe seleccionar un servidor primero", "error")
+            return
+        
+        if not hasattr(self, 'selected_map') or not self.selected_map:
+            self.add_status_message("Error: Debe seleccionar un mapa primero", "error")
+            return
+        
+        self.add_status_message(f"Iniciando servidor: {self.selected_server} con mapa: {self.selected_map}", "info")
+        self.server_manager.start_server(self.add_status_message, self.selected_server, self.selected_map)
     
     def stop_server(self):
         """Detiene el servidor"""
+        if not hasattr(self, 'selected_server') or not self.selected_server:
+            self.add_status_message("Error: Debe seleccionar un servidor primero", "error")
+            return
+        
+        self.add_status_message(f"Deteniendo servidor: {self.selected_server}", "info")
         self.server_manager.stop_server(self.add_status_message)
     
     def restart_server(self):
         """Reinicia el servidor"""
-        self.server_manager.restart_server(self.add_status_message)
+        if not hasattr(self, 'selected_server') or not self.selected_server:
+            self.add_status_message("Error: Debe seleccionar un servidor primero", "error")
+            return
+        
+        if not hasattr(self, 'selected_map') or not self.selected_map:
+            self.add_status_message("Error: Debe seleccionar un mapa primero", "error")
+            return
+        
+        self.add_status_message(f"Reiniciando servidor: {self.selected_server} con mapa: {self.selected_map}", "info")
+        self.server_manager.restart_server(self.add_status_message, self.selected_server, self.selected_map)
     
+    def show_progress(self, message="", progress=0):
+        """Muestra la barra de progreso con un mensaje y porcentaje"""
+        self.progress_frame.pack(fill="x", padx=10, pady=5, before=self.status_frame)
+        self.progress_label.configure(text=message)
+        self.progress_bar.set(progress / 100)
+        
+    def hide_progress(self):
+        """Oculta la barra de progreso"""
+        self.progress_frame.pack_forget()
+        
+    def update_progress(self, message, progress):
+        """Actualiza la barra de progreso"""
+        self.progress_label.configure(text=message)
+        self.progress_bar.set(progress / 100)
+        
     def install_server(self):
         """Instala/actualiza el servidor"""
-        self.server_manager.install_server(self.add_status_message)
+        # Verificar si hay una ruta raíz configurada
+        root_path = self.config_manager.get("server", "root_path", "").strip()
+        if not root_path:
+            self.add_status_message("Error: Primero debe configurar la ruta raíz en la pestaña Configuración", "error")
+            return
+        
+        # Mostrar diálogo para el nombre del servidor
+        dialog = ctk.CTkInputDialog(
+            text="Ingrese el nombre del servidor (será el nombre de la carpeta):",
+            title="Nombre del Servidor"
+        )
+        server_name = dialog.get_input()
+        
+        if not server_name or not server_name.strip():
+            self.add_status_message("Error: Debe ingresar un nombre para el servidor", "error")
+            return
+        
+        # Limpiar el nombre del servidor (remover caracteres especiales)
+        server_name = server_name.strip()
+        # Reemplazar caracteres no válidos para nombres de carpeta
+        invalid_chars = '<>:"/\\|?*'
+        for char in invalid_chars:
+            server_name = server_name.replace(char, '_')
+        
+        # Verificar si ya existe un servidor con ese nombre
+        server_path = os.path.join(root_path, server_name)
+        server_exists = os.path.exists(server_path)
+        
+        if server_exists:
+            # Verificar si hay un ejecutable válido
+            existing_exe = self.server_manager.find_server_executable(server_path)
+            if existing_exe:
+                # Preguntar si quiere actualizar
+                update_dialog = ctk.CTkInputDialog(
+                    text=f"El servidor '{server_name}' ya existe con ejecutable válido.\n¿Desea actualizarlo? (s/n):",
+                    title="Servidor Existente"
+                )
+                update_response = update_dialog.get_input()
+                if not update_response or update_response.lower() not in ['s', 'si', 'sí', 'y', 'yes']:
+                    self.add_status_message("Actualización cancelada por el usuario", "info")
+                    return
+                operation_type = "actualización"
+            else:
+                # Servidor existe pero sin ejecutable válido
+                update_dialog = ctk.CTkInputDialog(
+                    text=f"El servidor '{server_name}' existe pero no tiene un ejecutable válido.\n¿Desea reinstalarlo? (s/n):",
+                    title="Servidor Incompleto"
+                )
+                update_response = update_dialog.get_input()
+                if not update_response or update_response.lower() not in ['s', 'si', 'sí', 'y', 'yes']:
+                    self.add_status_message("Reinstalación cancelada por el usuario", "info")
+                    return
+                operation_type = "reinstalación"
+        else:
+            operation_type = "instalación"
+        
+        # Deshabilitar el botón durante la instalación
+        self.install_button.configure(state="disabled", text=f"{operation_type.capitalize()}...")
+        
+        # Mostrar barra de progreso
+        self.show_progress(f"Preparando {operation_type}...", 0)
+        
+        # Ejecutar la instalación en un hilo separado
+        def install_thread():
+            try:
+                self.add_status_message(f"Iniciando {operation_type} del servidor: {server_name}", "info")
+                self.add_status_message(f"Ruta de {operation_type}: {server_path}", "info")
+                
+                # Llamar al método de instalación del server_manager con callback mejorado
+                self.server_manager.install_server(self.install_callback, server_name)
+                
+                # El callback se encargará de mostrar el progreso y el resultado final
+                # No necesitamos verificar manualmente aquí porque el callback ya lo hace
+                
+            except Exception as e:
+                self.add_status_message(f"❌ Error en la {operation_type}: {str(e)}", "error")
+                self.logger.error(f"Error en la {operation_type}: {e}")
+            finally:
+                # Rehabilitar el botón y ocultar barra de progreso
+                self.install_button.configure(state="normal", text="Instalar/Actualizar")
+                # No ocultamos la barra de progreso aquí porque el callback se encarga de eso
+        
+        threading.Thread(target=install_thread, daemon=True).start()
+        
+    def install_callback(self, message_type, message):
+        """Callback mejorado para la instalación con barra de progreso"""
+        try:
+            if message_type == "progress":
+                # Extraer porcentaje del mensaje
+                if "Progress:" in message:
+                    # Buscar el porcentaje en el mensaje
+                    import re
+                    progress_match = re.search(r'Progress:\s*(\d+(?:\.\d+)?)', message)
+                    if progress_match:
+                        progress = float(progress_match.group(1))
+                        self.update_progress(f"Progreso: {progress:.1f}%", progress)
+                    else:
+                        self.update_progress(message, 50)  # Valor por defecto
+                elif "Downloading" in message:
+                    # Extraer porcentaje de descarga si está disponible
+                    import re
+                    download_match = re.search(r'(\d+(?:\.\d+)?)%', message)
+                    if download_match:
+                        progress = float(download_match.group(1))
+                        self.update_progress(f"Descargando... {progress:.1f}%", progress)
+                    else:
+                        self.update_progress(message, 25)
+                elif "Installing" in message:
+                    self.update_progress(message, 75)
+                elif "Validating" in message:
+                    self.update_progress(message, 90)
+                elif "Verificando SteamCMD" in message:
+                    self.update_progress(message, 5)
+                elif "Descargando SteamCMD" in message:
+                    self.update_progress(message, 10)
+                elif "Extrayendo SteamCMD" in message:
+                    self.update_progress(message, 15)
+                elif "Buscando ejecutable" in message:
+                    self.update_progress(message, 95)
+                else:
+                    # Para otros mensajes de progreso, mantener el progreso actual
+                    current_progress = self.progress_bar.get()
+                    self.update_progress(message, current_progress * 100)
+            elif message_type == "error":
+                # Mostrar error y ocultar barra de progreso
+                self.add_status_message(f"❌ {message}", "error")
+                self.hide_progress()
+            elif message_type == "success":
+                # Mostrar éxito
+                self.add_status_message(f"✅ {message}", "success")
+                # Si es un mensaje de éxito final, ocultar la barra de progreso y refrescar lista
+                if "completada exitosamente" in message.lower():
+                    self.hide_progress()
+                    # Refrescar la lista de servidores
+                    self.refresh_servers_list()
+            elif message_type == "warning":
+                # Mostrar advertencia
+                self.add_status_message(f"⚠️ {message}", "warning")
+            elif message_type == "info":
+                # Mostrar información
+                self.add_status_message(f"ℹ️ {message}", "info")
+            else:
+                # Usar el método original para otros tipos de mensajes
+                self.add_status_message(message, message_type)
+        except Exception as e:
+            # En caso de error en el callback, mostrar el error
+            self.add_status_message(f"❌ Error en el callback: {str(e)}", "error")
+            self.logger.error(f"Error en install_callback: {e}")
     
     def save_world(self):
         """Guarda el mundo del servidor"""
