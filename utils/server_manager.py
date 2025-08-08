@@ -156,16 +156,17 @@ class ServerManager:
                         callback("error", "Ruta del ejecutable no válida")
                     return
                 
-                # Construir comando base del servidor
-                cmd = [server_path, "-server", "-log"]
+                # Construir comando: solo el ejecutable más los argumentos personalizados
+                cmd = [server_path]
                 
                 # Agregar argumentos personalizados si se proporcionan
                 if custom_args and isinstance(custom_args, list):
                     cmd.extend(custom_args)
-                
-                # Agregar el mapa si se especifica
-                if map_name:
-                    cmd.append(f"?Map={map_name}")
+                else:
+                    # Si no hay argumentos personalizados, usar el método básico
+                    cmd.extend(["-server", "-log"])
+                    if map_name:
+                        cmd.append(f"?Map={map_name}")
                 
                 # Log del comando
                 self.logger.info(f"Comando del servidor: {' '.join(cmd)}")

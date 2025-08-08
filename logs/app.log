@@ -1012,3 +1012,125 @@
 2025-08-08 19:35:25 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
 2025-08-08 19:35:25 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
 2025-08-08 19:35:37 - ArkServerManager - INFO - Comando del servidor: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe -server -log TheIsland_WP?listen?ServerPassword=ert?Port=7777?QueryPort=27015?MaxPlayers=70?MultiHome=127.0.0.1?SessionName=ert?AdminPassword=ert?ServerPVE=true -server -log ?Map=TheCenter
+2025-08-08 19:52:22 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 19:52:22 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 19:52:22 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 19:52:22 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 19:52:22 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 19:52:22 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 19:52:22 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 19:52:22 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 19:52:22 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 19:53:17 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 19:53:17 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 19:53:18 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 19:53:18 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 19:53:18 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 19:53:18 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 19:53:18 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 19:53:18 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 19:53:18 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 19:55:36 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 19:55:36 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 19:55:36 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 19:55:36 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 19:55:36 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 19:55:36 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 19:55:36 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 19:55:36 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 19:55:36 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 19:59:42 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 19:59:42 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 19:59:42 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 19:59:42 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 19:59:42 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 19:59:42 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 19:59:42 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 19:59:42 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 19:59:42 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:05:35 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 20:05:35 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 20:05:35 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:05:35 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:05:35 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:05:35 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 20:05:35 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 20:05:35 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:05:35 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:07:55 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:07:55 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:07:55 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:07:55 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:07:55 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:07:55 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:07:59 - ArkServerManager - INFO - Comando del servidor: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe -server -log TheIsland_WP?listen?ServerPassword=ert?Port=7777?QueryPort=27015?MaxPlayers=70?MultiHome=127.0.0.1?SessionName=ert?AdminPassword=ert?ServerPVE=true -server -log ?Map=TheIsland_WP
+2025-08-08 20:10:51 - ArkServerManager - INFO - Comando del servidor: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe -server -log TheIsland_WP?listen?ServerPassword=ert?Port=7777?QueryPort=27015?MaxPlayers=70?MultiHome=127.0.0.1?SessionName=ert?AdminPassword=ert?ServerPVE=true -server -log -mods=929420 ?Map=TheIsland_WP
+2025-08-08 20:13:57 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 20:13:57 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 20:13:57 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:13:57 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:13:57 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:13:57 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 20:13:57 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 20:13:57 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:13:57 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:15:33 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 20:15:33 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 20:15:33 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:15:33 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:15:33 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:15:33 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 20:15:33 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 20:15:33 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:15:33 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:16:02 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 20:16:02 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 20:16:02 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:16:02 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:16:02 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:16:02 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 20:16:02 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 20:16:02 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:16:02 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:17:01 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:17:01 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:17:01 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:17:01 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:17:01 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:17:01 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:17:06 - ArkServerManager - INFO - Comando del servidor: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe TheIsland_WP?listen?ServerPassword=ert?Port=7777?QueryPort=27015?MaxPlayers=70?MultiHome=127.0.0.1?SessionName=ert?AdminPassword=ert?ServerPVE=true -server -log -mods=928793,940975,929420
+2025-08-08 20:21:49 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 20:21:49 - ArkServerManager - INFO - Cargados 0 mods para default
+2025-08-08 20:21:49 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 20:21:49 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:21:49 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:21:49 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:21:49 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 20:21:49 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 20:21:49 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:21:49 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:21:56 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:21:56 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:21:56 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:21:56 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:21:56 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:21:56 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:21:56 - ArkServerManager - INFO - Cargados 0 mods para default
+2025-08-08 20:21:59 - ArkServerManager - INFO - Cargados 0 mods para Prueba_TheIsland_WP
+2025-08-08 20:22:42 - ArkServerManager - INFO - Guardados 1 mods para Prueba_TheIsland_WP
+2025-08-08 20:22:45 - ArkServerManager - INFO - Guardados 2 mods para Prueba_TheIsland_WP
+2025-08-08 20:22:47 - ArkServerManager - INFO - Guardados 3 mods para Prueba_TheIsland_WP
+2025-08-08 20:22:55 - ArkServerManager - INFO - Cargados 0 mods para Prueba_Aberration_P
+2025-08-08 20:23:09 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 20:23:31 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 20:23:31 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 20:23:31 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 20:23:31 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 20:23:31 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 20:23:31 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:23:31 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:23:31 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:23:31 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 20:23:31 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 20:23:31 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:23:31 - ArkServerManager - INFO - Iniciando Ark Server Manager...

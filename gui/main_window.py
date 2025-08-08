@@ -5,6 +5,7 @@ from .panels.config_panel import ConfigPanel
 from .panels.monitoring_panel import MonitoringPanel
 from .panels.backup_panel import BackupPanel
 from .panels.players_panel import PlayersPanel
+from .panels.mods_panel import ModsPanel
 from .panels.logs_panel import LogsPanel
 
 class MainWindow:
@@ -359,9 +360,9 @@ class MainWindow:
         # El ServerPanel ya no se muestra en la interfaz, pero se mantiene para funcionalidad backend
         self.server_panel = ServerPanel(None, self.config_manager, self.logger, self)
         self.config_panel = ConfigPanel(self.tab_configuraciones_content, self.config_manager, self.logger)
+        self.mods_panel = ModsPanel(self.tab_mods_content, self.config_manager, self.logger, self)
         self.monitoring_panel = MonitoringPanel(self.tab_reinicios_content, self.config_manager, self.logger)
         self.backup_panel = BackupPanel(self.tab_backup_content, self.config_manager, self.logger)
-        self.players_panel = PlayersPanel(self.tab_mods_content, self.config_manager, self.logger)
         self.logs_panel = LogsPanel(self.tab_logs_content, self.config_manager, self.logger)
         
         # Configurar callbacks para los botones
@@ -369,6 +370,9 @@ class MainWindow:
         
         # Inicializar la lista de servidores después de crear el server_panel
         self.refresh_servers_list()
+        
+        # Cargar la última selección de servidor/mapa
+        self.load_last_server_map_selection()
         
         # Mostrar la pestaña inicial
         self.show_tab("Principal")
@@ -513,6 +517,9 @@ class MainWindow:
             self.server_panel.on_server_selected(server_name)
         if hasattr(self, 'principal_panel'):
             self.principal_panel.update_server_info(server_name, self.selected_map)
+        # Actualizar contexto de mods
+        if hasattr(self, 'mods_panel'):
+            self.mods_panel.update_server_map_context(server_name, self.selected_map)
     
     def on_map_selected(self, map_name):
         """Maneja la selección de un mapa"""
@@ -521,11 +528,52 @@ class MainWindow:
             self.server_panel.on_map_selected(map_name)
         if hasattr(self, 'principal_panel'):
             self.principal_panel.update_server_info(self.selected_server, map_name)
+        # Actualizar contexto de mods
+        if hasattr(self, 'mods_panel'):
+            self.mods_panel.update_server_map_context(self.selected_server, map_name)
     
     def refresh_servers_list(self):
         """Refresca la lista de servidores"""
         if hasattr(self, 'server_panel'):
             self.server_panel.refresh_servers_list()
+    
+    def load_last_server_map_selection(self):
+        """Cargar la última selección de servidor y mapa"""
+        try:
+            last_server = self.config_manager.get("app", "last_server", "")
+            last_map = self.config_manager.get("app", "last_map", "")
+            
+            if last_server and hasattr(self, 'server_dropdown'):
+                # Verificar si el servidor existe en la lista
+                try:
+                    current_values = self.server_dropdown.cget("values")
+                    if current_values and last_server in current_values:
+                        self.server_dropdown.set(last_server)
+                        self.selected_server = last_server
+                        self.add_log_message(f"📂 Servidor restaurado: {last_server}")
+                except:
+                    pass
+            
+            if last_map and hasattr(self, 'map_dropdown'):
+                # Verificar si el mapa existe en la lista
+                try:
+                    current_values = self.map_dropdown.cget("values")
+                    if current_values and last_map in current_values:
+                        self.map_dropdown.set(last_map)
+                        self.selected_map = last_map
+                        self.add_log_message(f"🗺️ Mapa restaurado: {last_map}")
+                except:
+                    pass
+                    
+            # Notificar a los paneles si se cargó alguna selección
+            if last_server and last_map:
+                if hasattr(self, 'principal_panel'):
+                    self.principal_panel.update_server_info(last_server, last_map)
+                if hasattr(self, 'mods_panel'):
+                    self.mods_panel.update_server_map_context(last_server, last_map)
+                    
+        except Exception as e:
+            self.logger.error(f"Error al cargar última selección: {e}")
     
     def start_server(self):
         """Inicia el servidor"""

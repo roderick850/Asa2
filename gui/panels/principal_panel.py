@@ -345,8 +345,20 @@ class PrincipalPanel:
         # 4. Agregar ServerPVE por defecto (como en tu script)
         map_arg += "?ServerPVE=true"
         
-        # 5. Construir la lista final con un solo argumento y los flags del servidor
+        # 5. Obtener mods configurados (buscar por servidor/mapa específico primero)
+        server_map_key = f"{self.selected_server}_{self.selected_map}" if self.selected_server and self.selected_map else "default"
+        mod_ids = self.config_manager.get("server", f"mod_ids_{server_map_key}", "").strip()
+        
+        # Fallback a la configuración general si no hay específica
+        if not mod_ids:
+            mod_ids = self.config_manager.get("server", "mod_ids", "").strip()
+        
+        # 6. Construir la lista final con un solo argumento y los flags del servidor
         args = [map_arg, "-server", "-log"]
+        
+        # 7. Agregar mods si existen
+        if mod_ids:
+            args.append(f"-mods={mod_ids}")
         
         return args
     
