@@ -5,7 +5,7 @@ import psutil
 import os
 import subprocess
 from datetime import datetime
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from utils.server_manager import ServerManager
 
 
@@ -171,9 +171,10 @@ class ServerPanel:
         )
         self.restart_button.grid(row=0, column=2, padx=5, pady=5)
         
+        # Botones de instalación y actualización separados
         self.install_button = ctk.CTkButton(
             buttons_frame, 
-            text="Instalar/Actualizar", 
+            text="Instalar Servidor", 
             command=self.install_server,
             fg_color="blue",
             hover_color="darkblue",
@@ -181,6 +182,17 @@ class ServerPanel:
             height=35
         )
         self.install_button.grid(row=0, column=3, padx=5, pady=5)
+        
+        self.update_button = ctk.CTkButton(
+            buttons_frame, 
+            text="Actualizar Servidor", 
+            command=self.update_server,
+            fg_color="purple",
+            hover_color="darkpurple",
+            width=130,
+            height=35
+        )
+        self.update_button.grid(row=0, column=4, padx=5, pady=5)
         
         # Frame para barra de progreso
         self.progress_frame = ctk.CTkFrame(main_frame)
@@ -652,7 +664,7 @@ class ServerPanel:
         self.progress_bar.set(progress / 100)
         
     def install_server(self):
-        """Instala/actualiza el servidor"""
+        """Instala un nuevo servidor"""
         # Verificar si hay una ruta raíz configurada
         root_path = self.config_manager.get("server", "root_path", "").strip()
         if not root_path:
@@ -679,64 +691,98 @@ class ServerPanel:
         
         # Verificar si ya existe un servidor con ese nombre
         server_path = os.path.join(root_path, server_name)
-        server_exists = os.path.exists(server_path)
-        
-        if server_exists:
-            # Verificar si hay un ejecutable válido
-            existing_exe = self.server_manager.find_server_executable(server_path)
-            if existing_exe:
-                # Preguntar si quiere actualizar
-                update_dialog = ctk.CTkInputDialog(
-                    text=f"El servidor '{server_name}' ya existe con ejecutable válido.\n¿Desea actualizarlo? (s/n):",
-                    title="Servidor Existente"
-                )
-                update_response = update_dialog.get_input()
-                if not update_response or update_response.lower() not in ['s', 'si', 'sí', 'y', 'yes']:
-                    self.add_status_message("Actualización cancelada por el usuario", "info")
-                    return
-                operation_type = "actualización"
-            else:
-                # Servidor existe pero sin ejecutable válido
-                update_dialog = ctk.CTkInputDialog(
-                    text=f"El servidor '{server_name}' existe pero no tiene un ejecutable válido.\n¿Desea reinstalarlo? (s/n):",
-                    title="Servidor Incompleto"
-                )
-                update_response = update_dialog.get_input()
-                if not update_response or update_response.lower() not in ['s', 'si', 'sí', 'y', 'yes']:
-                    self.add_status_message("Reinstalación cancelada por el usuario", "info")
-                    return
-                operation_type = "reinstalación"
-        else:
-            operation_type = "instalación"
+        if os.path.exists(server_path):
+            # Preguntar si quiere sobrescribir
+            update_dialog = ctk.CTkInputDialog(
+                text=f"El servidor '{server_name}' ya existe.\n¿Desea sobrescribirlo? (s/n):",
+                title="Servidor Existente"
+            )
+            update_response = update_dialog.get_input()
+            if not update_response or update_response.lower() not in ['s', 'si', 'sí', 'y', 'yes']:
+                self.add_status_message("Instalación cancelada por el usuario", "info")
+                return
         
         # Deshabilitar el botón durante la instalación
-        self.install_button.configure(state="disabled", text=f"{operation_type.capitalize()}...")
+        self.install_button.configure(state="disabled", text="Instalando...")
         
         # Mostrar barra de progreso
-        self.show_progress(f"Preparando {operation_type}...", 0)
+        self.show_progress("Preparando instalación...", 0)
         
         # Ejecutar la instalación en un hilo separado
         def install_thread():
             try:
-                self.add_status_message(f"Iniciando {operation_type} del servidor: {server_name}", "info")
-                self.add_status_message(f"Ruta de {operation_type}: {server_path}", "info")
+                self.add_status_message(f"Iniciando instalación del servidor: {server_name}", "info")
+                self.add_status_message(f"Ruta de instalación: {server_path}", "info")
                 
                 # Llamar al método de instalación del server_manager con callback mejorado
                 self.server_manager.install_server(self.install_callback, server_name)
                 
-                # El callback se encargará de mostrar el progreso y el resultado final
-                # No necesitamos verificar manualmente aquí porque el callback ya lo hace
-                
             except Exception as e:
-                self.add_status_message(f"❌ Error en la {operation_type}: {str(e)}", "error")
-                self.logger.error(f"Error en la {operation_type}: {e}")
+                self.add_status_message(f"❌ Error en la instalación: {str(e)}", "error")
+                self.logger.error(f"Error en la instalación: {e}")
             finally:
-                # Rehabilitar el botón y ocultar barra de progreso
-                self.install_button.configure(state="normal", text="Instalar/Actualizar")
-                # No ocultamos la barra de progreso aquí porque el callback se encarga de eso
+                # Rehabilitar el botón
+                self.install_button.configure(state="normal", text="Instalar Servidor")
         
         threading.Thread(target=install_thread, daemon=True).start()
+    
+    def update_server(self):
+        """Actualiza el servidor seleccionado"""
+        # Verificar si hay un servidor seleccionado
+        if not hasattr(self, 'selected_server') or not self.selected_server:
+            self.add_status_message("Error: Debe seleccionar un servidor primero", "error")
+            return
         
+        # Verificar si hay una ruta raíz configurada
+        root_path = self.config_manager.get("server", "root_path", "").strip()
+        if not root_path:
+            self.add_status_message("Error: Primero debe configurar la ruta raíz en la pestaña Configuración", "error")
+            return
+        
+        server_name = self.selected_server
+        server_path = os.path.join(root_path, server_name)
+        
+        # Verificar si el servidor existe
+        if not os.path.exists(server_path):
+            self.add_status_message(f"Error: El servidor '{server_name}' no existe en la ruta especificada", "error")
+            return
+        
+        # Preguntar confirmación para actualizar usando un diálogo simple
+        
+        # Mostrar diálogo de confirmación
+        response = messagebox.askyesno(
+            "Confirmar Actualización",
+            f"¿Desea actualizar el servidor '{server_name}'?\n\nEsto puede tomar varios minutos."
+        )
+        
+        if not response:
+            self.add_status_message("Actualización cancelada por el usuario", "info")
+            return
+        
+        # Deshabilitar el botón durante la actualización
+        self.update_button.configure(state="disabled", text="Actualizando...")
+        
+        # Mostrar barra de progreso
+        self.show_progress("Preparando actualización...", 0)
+        
+        # Ejecutar la actualización en un hilo separado
+        def update_thread():
+            try:
+                self.add_status_message(f"Iniciando actualización del servidor: {server_name}", "info")
+                self.add_status_message(f"Ruta del servidor: {server_path}", "info")
+                
+                # Llamar al método de actualización del server_manager
+                self.server_manager.update_server(self.install_callback, server_name)
+                
+            except Exception as e:
+                self.add_status_message(f"❌ Error en la actualización: {str(e)}", "error")
+                self.logger.error(f"Error en la actualización: {e}")
+            finally:
+                # Rehabilitar el botón
+                self.update_button.configure(state="normal", text="Actualizar Servidor")
+        
+        threading.Thread(target=update_thread, daemon=True).start()
+    
     def install_callback(self, message_type, message):
         """Callback mejorado para la instalación con barra de progreso"""
         try:
@@ -759,7 +805,10 @@ class ServerPanel:
                         progress = float(download_match.group(1))
                         self.update_progress(f"Descargando... {progress:.1f}%", progress)
                     else:
-                        self.update_progress(message, 25)
+                        # Si no hay porcentaje, incrementar gradualmente
+                        current_progress = self.progress_bar.get()
+                        new_progress = min(current_progress + 0.1, 0.9)  # Incrementar hasta 90%
+                        self.update_progress(message, new_progress * 100)
                 elif "Installing" in message:
                     self.update_progress(message, 75)
                 elif "Validating" in message:
@@ -772,6 +821,10 @@ class ServerPanel:
                     self.update_progress(message, 15)
                 elif "Buscando ejecutable" in message:
                     self.update_progress(message, 95)
+                elif "Update state" in message:
+                    # Para mensajes de estado de actualización, mantener progreso actual
+                    current_progress = self.progress_bar.get()
+                    self.update_progress(message, current_progress * 100)
                 else:
                     # Para otros mensajes de progreso, mantener el progreso actual
                     current_progress = self.progress_bar.get()

@@ -339,11 +339,25 @@ class ServerManager:
                             elif "Steam" in output and ("updating" in output.lower() or "installing" in output.lower()):
                                 if callback:
                                     callback("progress", output)
+                            elif "Downloading" in output or "Installing" in output or "Validating" in output:
+                                # Capturar cualquier mensaje que contenga estas palabras
+                                if callback:
+                                    callback("progress", output)
+                            elif "Progress:" in output:
+                                # Capturar mensajes de progreso específicos
+                                if callback:
+                                    callback("progress", output)
+                            else:
+                                # Para otros mensajes, mostrarlos como información
+                                if callback and output.strip():
+                                    callback("info", output)
                 
                 # Obtener código de salida
                 return_code = process.poll()
                 
-                if return_code == 0:
+                # SteamCMD puede devolver códigos de salida diferentes a 0 incluso cuando la operación es exitosa
+                # Código 7 es común cuando la instalación se completa correctamente
+                if return_code == 0 or return_code == 7:
                     if callback:
                         callback("info", "Buscando ejecutable del servidor...")
                     
@@ -776,3 +790,156 @@ class ServerManager:
                     callback("error", f"Error al banear jugador: {str(e)}")
         
         threading.Thread(target=_ban, daemon=True).start()
+
+    def update_server(self, callback=None, server_name=None):
+        """Actualiza un servidor existente de Ark"""
+        def _update():
+            try:
+                # Obtener rutas de configuración
+                root_path = self.config_manager.get("server", "root_path")
+                
+                if not root_path:
+                    if callback:
+                        callback("error", "Ruta raíz no configurada. Configure la aplicación primero.")
+                    return
+                
+                # Determinar la ruta del servidor
+                if server_name:
+                    install_path = os.path.join(root_path, server_name)
+                else:
+                    if callback:
+                        callback("error", "Nombre del servidor no especificado.")
+                    return
+                
+                # Verificar que el servidor existe
+                if not os.path.exists(install_path):
+                    if callback:
+                        callback("error", f"El servidor '{server_name}' no existe en la ruta: {install_path}")
+                    return
+                
+                if callback:
+                    callback("info", f"Servidor encontrado en: {install_path}")
+                
+                # Verificar/instalar SteamCMD si es necesario
+                if callback:
+                    callback("progress", "Verificando SteamCMD...")
+                steamcmd_path = self.install_steamcmd_if_needed(root_path, callback)
+                if not steamcmd_path:
+                    if callback:
+                        callback("error", "No se pudo instalar SteamCMD. Verifique su conexión a internet.")
+                    return
+                
+                self.logger.info(f"Iniciando actualización del servidor: {server_name}")
+                if callback:
+                    callback("info", f"Iniciando actualización del servidor: {server_name}")
+                
+                # Comando para actualizar el servidor de Ark Survival Ascended
+                # App ID: 2430930 (Ark Survival Ascended Dedicated Server)
+                cmd = [
+                    steamcmd_path,
+                    "+login", "anonymous",
+                    "+force_install_dir", install_path,
+                    "+app_update", "2430930", "validate",
+                    "+quit"
+                ]
+                
+                if callback:
+                    callback("info", "Ejecutando SteamCMD para actualización...")
+                
+                # Ejecutar el proceso de actualización
+                try:
+                    process = subprocess.Popen(
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        cwd=os.path.dirname(steamcmd_path) if steamcmd_path != "steamcmd" else None
+                    )
+                except Exception as e:
+                    if callback:
+                        callback("error", f"Error al ejecutar SteamCMD: {str(e)}")
+                    return
+                
+                # Leer salida en tiempo real
+                if callback:
+                    callback("progress", "Iniciando actualización...")
+                
+                while True:
+                    output = process.stdout.readline()
+                    if output == '' and process.poll() is not None:
+                        break
+                    if output:
+                        output = output.strip()
+                        if output:
+                            # Filtrar mensajes importantes y actualizar progreso
+                            if any(keyword in output for keyword in ["Downloading update", "Installing update", "Downloading", "Installing", "Validating", "Progress:"]):
+                                if callback:
+                                    callback("progress", output)
+                            elif "Success!" in output or "Installed" in output or "Update complete" in output:
+                                if callback:
+                                    callback("success", output)
+                            elif "ERROR" in output or "Failed" in output:
+                                if callback:
+                                    callback("error", output)
+                            elif any(keyword in output for keyword in ["Update state", "App 2430930", "Logging directory", "Loading Steam API", "Connecting anonymously", "Waiting for client config"]):
+                                if callback:
+                                    callback("info", output)
+                            elif "Steam" in output and ("updating" in output.lower() or "installing" in output.lower()):
+                                if callback:
+                                    callback("progress", output)
+                            elif "Downloading" in output or "Installing" in output or "Validating" in output:
+                                # Capturar cualquier mensaje que contenga estas palabras
+                                if callback:
+                                    callback("progress", output)
+                            elif "Progress:" in output:
+                                # Capturar mensajes de progreso específicos
+                                if callback:
+                                    callback("progress", output)
+                            else:
+                                # Para otros mensajes, mostrarlos como información
+                                if callback and output.strip():
+                                    callback("info", output)
+                
+                # Obtener código de salida
+                return_code = process.poll()
+                
+                # SteamCMD puede devolver códigos de salida diferentes a 0 incluso cuando la operación es exitosa
+                # Código 7 es común cuando la actualización se completa correctamente
+                if return_code == 0 or return_code == 7:
+                    if callback:
+                        callback("info", "Buscando ejecutable del servidor...")
+                    
+                    # Esperar un momento para que se complete la actualización
+                    import time
+                    time.sleep(2)
+                    
+                    # Buscar el ejecutable del servidor
+                    server_exe = self.find_server_executable(install_path)
+                    if server_exe:
+                        # Guardar la ruta del ejecutable para este servidor específico
+                        if server_name:
+                            server_key = f"executable_path_{server_name}"
+                            self.config_manager.set("server", server_key, server_exe)
+                            self.config_manager.save()
+                        
+                        self.logger.info(f"Actualización completada exitosamente. Ejecutable: {server_exe}")
+                        if callback:
+                            callback("success", f"Actualización completada exitosamente. Servidor en: {server_exe}")
+                    else:
+                        self.logger.warning(f"Actualización completada pero no se encontró el ejecutable en: {install_path}")
+                        if callback:
+                            callback("warning", f"Actualización completada pero no se encontró el ejecutable del servidor en: {install_path}")
+                else:
+                    stderr_output = process.stderr.read()
+                    self.logger.error(f"Error en la actualización: {stderr_output}")
+                    if callback:
+                        callback("error", f"Error en la actualización. Código de salida: {return_code}")
+                        if stderr_output:
+                            callback("error", f"Detalles: {stderr_output}")
+                        
+            except Exception as e:
+                self.logger.error(f"Error durante la actualización: {e}")
+                if callback:
+                    callback("error", f"Error durante la actualización: {str(e)}")
+        
+        threading.Thread(target=_update, daemon=True).start()

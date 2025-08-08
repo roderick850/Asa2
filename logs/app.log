@@ -156,3 +156,123 @@
 2025-08-08 15:17:06 - ArkServerManager - INFO - Monitoreo iniciado
 2025-08-08 15:17:06 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
 2025-08-08 15:17:06 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 15:18:47 - ArkServerManager - DEBUG - SteamCMD no encontrado en PATH: [WinError 2] El sistema no puede encontrar el archivo especificado
+2025-08-08 15:18:47 - ArkServerManager - INFO - Iniciando instalación del servidor...
+2025-08-08 15:19:59 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:19:59 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:19:59 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries
+2025-08-08 15:19:59 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Engine\Binaries\Win64
+2025-08-08 15:19:59 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries\Win64
+2025-08-08 15:19:59 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries
+2025-08-08 15:19:59 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba
+2025-08-08 15:19:59 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Prueba
+2025-08-08 15:19:59 - ArkServerManager - INFO - Ejecutable encontrado recursivamente: D:/ASA\Prueba\steamapps\downloading\2430930\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:20:01 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:20:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:20:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries
+2025-08-08 15:20:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Engine\Binaries\Win64
+2025-08-08 15:20:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries\Win64
+2025-08-08 15:20:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries
+2025-08-08 15:20:01 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba
+2025-08-08 15:20:01 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Prueba
+2025-08-08 15:20:01 - ArkServerManager - INFO - Ejecutable encontrado recursivamente: D:/ASA\Prueba\steamapps\downloading\2430930\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:20:01 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:20:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:20:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries
+2025-08-08 15:20:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Engine\Binaries\Win64
+2025-08-08 15:20:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries\Win64
+2025-08-08 15:20:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries
+2025-08-08 15:20:01 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba
+2025-08-08 15:20:01 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Prueba
+2025-08-08 15:20:01 - ArkServerManager - INFO - Ejecutable encontrado recursivamente: D:/ASA\Prueba\steamapps\downloading\2430930\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:20:11 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:20:11 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:20:11 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries
+2025-08-08 15:20:11 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Engine\Binaries\Win64
+2025-08-08 15:20:11 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries\Win64
+2025-08-08 15:20:11 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries
+2025-08-08 15:20:11 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba
+2025-08-08 15:20:11 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Prueba
+2025-08-08 15:20:11 - ArkServerManager - INFO - Ejecutable encontrado recursivamente: D:/ASA\Prueba\steamapps\downloading\2430930\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:20:17 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:20:17 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:20:17 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries
+2025-08-08 15:20:17 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Engine\Binaries\Win64
+2025-08-08 15:20:17 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries\Win64
+2025-08-08 15:20:17 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries
+2025-08-08 15:20:17 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba
+2025-08-08 15:20:17 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Prueba
+2025-08-08 15:20:17 - ArkServerManager - INFO - Ejecutable encontrado recursivamente: D:/ASA\Prueba\steamapps\downloading\2430930\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:20:17 - ArkServerManager - DEBUG - SteamCMD no encontrado en PATH: [WinError 2] El sistema no puede encontrar el archivo especificado
+2025-08-08 15:20:18 - ArkServerManager - INFO - Iniciando actualización del servidor...
+2025-08-08 15:20:23 - ArkServerManager - ERROR - Error en la actualización: 
+2025-08-08 15:20:59 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:20:59 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:20:59 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries
+2025-08-08 15:20:59 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Engine\Binaries\Win64
+2025-08-08 15:20:59 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries\Win64
+2025-08-08 15:20:59 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries
+2025-08-08 15:20:59 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba
+2025-08-08 15:20:59 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Prueba
+2025-08-08 15:20:59 - ArkServerManager - INFO - Ejecutable encontrado recursivamente: D:/ASA\Prueba\steamapps\downloading\2430930\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:21:05 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:21:05 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:21:05 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\ShooterGame\Binaries
+2025-08-08 15:21:05 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Engine\Binaries\Win64
+2025-08-08 15:21:05 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries\Win64
+2025-08-08 15:21:05 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Prueba\Binaries
+2025-08-08 15:21:05 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba
+2025-08-08 15:21:05 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Prueba
+2025-08-08 15:21:05 - ArkServerManager - INFO - Ejecutable encontrado recursivamente: D:/ASA\Prueba\steamapps\downloading\2430930\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:21:05 - ArkServerManager - DEBUG - SteamCMD no encontrado en PATH: [WinError 2] El sistema no puede encontrar el archivo especificado
+2025-08-08 15:21:06 - ArkServerManager - INFO - Iniciando actualización del servidor...
+2025-08-08 15:21:10 - ArkServerManager - ERROR - Error en la actualización: 
+2025-08-08 15:21:16 - ArkServerManager - ERROR - Error en la instalación: 
+2025-08-08 15:26:00 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:26:00 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:26:00 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:26:00 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 15:26:00 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 15:26:00 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 15:26:00 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 15:26:12 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:26:12 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:26:12 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:26:12 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:26:12 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:26:12 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:26:22 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:26:22 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:26:22 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:26:22 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 15:26:22 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 15:26:22 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 15:26:22 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 15:26:30 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:26:30 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:26:30 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:26:30 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:26:30 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:26:30 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:29:12 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:29:12 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:29:12 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:29:12 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 15:29:12 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 15:29:12 - ArkServerManager - INFO - Monitoreo de jugadores iniciado
+2025-08-08 15:29:12 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 15:29:23 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:29:23 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:29:23 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:29:23 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:29:23 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:29:23 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:29:33 - ArkServerManager - DEBUG - SteamCMD no encontrado en PATH: [WinError 2] El sistema no puede encontrar el archivo especificado
+2025-08-08 15:29:34 - ArkServerManager - INFO - Iniciando actualización del servidor: Prueba
+2025-08-08 15:30:00 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:30:00 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:30:00 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:30:00 - ArkServerManager - INFO - Actualización completada exitosamente. Ejecutable: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 15:30:00 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 15:30:00 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 15:30:00 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
