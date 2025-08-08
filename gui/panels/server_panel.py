@@ -5,15 +5,16 @@ import psutil
 import os
 import subprocess
 from datetime import datetime
-from tkinter import filedialog, messagebox
+from tkinter import filedialog
 from utils.server_manager import ServerManager
 
 
 class ServerPanel:
-    def __init__(self, parent, config_manager, logger):
+    def __init__(self, parent, config_manager, logger, main_window=None):
         self.parent = parent
         self.config_manager = config_manager
         self.logger = logger
+        self.main_window = main_window
         self.server_manager = ServerManager(config_manager, logger)
         
         # Inicializar variables de selección
@@ -24,201 +25,24 @@ class ServerPanel:
         self.start_monitoring()
     
     def create_widgets(self):
+        # Si no hay parent, no crear widgets (modo backend solamente)
+        if self.parent is None:
+            return
+            
         # Frame principal
         main_frame = ctk.CTkFrame(self.parent)
-        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        main_frame.pack(fill="both", expand=True, padx=5, pady=5)
         
         # Título
-        title_label = ctk.CTkLabel(main_frame, text="Control del Servidor", font=ctk.CTkFont(size=20, weight="bold"))
-        title_label.pack(pady=(10, 5))
-        
-        # Frame destacado para la ruta raíz actual
-        current_path_frame = ctk.CTkFrame(main_frame, fg_color=("gray90", "gray20"))
-        current_path_frame.pack(fill="x", padx=10, pady=(0, 10))
-        
-        current_path_label = ctk.CTkLabel(
-            current_path_frame,
-            text="📍 Ruta Raíz Actual:",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            text_color=("blue", "lightblue")
-        )
-        current_path_label.pack(anchor="w", padx=10, pady=(8, 3))
-        
-        self.current_path_display = ctk.CTkLabel(
-            current_path_frame,
-            text="No configurada",
-            font=ctk.CTkFont(size=12),
-            text_color=("red", "orange")
-        )
-        self.current_path_display.pack(anchor="w", padx=10, pady=(0, 8))
-        
-        change_path_button = ctk.CTkButton(
-            current_path_frame,
-            text="Cambiar Ruta",
-            command=self.browse_root_path,
-            fg_color=("blue", "darkblue"),
-            hover_color=("darkblue", "navy"),
-            width=100,
-            height=25
-        )
-        change_path_button.pack(anchor="w", padx=10, pady=(0, 8))
-        
-        # Frame para selección de servidor y mapa
-        selection_frame = ctk.CTkFrame(main_frame, fg_color=("gray90", "gray20"))
-        selection_frame.pack(fill="x", padx=10, pady=(0, 10))
-        
-        selection_label = ctk.CTkLabel(
-            selection_frame,
-            text="🎮 Configuración del Servidor:",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            text_color=("blue", "lightblue")
-        )
-        selection_label.pack(anchor="w", padx=10, pady=(8, 5))
-        
-        # Frame para los desplegables
-        dropdowns_frame = ctk.CTkFrame(selection_frame)
-        dropdowns_frame.pack(fill="x", padx=10, pady=(0, 8))
-        
-        # Frame para los desplegables (uno al lado del otro)
-        dropdowns_row_frame = ctk.CTkFrame(dropdowns_frame)
-        dropdowns_row_frame.pack(fill="x", pady=2)
-        
-        # Desplegable para seleccionar servidor (lado izquierdo)
-        server_selection_frame = ctk.CTkFrame(dropdowns_row_frame)
-        server_selection_frame.pack(side="left", fill="x", expand=True, padx=(0, 5))
-        
-        ctk.CTkLabel(
-            server_selection_frame,
-            text="Servidor:",
-            font=ctk.CTkFont(size=12, weight="bold")
-        ).pack(side="left", padx=(10, 5), pady=5)
-        
-        self.server_dropdown = ctk.CTkOptionMenu(
-            server_selection_frame,
-            values=["Seleccionar servidor..."],
-            command=self.on_server_selected,
-            width=200
-        )
-        self.server_dropdown.pack(side="left", padx=5, pady=5)
-        
-        # Botón para refrescar lista de servidores
-        refresh_servers_button = ctk.CTkButton(
-            server_selection_frame,
-            text="🔄",
-            command=self.refresh_servers_list,
-            width=30,
-            height=25
-        )
-        refresh_servers_button.pack(side="left", padx=5, pady=5)
-        
-        # Desplegable para seleccionar mapa (lado derecho)
-        map_selection_frame = ctk.CTkFrame(dropdowns_row_frame)
-        map_selection_frame.pack(side="right", fill="x", expand=True, padx=(5, 0))
-        
-        ctk.CTkLabel(
-            map_selection_frame,
-            text="Mapa:",
-            font=ctk.CTkFont(size=12, weight="bold")
-        ).pack(side="left", padx=(10, 5), pady=5)
-        
-        self.map_dropdown = ctk.CTkOptionMenu(
-            map_selection_frame,
-            values=["Seleccionar mapa..."],
-            command=self.on_map_selected,
-            width=200
-        )
-        self.map_dropdown.pack(side="left", padx=5, pady=5)
-        
-        # Frame para controles principales
-        controls_frame = ctk.CTkFrame(main_frame)
-        controls_frame.pack(fill="x", padx=10, pady=5)
-        
-        # Botones principales
-        buttons_frame = ctk.CTkFrame(controls_frame)
-        buttons_frame.pack(pady=10)
-        
-        # Botones de control del servidor
-        self.start_button = ctk.CTkButton(
-            buttons_frame, 
-            text="Iniciar Servidor", 
-            command=self.start_server,
-            fg_color="green",
-            hover_color="darkgreen",
-            width=130,
-            height=35
-        )
-        self.start_button.grid(row=0, column=0, padx=5, pady=5)
-        
-        self.stop_button = ctk.CTkButton(
-            buttons_frame, 
-            text="Detener Servidor", 
-            command=self.stop_server,
-            fg_color="red",
-            hover_color="darkred",
-            width=130,
-            height=35
-        )
-        self.stop_button.grid(row=0, column=1, padx=5, pady=5)
-        
-        self.restart_button = ctk.CTkButton(
-            buttons_frame, 
-            text="Reiniciar Servidor", 
-            command=self.restart_server,
-            fg_color="orange",
-            hover_color="darkorange",
-            width=130,
-            height=35
-        )
-        self.restart_button.grid(row=0, column=2, padx=5, pady=5)
-        
-        # Botones de instalación y actualización separados
-        self.install_button = ctk.CTkButton(
-            buttons_frame, 
-            text="Instalar Servidor", 
-            command=self.install_server,
-            fg_color="blue",
-            hover_color="darkblue",
-            width=130,
-            height=35
-        )
-        self.install_button.grid(row=0, column=3, padx=5, pady=5)
-        
-        self.update_button = ctk.CTkButton(
-            buttons_frame, 
-            text="Actualizar Servidor", 
-            command=self.update_server,
-            fg_color="purple",
-            hover_color="darkpurple",
-            width=130,
-            height=35
-        )
-        self.update_button.grid(row=0, column=4, padx=5, pady=5)
-        
-        # Frame para barra de progreso
-        self.progress_frame = ctk.CTkFrame(main_frame)
-        self.progress_frame.pack(fill="x", padx=10, pady=5)
-        
-        # Barra de progreso
-        self.progress_label = ctk.CTkLabel(
-            self.progress_frame,
-            text="",
-            font=ctk.CTkFont(size=12, weight="bold")
-        )
-        self.progress_label.pack(pady=(5, 2))
-        
-        self.progress_bar = ctk.CTkProgressBar(self.progress_frame)
-        self.progress_bar.pack(fill="x", padx=10, pady=(0, 5))
-        self.progress_bar.set(0)
-        
-        # Ocultar la barra de progreso inicialmente
-        self.progress_frame.pack_forget()
+        title_label = ctk.CTkLabel(main_frame, text="Panel de Control", font=ctk.CTkFont(size=16, weight="bold"))
+        title_label.pack(pady=(5, 10))
         
         # Frame para información del servidor
         info_frame = ctk.CTkFrame(main_frame)
-        info_frame.pack(fill="x", padx=10, pady=5)
+        info_frame.pack(fill="x", padx=5, pady=5)
         
         # Información del servidor
-        info_label = ctk.CTkLabel(info_frame, text="Información del Servidor", font=ctk.CTkFont(size=16, weight="bold"))
+        info_label = ctk.CTkLabel(info_frame, text="Información del Servidor", font=ctk.CTkFont(size=14, weight="bold"))
         info_label.pack(pady=(10, 5))
         
         # Grid para información
@@ -245,11 +69,30 @@ class ServerPanel:
         self.memory_label = ctk.CTkLabel(info_grid, text="0 MB")
         self.memory_label.grid(row=3, column=1, padx=8, pady=3, sticky="w")
         
+        # Frame para barra de progreso
+        self.progress_frame = ctk.CTkFrame(main_frame)
+        self.progress_frame.pack(fill="x", padx=5, pady=5)
+        
+        # Barra de progreso
+        self.progress_label = ctk.CTkLabel(
+            self.progress_frame,
+            text="",
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        self.progress_label.pack(pady=(5, 2))
+        
+        self.progress_bar = ctk.CTkProgressBar(self.progress_frame)
+        self.progress_bar.pack(fill="x", padx=10, pady=(0, 5))
+        self.progress_bar.set(0)
+        
+        # Ocultar la barra de progreso inicialmente
+        self.progress_frame.pack_forget()
+        
         # Frame para acciones rápidas
         quick_actions_frame = ctk.CTkFrame(main_frame)
-        quick_actions_frame.pack(fill="x", padx=10, pady=5)
+        quick_actions_frame.pack(fill="x", padx=5, pady=5)
         
-        quick_actions_label = ctk.CTkLabel(quick_actions_frame, text="Acciones Rápidas", font=ctk.CTkFont(size=16, weight="bold"))
+        quick_actions_label = ctk.CTkLabel(quick_actions_frame, text="Acciones Rápidas", font=ctk.CTkFont(size=14, weight="bold"))
         quick_actions_label.pack(pady=(10, 5))
         
         # Botones de acciones rápidas
@@ -287,81 +130,24 @@ class ServerPanel:
             quick_buttons_frame,
             text="Expulsar Todos",
             command=self.kick_all_players,
-            fg_color="red",
-            hover_color="darkred",
             width=100,
             height=30
         )
         self.kick_all_button.grid(row=0, column=3, padx=3, pady=3)
         
-        # Frame para gestión de jugadores
-        players_frame = ctk.CTkFrame(main_frame)
-        players_frame.pack(fill="x", padx=10, pady=5)
+        # Frame para área de logs
+        logs_frame = ctk.CTkFrame(main_frame)
+        logs_frame.pack(fill="both", expand=True, padx=5, pady=5)
         
-        players_label = ctk.CTkLabel(players_frame, text="Gestión de Jugadores", font=ctk.CTkFont(size=16, weight="bold"))
-        players_label.pack(pady=(10, 5))
+        logs_label = ctk.CTkLabel(logs_frame, text="Logs del Sistema", font=ctk.CTkFont(size=14, weight="bold"))
+        logs_label.pack(pady=(10, 5))
         
-        # Frame para entrada de jugador
-        player_input_frame = ctk.CTkFrame(players_frame)
-        player_input_frame.pack(pady=5)
+        # Área de logs con scroll
+        self.logs_text = ctk.CTkTextbox(logs_frame, height=200)
+        self.logs_text.pack(fill="both", expand=True, padx=5, pady=5)
         
-        ctk.CTkLabel(player_input_frame, text="Jugador:").pack(side="left", padx=(8, 3))
-        self.player_entry = ctk.CTkEntry(player_input_frame, width=120)
-        self.player_entry.pack(side="left", padx=3)
-        
-        # Botones de gestión de jugadores
-        player_buttons_frame = ctk.CTkFrame(players_frame)
-        player_buttons_frame.pack(pady=5)
-        
-        self.kick_player_button = ctk.CTkButton(
-            player_buttons_frame,
-            text="Expulsar",
-            command=self.kick_player,
-            fg_color="orange",
-            hover_color="darkorange",
-            width=80,
-            height=25
-        )
-        self.kick_player_button.pack(side="left", padx=3)
-        
-        self.ban_player_button = ctk.CTkButton(
-            player_buttons_frame,
-            text="Banear",
-            command=self.ban_player,
-            fg_color="red",
-            hover_color="darkred",
-            width=80,
-            height=25
-        )
-        self.ban_player_button.pack(side="left", padx=3)
-        
-        self.teleport_button = ctk.CTkButton(
-            player_buttons_frame,
-            text="Teletransportar",
-            command=self.teleport_player,
-            width=80,
-            height=25
-        )
-        self.teleport_button.pack(side="left", padx=3)
-        
-        self.give_item_button = ctk.CTkButton(
-            player_buttons_frame,
-            text="Dar Item",
-            command=self.give_item_to_player,
-            width=80,
-            height=25
-        )
-        self.give_item_button.pack(side="left", padx=3)
-        
-        # Frame para mensajes de estado
-        self.status_frame = ctk.CTkFrame(main_frame)
-        self.status_frame.pack(fill="both", expand=True, padx=10, pady=5)
-        
-        self.status_text = ctk.CTkTextbox(self.status_frame, height=80)
-        self.status_text.pack(fill="both", expand=True, padx=5, pady=5)
-        
-        # Actualizar la visualización de la ruta raíz
-        self.update_current_path_display()
+        # Configurar el área de logs para mostrar mensajes
+        self.logs_text.configure(state="disabled")
     
     def browse_root_path(self):
         """Buscar directorio raíz para servidores"""
@@ -374,19 +160,8 @@ class ServerPanel:
     
     def update_current_path_display(self):
         """Actualizar la visualización de la ruta actual"""
-        current_path = self.config_manager.get("server", "root_path", "").strip()
-        if current_path:
-            self.current_path_display.configure(
-                text=current_path,
-                text_color=("green", "lightgreen")
-            )
-        else:
-            self.current_path_display.configure(
-                text="No configurada",
-                text_color=("red", "orange")
-            )
-        
-        # Actualizar lista de servidores cuando cambia la ruta
+        # Este método ya no es necesario en el panel ya que la ruta se muestra en la barra superior
+        # Solo refrescar la lista de servidores cuando cambia la ruta
         self.refresh_servers_list()
     
     def refresh_servers_list(self):
@@ -394,7 +169,9 @@ class ServerPanel:
         try:
             root_path = self.config_manager.get("server", "root_path", "").strip()
             if not root_path or not os.path.exists(root_path):
-                self.server_dropdown.configure(values=["Seleccionar servidor..."])
+                # Buscar el dropdown en la ventana principal
+                if hasattr(self.main_window, 'server_dropdown'):
+                    self.main_window.server_dropdown.configure(values=["Seleccionar servidor..."])
                 return
             
             # Buscar servidores en el directorio raíz
@@ -407,15 +184,21 @@ class ServerPanel:
                         servers.append(item)
             
             if servers:
-                self.server_dropdown.configure(values=["Seleccionar servidor..."] + servers)
+                # Buscar el dropdown en la ventana principal
+                if hasattr(self.main_window, 'server_dropdown'):
+                    self.main_window.server_dropdown.configure(values=["Seleccionar servidor..."] + servers)
                 self.add_status_message(f"Encontrados {len(servers)} servidor(es)", "info")
             else:
-                self.server_dropdown.configure(values=["Seleccionar servidor..."])
+                # Buscar el dropdown en la ventana principal
+                if hasattr(self.main_window, 'server_dropdown'):
+                    self.main_window.server_dropdown.configure(values=["Seleccionar servidor..."])
                 self.add_status_message("No se encontraron servidores instalados", "warning")
                 
         except Exception as e:
             self.logger.error(f"Error al refrescar lista de servidores: {e}")
-            self.server_dropdown.configure(values=["Seleccionar servidor..."])
+            # Buscar el dropdown en la ventana principal
+            if hasattr(self.main_window, 'server_dropdown'):
+                self.main_window.server_dropdown.configure(values=["Seleccionar servidor..."])
     
     def on_server_selected(self, server_name):
         """Maneja la selección de un servidor"""
@@ -430,7 +213,9 @@ class ServerPanel:
             self.show_selected_server_info()
         else:
             self.selected_server = None
-            self.map_dropdown.configure(values=["Seleccionar mapa..."])
+            # Buscar el dropdown en la ventana principal
+            if hasattr(self.main_window, 'map_dropdown'):
+                self.main_window.map_dropdown.configure(values=["Seleccionar mapa..."])
             self.clear_selected_server_info()
     
     def show_selected_server_info(self):
@@ -486,12 +271,16 @@ class ServerPanel:
         try:
             root_path = self.config_manager.get("server", "root_path", "").strip()
             if not root_path or not server_name:
-                self.map_dropdown.configure(values=["Seleccionar mapa..."])
+                # Buscar el dropdown en la ventana principal
+                if hasattr(self.main_window, 'map_dropdown'):
+                    self.main_window.map_dropdown.configure(values=["Seleccionar mapa..."])
                 return
             
             server_path = os.path.join(root_path, server_name)
             if not os.path.exists(server_path):
-                self.map_dropdown.configure(values=["Seleccionar mapa..."])
+                # Buscar el dropdown en la ventana principal
+                if hasattr(self.main_window, 'map_dropdown'):
+                    self.main_window.map_dropdown.configure(values=["Seleccionar mapa..."])
                 return
             
             # Mapas disponibles para Ark Survival Ascended
@@ -530,12 +319,16 @@ class ServerPanel:
             # Ordenar los mapas encontrados
             available_maps_found.sort()
             
-            self.map_dropdown.configure(values=["Seleccionar mapa..."] + available_maps_found)
+            # Buscar el dropdown en la ventana principal
+            if hasattr(self.main_window, 'map_dropdown'):
+                self.main_window.map_dropdown.configure(values=["Seleccionar mapa..."] + available_maps_found)
             self.add_status_message(f"Cargados {len(available_maps_found)} mapa(s) para {server_name}", "info")
             
         except Exception as e:
             self.logger.error(f"Error al cargar mapas: {e}")
-            self.map_dropdown.configure(values=["Seleccionar mapa..."])
+            # Buscar el dropdown en la ventana principal
+            if hasattr(self.main_window, 'map_dropdown'):
+                self.main_window.map_dropdown.configure(values=["Seleccionar mapa..."])
     
     def on_map_selected(self, map_name):
         """Maneja la selección de un mapa"""
@@ -572,10 +365,31 @@ class ServerPanel:
             else:
                 status_color = "red"
             
-            self.status_label.configure(text=status, text_color=status_color)
-            self.uptime_label.configure(text=uptime)
-            self.cpu_label.configure(text=f"{stats['cpu']:.1f}%")
-            self.memory_label.configure(text=f"{stats['memory_mb']:.1f} MB")
+            # Actualizar etiquetas solo si existen (cuando hay widgets)
+            if hasattr(self, 'status_label') and self.status_label:
+                self.status_label.configure(text=status, text_color=status_color)
+            
+            if hasattr(self, 'uptime_label') and self.uptime_label:
+                self.uptime_label.configure(text=uptime)
+            
+            if hasattr(self, 'cpu_label') and self.cpu_label:
+                self.cpu_label.configure(text=f"{stats['cpu']:.1f}%")
+            
+            if hasattr(self, 'memory_label') and self.memory_label:
+                self.memory_label.configure(text=f"{stats['memory_mb']:.1f} MB")
+            
+            # Actualizar en la ventana principal si está disponible
+            if hasattr(self.main_window, 'update_server_status'):
+                self.main_window.update_server_status(status, status_color)
+            
+            if hasattr(self.main_window, 'update_uptime'):
+                self.main_window.update_uptime(uptime)
+            
+            if hasattr(self.main_window, 'update_cpu_usage'):
+                self.main_window.update_cpu_usage(stats['cpu'])
+            
+            if hasattr(self.main_window, 'update_memory_usage'):
+                self.main_window.update_memory_usage(stats['memory_mb'])
             
             # Mostrar información del servidor seleccionado si hay uno
             if hasattr(self, 'selected_server') and self.selected_server:
@@ -613,8 +427,41 @@ class ServerPanel:
             self.logger.error(f"Error al obtener información del servidor: {e}")
             return None
     
+    def update_server_status(self, status, color="red"):
+        """Actualiza el estado del servidor en la ventana principal"""
+        try:
+            # Buscar la ventana principal y actualizar el estado
+            if hasattr(self.main_window, 'update_server_status'):
+                self.main_window.update_server_status(status, color)
+        except Exception as e:
+            self.logger.error(f"Error al actualizar estado del servidor: {e}")
+    
+    def update_uptime(self, uptime):
+        """Actualiza el tiempo de actividad en la ventana principal"""
+        try:
+            if hasattr(self.main_window, 'update_uptime'):
+                self.main_window.update_uptime(uptime)
+        except Exception as e:
+            self.logger.error(f"Error al actualizar tiempo de actividad: {e}")
+    
+    def update_cpu_usage(self, cpu_percent):
+        """Actualiza el uso de CPU en la ventana principal"""
+        try:
+            if hasattr(self.main_window, 'update_cpu_usage'):
+                self.main_window.update_cpu_usage(cpu_percent)
+        except Exception as e:
+            self.logger.error(f"Error al actualizar uso de CPU: {e}")
+    
+    def update_memory_usage(self, memory_mb):
+        """Actualiza el uso de memoria en la ventana principal"""
+        try:
+            if hasattr(self.main_window, 'update_memory_usage'):
+                self.main_window.update_memory_usage(memory_mb)
+        except Exception as e:
+            self.logger.error(f"Error al actualizar uso de memoria: {e}")
+    
     def start_server(self):
-        """Inicia el servidor"""
+        """Inicia el servidor usando la configuración de la pestaña Principal"""
         if not hasattr(self, 'selected_server') or not self.selected_server:
             self.add_status_message("Error: Debe seleccionar un servidor primero", "error")
             return
@@ -623,8 +470,21 @@ class ServerPanel:
             self.add_status_message("Error: Debe seleccionar un mapa primero", "error")
             return
         
-        self.add_status_message(f"Iniciando servidor: {self.selected_server} con mapa: {self.selected_map}", "info")
-        self.server_manager.start_server(self.add_status_message, self.selected_server, self.selected_map)
+        # Delegar al panel principal para usar la configuración correcta
+        if hasattr(self.main_window, 'principal_panel'):
+            # Actualizar información del servidor seleccionado en el panel principal
+            self.main_window.principal_panel.selected_server = self.selected_server
+            self.main_window.principal_panel.selected_map = self.selected_map
+            
+            # Iniciar servidor con configuración del panel principal
+            self.add_status_message(f"Iniciando servidor: {self.selected_server} con mapa: {self.selected_map}", "info")
+            self.update_server_status("Iniciando...", "orange")
+            self.main_window.principal_panel.start_server_with_config()
+        else:
+            # Fallback al método antiguo si no hay panel principal
+            self.add_status_message(f"Iniciando servidor: {self.selected_server} con mapa: {self.selected_map}", "info")
+            self.update_server_status("Iniciando...", "orange")
+            self.server_manager.start_server(self.add_status_message, self.selected_server, self.selected_map)
     
     def stop_server(self):
         """Detiene el servidor"""
@@ -633,6 +493,7 @@ class ServerPanel:
             return
         
         self.add_status_message(f"Deteniendo servidor: {self.selected_server}", "info")
+        self.update_server_status("Deteniendo...", "orange")
         self.server_manager.stop_server(self.add_status_message)
     
     def restart_server(self):
@@ -646,22 +507,36 @@ class ServerPanel:
             return
         
         self.add_status_message(f"Reiniciando servidor: {self.selected_server} con mapa: {self.selected_map}", "info")
+        self.update_server_status("Reiniciando...", "orange")
         self.server_manager.restart_server(self.add_status_message, self.selected_server, self.selected_map)
     
     def show_progress(self, message="", progress=0):
         """Muestra la barra de progreso con un mensaje y porcentaje"""
-        self.progress_frame.pack(fill="x", padx=10, pady=5, before=self.status_frame)
-        self.progress_label.configure(text=message)
-        self.progress_bar.set(progress / 100)
+        # Solo mostrar progreso si hay widgets (no en modo backend)
+        if hasattr(self, 'progress_frame') and self.progress_frame:
+            self.progress_frame.pack(fill="x", padx=5, pady=5)
+            self.progress_label.configure(text=message)
+            self.progress_bar.set(progress / 100)
+        
+        # Siempre mostrar mensaje en logs
+        self.add_status_message(f"🔄 {message} ({progress}%)", "info")
         
     def hide_progress(self):
         """Oculta la barra de progreso"""
-        self.progress_frame.pack_forget()
+        # Solo ocultar progreso si hay widgets (no en modo backend)
+        if hasattr(self, 'progress_frame') and self.progress_frame:
+            self.progress_frame.pack_forget()
         
     def update_progress(self, message, progress):
         """Actualiza la barra de progreso"""
-        self.progress_label.configure(text=message)
-        self.progress_bar.set(progress / 100)
+        # Solo actualizar progreso si hay widgets (no en modo backend)
+        if hasattr(self, 'progress_label') and self.progress_label:
+            self.progress_label.configure(text=message)
+        if hasattr(self, 'progress_bar') and self.progress_bar:
+            self.progress_bar.set(progress / 100)
+        
+        # Siempre mostrar mensaje en logs
+        self.add_status_message(f"🔄 {message} ({progress}%)", "info")
         
     def install_server(self):
         """Instala un nuevo servidor"""
@@ -703,7 +578,8 @@ class ServerPanel:
                 return
         
         # Deshabilitar el botón durante la instalación
-        self.install_button.configure(state="disabled", text="Instalando...")
+        if hasattr(self.main_window, 'install_button'):
+            self.main_window.install_button.configure(state="disabled", text="Instalando...")
         
         # Mostrar barra de progreso
         self.show_progress("Preparando instalación...", 0)
@@ -722,7 +598,8 @@ class ServerPanel:
                 self.logger.error(f"Error en la instalación: {e}")
             finally:
                 # Rehabilitar el botón
-                self.install_button.configure(state="normal", text="Instalar Servidor")
+                if hasattr(self.main_window, 'install_button'):
+                    self.main_window.install_button.configure(state="normal", text="Instalar Servidor")
         
         threading.Thread(target=install_thread, daemon=True).start()
     
@@ -747,20 +624,76 @@ class ServerPanel:
             self.add_status_message(f"Error: El servidor '{server_name}' no existe en la ruta especificada", "error")
             return
         
-        # Preguntar confirmación para actualizar usando un diálogo simple
+        # Mostrar diálogo de confirmación usando CustomTkinter
+        import customtkinter as ctk
         
-        # Mostrar diálogo de confirmación
-        response = messagebox.askyesno(
-            "Confirmar Actualización",
-            f"¿Desea actualizar el servidor '{server_name}'?\n\nEsto puede tomar varios minutos."
-        )
+        # Crear ventana de confirmación
+        confirm_window = ctk.CTkToplevel()
+        confirm_window.title("Confirmar Actualización")
+        confirm_window.geometry("400x200")
+        confirm_window.resizable(False, False)
         
-        if not response:
+        # Centrar la ventana
+        confirm_window.transient(self.parent)
+        confirm_window.grab_set()
+        
+        # Contenido de la ventana
+        ctk.CTkLabel(
+            confirm_window, 
+            text=f"¿Desea actualizar el servidor '{server_name}'?",
+            font=("Arial", 14, "bold")
+        ).pack(pady=(20, 10))
+        
+        ctk.CTkLabel(
+            confirm_window, 
+            text="Esto puede tomar varios minutos.",
+            font=("Arial", 12)
+        ).pack(pady=(0, 20))
+        
+        # Frame para botones
+        buttons_frame = ctk.CTkFrame(confirm_window, fg_color="transparent")
+        buttons_frame.pack(pady=20)
+        
+        # Variable para almacenar la respuesta
+        response = [False]
+        
+        def on_confirm():
+            response[0] = True
+            confirm_window.destroy()
+        
+        def on_cancel():
+            response[0] = False
+            confirm_window.destroy()
+        
+        # Botones
+        ctk.CTkButton(
+            buttons_frame,
+            text="Confirmar",
+            command=on_confirm,
+            fg_color="green",
+            hover_color="darkgreen",
+            width=100
+        ).pack(side="left", padx=10)
+        
+        ctk.CTkButton(
+            buttons_frame,
+            text="Cancelar",
+            command=on_cancel,
+            fg_color="red",
+            hover_color="darkred",
+            width=100
+        ).pack(side="left", padx=10)
+        
+        # Esperar a que se cierre la ventana
+        confirm_window.wait_window()
+        
+        if not response[0]:
             self.add_status_message("Actualización cancelada por el usuario", "info")
             return
         
-        # Deshabilitar el botón durante la actualización
-        self.update_button.configure(state="disabled", text="Actualizando...")
+        # Deshabilitar el botón durante la actualización (usar el botón de la ventana principal)
+        if hasattr(self.main_window, 'update_button'):
+            self.main_window.update_button.configure(state="disabled", text="Actualizando...")
         
         # Mostrar barra de progreso
         self.show_progress("Preparando actualización...", 0)
@@ -779,7 +712,8 @@ class ServerPanel:
                 self.logger.error(f"Error en la actualización: {e}")
             finally:
                 # Rehabilitar el botón
-                self.update_button.configure(state="normal", text="Actualizar Servidor")
+                if hasattr(self.main_window, 'update_button'):
+                    self.main_window.update_button.configure(state="normal", text="Actualizar Servidor")
         
         threading.Thread(target=update_thread, daemon=True).start()
     
@@ -806,9 +740,12 @@ class ServerPanel:
                         self.update_progress(f"Descargando... {progress:.1f}%", progress)
                     else:
                         # Si no hay porcentaje, incrementar gradualmente
-                        current_progress = self.progress_bar.get()
-                        new_progress = min(current_progress + 0.1, 0.9)  # Incrementar hasta 90%
-                        self.update_progress(message, new_progress * 100)
+                        if hasattr(self, 'progress_bar') and self.progress_bar:
+                            current_progress = self.progress_bar.get()
+                            new_progress = min(current_progress + 0.1, 0.9)  # Incrementar hasta 90%
+                            self.update_progress(message, new_progress * 100)
+                        else:
+                            self.update_progress(message, 50)  # Valor por defecto
                 elif "Installing" in message:
                     self.update_progress(message, 75)
                 elif "Validating" in message:
@@ -823,12 +760,18 @@ class ServerPanel:
                     self.update_progress(message, 95)
                 elif "Update state" in message:
                     # Para mensajes de estado de actualización, mantener progreso actual
-                    current_progress = self.progress_bar.get()
-                    self.update_progress(message, current_progress * 100)
+                    if hasattr(self, 'progress_bar') and self.progress_bar:
+                        current_progress = self.progress_bar.get()
+                        self.update_progress(message, current_progress * 100)
+                    else:
+                        self.update_progress(message, 70)  # Valor por defecto
                 else:
                     # Para otros mensajes de progreso, mantener el progreso actual
-                    current_progress = self.progress_bar.get()
-                    self.update_progress(message, current_progress * 100)
+                    if hasattr(self, 'progress_bar') and self.progress_bar:
+                        current_progress = self.progress_bar.get()
+                        self.update_progress(message, current_progress * 100)
+                    else:
+                        self.update_progress(message, 50)  # Valor por defecto
             elif message_type == "error":
                 # Mostrar error y ocultar barra de progreso
                 self.add_status_message(f"❌ {message}", "error")
@@ -884,7 +827,12 @@ class ServerPanel:
     
     def kick_player(self):
         """Expulsa a un jugador específico"""
-        player_name = self.player_entry.get().strip()
+        # Mostrar diálogo para ingresar nombre del jugador
+        dialog = ctk.CTkInputDialog(
+            text="Ingrese el nombre del jugador a expulsar:",
+            title="Expulsar Jugador"
+        )
+        player_name = dialog.get_input()
         if player_name:
             self.server_manager.kick_player(player_name, self.add_status_message)
         else:
@@ -892,7 +840,12 @@ class ServerPanel:
     
     def ban_player(self):
         """Banea a un jugador específico"""
-        player_name = self.player_entry.get().strip()
+        # Mostrar diálogo para ingresar nombre del jugador
+        dialog = ctk.CTkInputDialog(
+            text="Ingrese el nombre del jugador a banear:",
+            title="Banear Jugador"
+        )
+        player_name = dialog.get_input()
         if player_name:
             self.server_manager.ban_player(player_name, self.add_status_message)
         else:
@@ -900,61 +853,98 @@ class ServerPanel:
     
     def teleport_player(self):
         """Teletransporta a un jugador"""
-        player_name = self.player_entry.get().strip()
+        # Mostrar diálogo para ingresar nombre del jugador
+        dialog = ctk.CTkInputDialog(
+            text="Ingrese el nombre del jugador a teletransportar:",
+            title="Teletransportar Jugador"
+        )
+        player_name = dialog.get_input()
         if player_name:
             # Mostrar diálogo para coordenadas
-            dialog = ctk.CTkInputDialog(
+            coord_dialog = ctk.CTkInputDialog(
                 text="Ingrese las coordenadas (X,Y,Z):",
                 title="Teletransportar Jugador"
             )
-            coordinates = dialog.get_input()
+            coordinates = coord_dialog.get_input()
             
             if coordinates:
-                self.add_status_message(f"Teletransportando {player_name} a {coordinates}...", "info")
-                # Aquí iría la lógica para teletransportar
-                time.sleep(1)
-                self.add_status_message(f"Jugador {player_name} teletransportado", "success")
+                self.add_status_message(f"Teletransportando {player_name} a {coordinates}", "info")
+                # Aquí iría la lógica para teletransportar al jugador
+            else:
+                self.add_status_message("Error: Ingrese las coordenadas", "error")
         else:
             self.add_status_message("Error: Ingrese el nombre del jugador", "error")
     
     def give_item_to_player(self):
         """Da un item a un jugador"""
-        player_name = self.player_entry.get().strip()
+        # Mostrar diálogo para ingresar nombre del jugador
+        dialog = ctk.CTkInputDialog(
+            text="Ingrese el nombre del jugador:",
+            title="Dar Item"
+        )
+        player_name = dialog.get_input()
         if player_name:
             # Mostrar diálogo para item
-            dialog = ctk.CTkInputDialog(
+            item_dialog = ctk.CTkInputDialog(
                 text="Ingrese el nombre del item:",
                 title="Dar Item"
             )
-            item_name = dialog.get_input()
+            item_name = item_dialog.get_input()
             
             if item_name:
-                self.add_status_message(f"Dando {item_name} a {player_name}...", "info")
-                # Aquí iría la lógica para dar item
-                time.sleep(1)
-                self.add_status_message(f"Item {item_name} dado a {player_name}", "success")
+                self.add_status_message(f"Dando {item_name} a {player_name}", "info")
+                # Aquí iría la lógica para dar el item al jugador
+            else:
+                self.add_status_message("Error: Ingrese el nombre del item", "error")
         else:
             self.add_status_message("Error: Ingrese el nombre del jugador", "error")
     
     def add_status_message(self, message, message_type="info"):
-        """Agrega un mensaje al área de estado"""
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        
-        if message_type == "error":
-            color = "red"
-        elif message_type == "success":
-            color = "green"
-        elif message_type == "warning":
-            color = "orange"
-        else:
-            color = "white"
-        
-        formatted_message = f"[{timestamp}] {message}\n"
-        
-        self.status_text.insert("end", formatted_message)
-        self.status_text.see("end")
-        
-        # Limitar el número de líneas en el texto
-        lines = self.status_text.get("1.0", "end").split("\n")
-        if len(lines) > 50:
-            self.status_text.delete("1.0", "2.0")
+        """Agrega un mensaje al área de logs"""
+        try:
+            # Obtener timestamp
+            timestamp = datetime.now().strftime("[%H:%M:%S]")
+            
+            # Determinar el icono según el tipo de mensaje
+            if message_type == "error":
+                icon = "❌"
+            elif message_type == "success":
+                icon = "✅"
+            elif message_type == "warning":
+                icon = "⚠️"
+            elif message_type == "info":
+                icon = "ℹ️"
+            else:
+                icon = "📝"
+            
+            # Crear el mensaje completo
+            full_message = f"{timestamp} {icon} {message}"
+            
+            # Solo acceder a logs_text si existe (modo con widgets)
+            if hasattr(self, 'logs_text') and self.logs_text:
+                # Habilitar el área de logs para edición
+                self.logs_text.configure(state="normal")
+                
+                # Insertar el mensaje al final
+                self.logs_text.insert("end", full_message + "\n")
+                
+                # Hacer scroll al final
+                self.logs_text.see("end")
+                
+                # Deshabilitar el área de logs
+                self.logs_text.configure(state="disabled")
+                
+                # Limitar el número de líneas para evitar que crezca demasiado
+                lines = self.logs_text.get("1.0", "end").split('\n')
+                if len(lines) > 1000:  # Mantener solo las últimas 1000 líneas
+                    # Eliminar las primeras 500 líneas
+                    self.logs_text.configure(state="normal")
+                    self.logs_text.delete("1.0", f"{500}.0")
+                    self.logs_text.configure(state="disabled")
+            
+            # Siempre enviar el mensaje a la ventana principal si está disponible
+            if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'add_log_message'):
+                self.main_window.add_log_message(full_message)
+                
+        except Exception as e:
+            self.logger.error(f"Error al agregar mensaje de estado: {e}")

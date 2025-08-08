@@ -131,6 +131,87 @@ class ServerManager:
         
         threading.Thread(target=_start, daemon=True).start()
     
+    def start_server_with_args(self, callback=None, server_name=None, map_name=None, custom_args=None):
+        """Inicia el servidor de Ark con argumentos personalizados"""
+        def _start_with_args():
+            try:
+                # Obtener la ruta del ejecutable del servidor
+                if server_name:
+                    # Usar la ruta específica del servidor
+                    server_key = f"executable_path_{server_name}"
+                    server_path = self.config_manager.get("server", server_key)
+                    if not server_path:
+                        # Buscar el ejecutable en la ruta del servidor
+                        root_path = self.config_manager.get("server", "root_path")
+                        if root_path:
+                            server_dir = os.path.join(root_path, server_name)
+                            server_path = self.find_server_executable(server_dir)
+                else:
+                    # Usar la ruta por defecto
+                    server_path = self.config_manager.get("server", "executable_path")
+                
+                if not server_path or not os.path.exists(server_path):
+                    self.logger.error("Ruta del ejecutable del servidor no válida")
+                    if callback:
+                        callback("error", "Ruta del ejecutable no válida")
+                    return
+                
+                # Construir comando base del servidor
+                cmd = [server_path, "-server", "-log"]
+                
+                # Agregar argumentos personalizados si se proporcionan
+                if custom_args and isinstance(custom_args, list):
+                    cmd.extend(custom_args)
+                
+                # Agregar el mapa si se especifica
+                if map_name:
+                    cmd.append(f"?Map={map_name}")
+                
+                # Log del comando
+                self.logger.info(f"Comando del servidor: {' '.join(cmd)}")
+                if callback:
+                    callback("info", f"Comando del servidor: {' '.join(cmd)}")
+                
+                # Iniciar el proceso del servidor
+                self.server_process = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1,
+                    universal_newlines=True
+                )
+                
+                self.server_pid = self.server_process.pid
+                self.server_running = True
+                self.uptime_start = datetime.now()
+                
+                if callback:
+                    callback("success", f"Servidor iniciado con PID: {self.server_pid}")
+                
+                # Monitorear la salida del servidor
+                for line in iter(self.server_process.stdout.readline, ''):
+                    if line:
+                        line = line.strip()
+                        if callback:
+                            callback("info", line)
+                        self.logger.info(f"Servidor: {line}")
+                
+                # El servidor se ha detenido
+                self.server_running = False
+                self.server_pid = None
+                self.uptime_start = None
+                
+                if callback:
+                    callback("info", "Servidor detenido")
+                
+            except Exception as e:
+                self.logger.error(f"Error al iniciar servidor con argumentos personalizados: {e}")
+                if callback:
+                    callback("error", f"Error al iniciar servidor: {str(e)}")
+        
+        threading.Thread(target=_start_with_args, daemon=True).start()
+    
     def stop_server(self, callback=None):
         """Detiene el servidor de Ark"""
         def _stop():

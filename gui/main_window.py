@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from .panels.principal_panel import PrincipalPanel
 from .panels.server_panel import ServerPanel
 from .panels.config_panel import ConfigPanel
 from .panels.monitoring_panel import MonitoringPanel
@@ -12,129 +13,541 @@ class MainWindow:
         self.config_manager = config_manager
         self.logger = logger
         
-        # Configurar el grid principal
-        self.root.grid_columnconfigure(1, weight=1)
-        self.root.grid_rowconfigure(0, weight=1)
+        # Variables para el servidor y mapa seleccionados
+        self.selected_server = None
+        self.selected_map = None
         
-        # Crear sidebar
-        self.create_sidebar()
+        # Configurar el grid principal
+        self.root.grid_columnconfigure(0, weight=1)
+        self.root.grid_rowconfigure(2, weight=1)
+        
+        # Crear barra superior con menú y estado
+        self.create_top_bar()
+        
+        # Crear barra de pestañas principales
+        self.create_tabs_bar()
         
         # Crear pestañas principales
         self.create_tabview()
         
-    def create_sidebar(self):
-        """Crear la barra lateral con navegación"""
-        self.sidebar = ctk.CTkFrame(self.root, width=200, corner_radius=0)
-        self.sidebar.grid(row=0, column=0, rowspan=4, sticky="nsew")
-        self.sidebar.grid_rowconfigure(4, weight=1)
+        # Crear barra de logs siempre visible
+        self.create_logs_bar()
         
-        # Título
-        self.logo_label = ctk.CTkLabel(
-            self.sidebar, 
-            text="ARK SERVER\nMANAGER", 
-            font=ctk.CTkFont(size=20, weight="bold")
+        # Configurar callbacks de botones
+        self.setup_button_callbacks()
+        
+    def create_top_bar(self):
+        """Crear la barra superior con menú, administración y estado del servidor"""
+        # Frame principal de la barra superior
+        self.top_bar = ctk.CTkFrame(self.root, height=120, corner_radius=0)
+        self.top_bar.grid(row=0, column=0, sticky="ew", padx=0, pady=0)
+        self.top_bar.grid_columnconfigure(1, weight=1)  # Espacio flexible para el estado
+        
+        # Frame para botones de menú pequeños (fila 0)
+        menu_buttons_frame = ctk.CTkFrame(self.top_bar, fg_color="transparent")
+        menu_buttons_frame.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        
+        # Botones de menú pequeños (tamaño igual a las pestañas)
+        self.menu_button = ctk.CTkButton(
+            menu_buttons_frame, 
+            text="Menu", 
+            command=self.show_menu,
+            width=100,
+            height=25
         )
-        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        self.menu_button.grid(row=0, column=0, padx=2, pady=2)
         
-        # Botones de navegación
-        self.sidebar_button_1 = ctk.CTkButton(
-            self.sidebar, 
-            text="Servidor", 
-            command=self.show_server_panel
+        self.herramientas_button = ctk.CTkButton(
+            menu_buttons_frame, 
+            text="Herramientas", 
+            command=self.show_herramientas,
+            width=100,
+            height=25
         )
-        self.sidebar_button_1.grid(row=1, column=0, padx=20, pady=10)
+        self.herramientas_button.grid(row=0, column=1, padx=2, pady=2)
         
-        self.sidebar_button_2 = ctk.CTkButton(
-            self.sidebar, 
+        self.ayuda_button = ctk.CTkButton(
+            menu_buttons_frame, 
+            text="Ayuda", 
+            command=self.show_ayuda,
+            width=100,
+            height=25
+        )
+        self.ayuda_button.grid(row=0, column=2, padx=2, pady=2)
+        
+        self.configuracion_button = ctk.CTkButton(
+            menu_buttons_frame, 
             text="Configuración", 
-            command=self.show_config_panel
+            command=self.show_configuracion,
+            width=100,
+            height=25
         )
-        self.sidebar_button_2.grid(row=2, column=0, padx=20, pady=10)
+        self.configuracion_button.grid(row=0, column=3, padx=2, pady=2)
         
-        self.sidebar_button_3 = ctk.CTkButton(
-            self.sidebar, 
-            text="Monitoreo", 
-            command=self.show_monitoring_panel
+        self.salir_button = ctk.CTkButton(
+            menu_buttons_frame, 
+            text="Salir", 
+            command=self.salir_aplicacion,
+            width=100,
+            height=25
         )
-        self.sidebar_button_3.grid(row=3, column=0, padx=20, pady=10)
+        self.salir_button.grid(row=0, column=4, padx=2, pady=2)
         
-        self.sidebar_button_4 = ctk.CTkButton(
-            self.sidebar, 
-            text="Jugadores", 
-            command=self.show_players_panel
-        )
-        self.sidebar_button_4.grid(row=4, column=0, padx=20, pady=10)
+        # Frame para botones de administración grandes (fila 1)
+        admin_frame = ctk.CTkFrame(self.top_bar, fg_color="transparent")
+        admin_frame.grid(row=1, column=0, padx=10, pady=5, sticky="w")
         
-        self.sidebar_button_5 = ctk.CTkButton(
-            self.sidebar, 
-            text="Backups", 
-            command=self.show_backup_panel
+        # Botones de administración del servidor (tamaño grande)
+        self.start_button = ctk.CTkButton(
+            admin_frame, 
+            text="Iniciar Servidor", 
+            command=self.start_server,
+            fg_color="green",
+            hover_color="darkgreen",
+            width=120,
+            height=30
         )
-        self.sidebar_button_5.grid(row=5, column=0, padx=20, pady=10)
+        self.start_button.grid(row=0, column=0, padx=2, pady=2)
         
-        self.sidebar_button_6 = ctk.CTkButton(
-            self.sidebar, 
-            text="Logs", 
-            command=self.show_logs_panel
+        self.stop_button = ctk.CTkButton(
+            admin_frame, 
+            text="Detener Servidor", 
+            command=self.stop_server,
+            fg_color="red",
+            hover_color="darkred",
+            width=120,
+            height=30
         )
-        self.sidebar_button_6.grid(row=6, column=0, padx=20, pady=10)
+        self.stop_button.grid(row=0, column=1, padx=2, pady=2)
         
-        # Botón de configuración de apariencia
-        self.appearance_mode_label = ctk.CTkLabel(self.sidebar, text="Apariencia:", anchor="w")
-        self.appearance_mode_label.grid(row=7, column=0, padx=20, pady=(10, 0))
-        self.appearance_mode_menu = ctk.CTkOptionMenu(
-            self.sidebar, 
-            values=["Light", "Dark", "System"],
-            command=self.change_appearance_mode
+        self.restart_button = ctk.CTkButton(
+            admin_frame, 
+            text="Reiniciar Servidor", 
+            command=self.restart_server,
+            fg_color="orange",
+            hover_color="darkorange",
+            width=120,
+            height=30
         )
-        self.appearance_mode_menu.grid(row=8, column=0, padx=20, pady=(10, 20))
-        self.appearance_mode_menu.set("Dark")
+        self.restart_button.grid(row=0, column=2, padx=2, pady=2)
+        
+        self.install_button = ctk.CTkButton(
+            admin_frame, 
+            text="Instalar Servidor", 
+            command=self.install_server,
+            fg_color="blue",
+            hover_color="darkblue",
+            width=120,
+            height=30
+        )
+        self.install_button.grid(row=0, column=3, padx=2, pady=2)
+        
+        self.update_button = ctk.CTkButton(
+            admin_frame, 
+            text="Actualizar Servidor", 
+            command=self.update_server,
+            fg_color="#8B00FF",
+            hover_color="#6B00CC",
+            width=120,
+            height=30
+        )
+        self.update_button.grid(row=0, column=4, padx=2, pady=2)
+        
+        # Frame para ruta raíz (fila 2)
+        path_frame = ctk.CTkFrame(self.top_bar, fg_color="transparent")
+        path_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=5, sticky="ew")
+        
+        # Etiqueta y botón para cambiar ruta raíz
+        ctk.CTkLabel(path_frame, text="Ruta Raíz:").grid(row=0, column=0, padx=(0, 5), pady=2, sticky="w")
+        
+        self.current_path_display = ctk.CTkLabel(
+            path_frame, 
+            text=self.config_manager.get("server", "root_path", "No configurada"),
+            fg_color=("gray90", "gray20"),
+            corner_radius=5,
+            padx=10,
+            pady=5
+        )
+        self.current_path_display.grid(row=0, column=1, padx=5, pady=2, sticky="ew")
+        
+        self.browse_button = ctk.CTkButton(
+            path_frame, 
+            text="Cambiar", 
+            command=self.browse_root_path,
+            width=80,
+            height=25
+        )
+        self.browse_button.grid(row=0, column=2, padx=(5, 0), pady=2)
+        
+        # Configurar peso de columna para que la ruta ocupe el espacio disponible
+        #.grid_columnconfigure(1, weight=1)
+        
+        # Frame para selección de servidor y mapa (fila 3)
+        selection_frame = ctk.CTkFrame(self.top_bar, fg_color="transparent")
+        selection_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=5, sticky="ew")
+        
+        # Etiqueta y dropdown para servidor
+        ctk.CTkLabel(selection_frame, text="Servidor:").grid(row=0, column=0, padx=(0, 5), pady=2, sticky="w")
+        
+        self.server_dropdown = ctk.CTkOptionMenu(
+            selection_frame,
+            values=["Seleccionar servidor..."],
+            command=self.on_server_selected,
+            width=200
+        )
+        self.server_dropdown.grid(row=0, column=1, padx=5, pady=2, sticky="w")
+        
+        # Botón para recargar lista de servidores
+        self.refresh_servers_button = ctk.CTkButton(
+            selection_frame,
+            text="🔄",
+            command=self.refresh_servers_list,
+            width=30,
+            height=25
+        )
+        self.refresh_servers_button.grid(row=0, column=2, padx=5, pady=2, sticky="w")
+        
+        # Etiqueta y dropdown para mapa
+        ctk.CTkLabel(selection_frame, text="Mapa:").grid(row=0, column=3, padx=(20, 5), pady=2, sticky="w")
+        
+        self.map_dropdown = ctk.CTkOptionMenu(
+            selection_frame,
+            values=["The Island", "The Center", "Scorched Earth", "Ragnarok", "Aberration", "Extinction", "Valguero", "Genesis: Part 1", "Crystal Isles", "Genesis: Part 2", "Lost Island", "Fjordur"],
+            command=self.on_map_selected,
+            width=200
+        )
+        self.map_dropdown.grid(row=0, column=4, padx=5, pady=2, sticky="w")
+        
+        # Frame para estado del servidor (lado derecho, abarca todas las filas)
+        status_frame = ctk.CTkFrame(self.top_bar, fg_color=("gray90", "gray20"))
+        status_frame.grid(row=0, column=2, rowspan=4, padx=10, pady=5, sticky="ne")
+        
+        # Panel de estado del servidor
+        status_panel = ctk.CTkFrame(status_frame, fg_color="transparent")
+        status_panel.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Título del panel de estado
+        ctk.CTkLabel(status_panel, text="Estado del Servidor", font=("Arial", 14, "bold")).pack(pady=(0, 10))
+        
+        # Estado del servidor
+        status_container = ctk.CTkFrame(status_panel, fg_color="transparent")
+        status_container.pack(fill="x", pady=2)
+        
+        ctk.CTkLabel(status_container, text="Estado:").pack(side="left")
+        self.status_label = ctk.CTkLabel(status_container, text="Detenido", fg_color="red", corner_radius=5, padx=10, pady=2)
+        self.status_label.pack(side="right", padx=(5, 0))
+        
+        # Tiempo activo
+        uptime_container = ctk.CTkFrame(status_panel, fg_color="transparent")
+        uptime_container.pack(fill="x", pady=2)
+        
+        ctk.CTkLabel(uptime_container, text="Tiempo Activo:").pack(side="left")
+        self.uptime_label = ctk.CTkLabel(uptime_container, text="00:00:00", fg_color=("gray90", "gray20"), corner_radius=5, padx=10, pady=2)
+        self.uptime_label.pack(side="right", padx=(5, 0))
+        
+        # Uso de CPU
+        cpu_container = ctk.CTkFrame(status_panel, fg_color="transparent")
+        cpu_container.pack(fill="x", pady=2)
+        
+        ctk.CTkLabel(cpu_container, text="CPU:").pack(side="left")
+        self.cpu_label = ctk.CTkLabel(cpu_container, text="0%", fg_color=("gray90", "gray20"), corner_radius=5, padx=10, pady=2)
+        self.cpu_label.pack(side="right", padx=(5, 0))
+        
+        # Uso de memoria
+        memory_container = ctk.CTkFrame(status_panel, fg_color="transparent")
+        memory_container.pack(fill="x", pady=2)
+        
+        ctk.CTkLabel(memory_container, text="Memoria:").pack(side="left")
+        self.memory_label = ctk.CTkLabel(memory_container, text="0 MB", fg_color=("gray90", "gray20"), corner_radius=5, padx=10, pady=2)
+        self.memory_label.pack(side="right", padx=(5, 0))
+        
+        # La lista de servidores se inicializará después de crear el server_panel
+        
+    def create_tabs_bar(self):
+        """Crear la barra de pestañas principales - completamente independiente del menú"""
+        # Frame principal de la barra de pestañas
+        self.tabs_bar = ctk.CTkFrame(self.root, height=40, corner_radius=0)
+        self.tabs_bar.grid(row=1, column=0, sticky="ew", padx=0, pady=0)
+        self.tabs_bar.grid_columnconfigure(6, weight=1)  # Espacio flexible al final
+        
+        # Frame para pestañas
+        tabs_frame = ctk.CTkFrame(self.tabs_bar, fg_color="transparent")
+        tabs_frame.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        
+        # Pestañas principales - completamente independientes del menú
+        self.tab_principal = ctk.CTkButton(
+            tabs_frame,
+            text="Principal",
+            command=lambda: self.show_tab("Principal"),
+            fg_color="blue",
+            hover_color="darkblue",
+            width=100,
+            height=25
+        )
+        self.tab_principal.grid(row=0, column=0, padx=2, pady=2)
+        
+        self.tab_configuraciones = ctk.CTkButton(
+            tabs_frame,
+            text="Configuraciones",
+            command=lambda: self.show_tab("Configuraciones"),
+            fg_color="gray",
+            hover_color="darkgray",
+            width=100,
+            height=25
+        )
+        self.tab_configuraciones.grid(row=0, column=1, padx=2, pady=2)
+        
+        self.tab_mods = ctk.CTkButton(
+            tabs_frame,
+            text="Mods",
+            command=lambda: self.show_tab("Mods"),
+            fg_color="gray",
+            hover_color="darkgray",
+            width=100,
+            height=25
+        )
+        self.tab_mods.grid(row=0, column=2, padx=2, pady=2)
+        
+        self.tab_backup = ctk.CTkButton(
+            tabs_frame,
+            text="Backup",
+            command=lambda: self.show_tab("Backup"),
+            fg_color="gray",
+            hover_color="darkgray",
+            width=100,
+            height=25
+        )
+        self.tab_backup.grid(row=0, column=3, padx=2, pady=2)
+        
+        self.tab_reinicios = ctk.CTkButton(
+            tabs_frame,
+            text="Reinicios",
+            command=lambda: self.show_tab("Reinicios"),
+            fg_color="gray",
+            hover_color="darkgray",
+            width=100,
+            height=25
+        )
+        self.tab_reinicios.grid(row=0, column=4, padx=2, pady=2)
+        
+        self.tab_logs = ctk.CTkButton(
+            tabs_frame,
+            text="Logs",
+            command=lambda: self.show_tab("Logs"),
+            fg_color="gray",
+            hover_color="darkgray",
+            width=100,
+            height=25
+        )
+        self.tab_logs.grid(row=0, column=5, padx=2, pady=2)
         
     def create_tabview(self):
         """Crear el sistema de pestañas principal"""
         self.tabview = ctk.CTkTabview(self.root)
-        self.tabview.grid(row=0, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        self.tabview.grid(row=2, column=0, padx=2, pady=1, sticky="nsew")
         
         # Crear pestañas
-        self.tab_server = self.tabview.add("Servidor")
-        self.tab_config = self.tabview.add("Configuración")
-        self.tab_monitoring = self.tabview.add("Monitoreo")
-        self.tab_players = self.tabview.add("Jugadores")
-        self.tab_backup = self.tabview.add("Backups")
-        self.tab_logs = self.tabview.add("Logs")
+        self.tab_principal_content = self.tabview.add("Principal")
+        self.tab_configuraciones_content = self.tabview.add("Configuraciones")
+        self.tab_mods_content = self.tabview.add("Mods")
+        self.tab_backup_content = self.tabview.add("Backup")
+        self.tab_reinicios_content = self.tabview.add("Reinicios")
+        self.tab_logs_content = self.tabview.add("Logs")
         
-        # Inicializar paneles
-        self.server_panel = ServerPanel(self.tab_server, self.config_manager, self.logger)
-        self.config_panel = ConfigPanel(self.tab_config, self.config_manager, self.logger)
-        self.monitoring_panel = MonitoringPanel(self.tab_monitoring, self.config_manager, self.logger)
-        self.players_panel = PlayersPanel(self.tab_players, self.config_manager, self.logger)
-        self.backup_panel = BackupPanel(self.tab_backup, self.config_manager, self.logger)
-        self.logs_panel = LogsPanel(self.tab_logs, self.config_manager, self.logger)
+        # Crear paneles
+        self.principal_panel = PrincipalPanel(self.tab_principal_content, self.config_manager, self.logger, self)
+        # El ServerPanel ya no se muestra en la interfaz, pero se mantiene para funcionalidad backend
+        self.server_panel = ServerPanel(None, self.config_manager, self.logger, self)
+        self.config_panel = ConfigPanel(self.tab_configuraciones_content, self.config_manager, self.logger)
+        self.monitoring_panel = MonitoringPanel(self.tab_reinicios_content, self.config_manager, self.logger)
+        self.backup_panel = BackupPanel(self.tab_backup_content, self.config_manager, self.logger)
+        self.players_panel = PlayersPanel(self.tab_mods_content, self.config_manager, self.logger)
+        self.logs_panel = LogsPanel(self.tab_logs_content, self.config_manager, self.logger)
         
-    def show_server_panel(self):
-        """Mostrar panel de servidor"""
-        self.tabview.set("Servidor")
+        # Configurar callbacks para los botones
+        self.setup_button_callbacks()
         
-    def show_config_panel(self):
-        """Mostrar panel de configuración"""
-        self.tabview.set("Configuración")
+        # Inicializar la lista de servidores después de crear el server_panel
+        self.refresh_servers_list()
         
-    def show_monitoring_panel(self):
-        """Mostrar panel de monitoreo"""
-        self.tabview.set("Monitoreo")
+        # Mostrar la pestaña inicial
+        self.show_tab("Principal")
         
-    def show_players_panel(self):
-        """Mostrar panel de jugadores"""
-        self.tabview.set("Jugadores")
+    def create_logs_bar(self):
+        """Crear barra de logs siempre visible en la parte inferior"""
+        # Frame para la barra de logs
+        logs_frame = ctk.CTkFrame(self.root, height=85, corner_radius=0)
+        logs_frame.grid(row=3, column=0, sticky="ew", padx=0, pady=0)
         
-    def show_backup_panel(self):
-        """Mostrar panel de backups"""
-        self.tabview.set("Backups")
+        # Título de la barra de logs
+        logs_title = ctk.CTkLabel(logs_frame, text="Logs del Sistema", font=("Arial", 11, "bold"))
+        logs_title.pack(pady=(3, 0))
         
-    def show_logs_panel(self):
-        """Mostrar panel de logs"""
-        self.tabview.set("Logs")
+        # Área de texto para los logs
+        self.logs_text = ctk.CTkTextbox(logs_frame, height=60, state="disabled")
+        self.logs_text.pack(fill="both", expand=True, padx=5, pady=3)
         
-    def change_appearance_mode(self, new_appearance_mode: str):
-        """Cambiar modo de apariencia"""
-        ctk.set_appearance_mode(new_appearance_mode)
+        # Mensaje inicial
+        self.add_log_message("🚀 Aplicación iniciada correctamente")
+    
+    def show_tab(self, tab_name):
+        """Muestra la pestaña seleccionada - completamente independiente del menú"""
+        # Actualizar colores de los botones de pestañas
+        self.tab_principal.configure(fg_color="gray")
+        self.tab_configuraciones.configure(fg_color="gray")
+        self.tab_mods.configure(fg_color="gray")
+        self.tab_backup.configure(fg_color="gray")
+        self.tab_reinicios.configure(fg_color="gray")
+        self.tab_logs.configure(fg_color="gray")
+        
+        if tab_name == "Principal":
+            self.tab_principal.configure(fg_color="blue")
+            self.tabview.set("Principal")
+        elif tab_name == "Configuraciones":
+            self.tab_configuraciones.configure(fg_color="blue")
+            self.tabview.set("Configuraciones")
+        elif tab_name == "Mods":
+            self.tab_mods.configure(fg_color="blue")
+            self.tabview.set("Mods")
+        elif tab_name == "Backup":
+            self.tab_backup.configure(fg_color="blue")
+            self.tabview.set("Backup")
+        elif tab_name == "Reinicios":
+            self.tab_reinicios.configure(fg_color="blue")
+            self.tabview.set("Reinicios")
+        elif tab_name == "Logs":
+            self.tab_logs.configure(fg_color="blue")
+            self.tabview.set("Logs")
+        
+    def setup_button_callbacks(self):
+        """Configurar callbacks de los botones"""
+        # Los botones ya tienen sus comandos configurados en create_top_bar
+        pass
+    
+    def show_menu(self):
+        """Mostrar menú principal"""
+        self.add_log_message("📋 Menú principal abierto")
+    
+    def show_herramientas(self):
+        """Mostrar herramientas"""
+        self.add_log_message("🔧 Herramientas abiertas")
+    
+    def show_ayuda(self):
+        """Mostrar ayuda"""
+        self.add_log_message("❓ Ayuda abierta")
+    
+    def show_configuracion(self):
+        """Mostrar configuración"""
+        self.add_log_message("⚙️ Configuración abierta")
+    
+    def salir_aplicacion(self):
+        """Salir de la aplicación"""
+        self.add_log_message("🚪 Cerrando aplicación...")
+        self.root.quit()
+    
+    def add_log_message(self, message):
+        """Agregar mensaje al log del sistema"""
+        if hasattr(self, 'logs_text'):
+            # Habilitar temporalmente para escribir
+            self.logs_text.configure(state="normal")
+            
+            # Obtener timestamp actual
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            
+            # Agregar mensaje con timestamp
+            self.logs_text.insert("end", f"[{timestamp}] {message}\n")
+            
+            # Deshabilitar para solo lectura
+            self.logs_text.configure(state="disabled")
+            
+            # Hacer scroll al final
+            self.logs_text.see("end")
+        
+    def browse_root_path(self):
+        """Buscar directorio raíz para servidores"""
+        from tkinter import filedialog
+        directory = filedialog.askdirectory(title="Seleccionar ruta raíz para servidores")
+        if directory:
+            self.config_manager.set("server", "root_path", directory)
+            self.config_manager.save()
+            self.update_current_path_display()
+            # Refrescar la lista de servidores
+            if hasattr(self, 'server_panel'):
+                self.server_panel.refresh_servers_list()
+    
+    def update_current_path_display(self):
+        """Actualizar la visualización de la ruta actual"""
+        current_path = self.config_manager.get("server", "root_path", "").strip()
+        if current_path:
+            self.current_path_display.configure(
+                text=current_path,
+                text_color=("green", "lightgreen")
+            )
+        else:
+            self.current_path_display.configure(
+                text="No configurada",
+                text_color=("red", "orange")
+            )
+    
+    def update_server_status(self, status, color="red"):
+        """Actualizar el estado del servidor"""
+        self.status_label.configure(text=status, fg_color=color)
+    
+    def update_uptime(self, uptime):
+        """Actualizar el tiempo activo del servidor"""
+        self.uptime_label.configure(text=uptime)
+    
+    def update_cpu_usage(self, cpu_percent):
+        """Actualizar el uso de CPU del servidor"""
+        self.cpu_label.configure(text=f"{cpu_percent}%")
+    
+    def update_memory_usage(self, memory_mb):
+        """Actualizar el uso de memoria del servidor"""
+        self.memory_label.configure(text=f"{memory_mb} MB")
+    
+    def on_server_selected(self, server_name):
+        """Maneja la selección de un servidor"""
+        self.selected_server = server_name
+        if hasattr(self, 'server_panel'):
+            self.server_panel.on_server_selected(server_name)
+        if hasattr(self, 'principal_panel'):
+            self.principal_panel.update_server_info(server_name, self.selected_map)
+    
+    def on_map_selected(self, map_name):
+        """Maneja la selección de un mapa"""
+        self.selected_map = map_name
+        if hasattr(self, 'server_panel'):
+            self.server_panel.on_map_selected(map_name)
+        if hasattr(self, 'principal_panel'):
+            self.principal_panel.update_server_info(self.selected_server, map_name)
+    
+    def refresh_servers_list(self):
+        """Refresca la lista de servidores"""
+        if hasattr(self, 'server_panel'):
+            self.server_panel.refresh_servers_list()
+    
+    def start_server(self):
+        """Inicia el servidor"""
+        if hasattr(self, 'server_panel'):
+            self.server_panel.start_server()
+    
+    def stop_server(self):
+        """Detiene el servidor"""
+        if hasattr(self, 'server_panel'):
+            self.server_panel.stop_server()
+    
+    def restart_server(self):
+        """Reinicia el servidor"""
+        if hasattr(self, 'server_panel'):
+            self.server_panel.restart_server()
+    
+    def install_server(self):
+        """Instala un servidor"""
+        if hasattr(self, 'server_panel'):
+            self.server_panel.install_server()
+    
+    def update_server(self):
+        """Actualiza un servidor"""
+        if hasattr(self, 'server_panel'):
+            self.server_panel.update_server()

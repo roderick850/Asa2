@@ -19,24 +19,78 @@ class LogsPanel(ctk.CTkFrame):
         
     def create_widgets(self):
         """Crear todos los widgets del panel"""
+        # Configurar el grid
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(3, weight=1)
+        
         # Título
         title_label = ctk.CTkLabel(
             self, 
             text="Gestión de Logs", 
-            font=ctk.CTkFont(size=24, weight="bold")
+            font=ctk.CTkFont(size=18, weight="bold")
         )
-        title_label.grid(row=0, column=0, columnspan=2, pady=(20, 30))
+        title_label.grid(row=0, column=0, columnspan=2, pady=(10, 15))
+        
+        # Frame para acceso rápido a logs del servidor
+        server_logs_frame = ctk.CTkFrame(self)
+        server_logs_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
+        
+        server_logs_label = ctk.CTkLabel(
+            server_logs_frame, 
+            text="Logs del Servidor ARK", 
+            font=ctk.CTkFont(size=14, weight="bold")
+        )
+        server_logs_label.pack(pady=5)
+        
+        # Frame para botones de logs rápidos
+        quick_logs_frame = ctk.CTkFrame(server_logs_frame, fg_color="transparent")
+        quick_logs_frame.pack(fill="x", padx=10, pady=5)
+        
+        # Botones para logs comunes
+        ctk.CTkButton(
+            quick_logs_frame,
+            text="Log de Chat",
+            command=self.view_chat_log,
+            width=120,
+            height=30
+        ).pack(side="left", padx=5)
+        
+        ctk.CTkButton(
+            quick_logs_frame,
+            text="Log de Errores",
+            command=self.view_error_log,
+            width=120,
+            height=30
+        ).pack(side="left", padx=5)
+        
+        ctk.CTkButton(
+            quick_logs_frame,
+            text="Log del Servidor",
+            command=self.view_server_log,
+            width=120,
+            height=30
+        ).pack(side="left", padx=5)
+        
+        ctk.CTkButton(
+            quick_logs_frame,
+            text="Actualizar",
+            command=self.refresh_server_logs,
+            width=100,
+            height=30,
+            fg_color="orange",
+            hover_color="darkorange"
+        ).pack(side="left", padx=5)
         
         # Frame de configuración de logs
         config_frame = ctk.CTkFrame(self)
-        config_frame.grid(row=1, column=0, columnspan=2, padx=20, pady=10, sticky="ew")
+        config_frame.grid(row=2, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
         
         config_label = ctk.CTkLabel(
             config_frame, 
             text="Configuración de Logs", 
-            font=ctk.CTkFont(size=16, weight="bold")
+            font=ctk.CTkFont(size=14, weight="bold")
         )
-        config_label.grid(row=0, column=0, columnspan=3, pady=10)
+        config_label.grid(row=0, column=0, columnspan=3, pady=5)
         
         # Ruta de logs
         logs_path_label = ctk.CTkLabel(config_frame, text="Ruta de logs:")
@@ -338,3 +392,275 @@ class LogsPanel(ctk.CTkFrame):
             
         except Exception as e:
             self.logger.error(f"Error al eliminar archivo de log: {e}")
+    
+    def view_chat_log(self):
+        """Ver logs de chat del servidor"""
+        try:
+            server_path = self.get_current_server_path()
+            if not server_path:
+                self.add_log_message("❌ No hay servidor seleccionado o ruta no configurada")
+                self.show_demo_chat_log()
+                return
+            
+            self.add_log_message(f"🔍 Buscando logs de chat en: {server_path}")
+            
+            # Rutas comunes para logs de chat en ARK
+            possible_chat_logs = [
+                os.path.join(server_path, "ShooterGame", "Saved", "Logs", "chat.log"),
+                os.path.join(server_path, "ShooterGame", "Logs", "chat.log"),
+                os.path.join(server_path, "Logs", "chat.log")
+            ]
+            
+            chat_log_found = None
+            for log_path in possible_chat_logs:
+                self.add_log_message(f"🔍 Verificando: {log_path}")
+                if os.path.exists(log_path):
+                    chat_log_found = log_path
+                    break
+            
+            if chat_log_found:
+                self.load_log_content(chat_log_found)
+                self.add_log_message(f"✅ Cargado log de chat: {chat_log_found}")
+            else:
+                self.add_log_message("⚠️ No se encontró archivo de log de chat")
+                self.show_demo_chat_log()
+                
+        except Exception as e:
+            self.logger.error(f"Error al cargar log de chat: {e}")
+            self.add_log_message(f"❌ Error al cargar log de chat: {str(e)}")
+            self.show_demo_chat_log()
+    
+    def view_error_log(self):
+        """Ver logs de errores del servidor"""
+        try:
+            server_path = self.get_current_server_path()
+            if not server_path:
+                self.add_log_message("❌ No hay servidor seleccionado o ruta no configurada")
+                self.show_demo_error_log()
+                return
+            
+            self.add_log_message(f"🔍 Buscando logs de errores en: {server_path}")
+            
+            # Rutas comunes para logs de errores en ARK
+            possible_error_logs = [
+                os.path.join(server_path, "ShooterGame", "Saved", "Logs", "ShooterGame.log"),
+                os.path.join(server_path, "ShooterGame", "Logs", "error.log"),
+                os.path.join(server_path, "Logs", "error.log")
+            ]
+            
+            error_log_found = None
+            for log_path in possible_error_logs:
+                self.add_log_message(f"🔍 Verificando: {log_path}")
+                if os.path.exists(log_path):
+                    error_log_found = log_path
+                    break
+            
+            if error_log_found:
+                self.load_log_content(error_log_found)
+                self.add_log_message(f"✅ Cargado log de errores: {error_log_found}")
+            else:
+                self.add_log_message("⚠️ No se encontró archivo de log de errores")
+                self.show_demo_error_log()
+                
+        except Exception as e:
+            self.logger.error(f"Error al cargar log de errores: {e}")
+            self.add_log_message(f"❌ Error al cargar log de errores: {str(e)}")
+            self.show_demo_error_log()
+    
+    def view_server_log(self):
+        """Ver logs principales del servidor"""
+        try:
+            server_path = self.get_current_server_path()
+            if not server_path:
+                self.add_log_message("❌ No hay servidor seleccionado o ruta no configurada")
+                self.show_demo_server_log()
+                return
+            
+            self.add_log_message(f"🔍 Buscando logs del servidor en: {server_path}")
+            
+            # Rutas comunes para logs principales en ARK
+            possible_server_logs = [
+                os.path.join(server_path, "ShooterGame", "Saved", "Logs", "ShooterGame.log"),
+                os.path.join(server_path, "Logs", "server.log"),
+                os.path.join(server_path, "ShooterGame", "Logs", "ShooterGame.log")
+            ]
+            
+            server_log_found = None
+            for log_path in possible_server_logs:
+                self.add_log_message(f"🔍 Verificando: {log_path}")
+                if os.path.exists(log_path):
+                    server_log_found = log_path
+                    break
+            
+            if server_log_found:
+                self.load_log_content(server_log_found)
+                self.add_log_message(f"✅ Cargado log del servidor: {server_log_found}")
+            else:
+                self.add_log_message("⚠️ No se encontró archivo de log del servidor")
+                self.show_demo_server_log()
+                
+        except Exception as e:
+            self.logger.error(f"Error al cargar log del servidor: {e}")
+            self.add_log_message(f"❌ Error al cargar log del servidor: {str(e)}")
+            self.show_demo_server_log()
+    
+    def refresh_server_logs(self):
+        """Actualizar la lista de logs del servidor"""
+        try:
+            server_path = self.get_current_server_path()
+            if not server_path:
+                self.add_log_message("❌ No hay servidor seleccionado o ruta no configurada")
+                return
+            
+            # Buscar todos los archivos de log disponibles
+            log_dirs = [
+                os.path.join(server_path, "ShooterGame", "Saved", "Logs"),
+                os.path.join(server_path, "ShooterGame", "Logs"),
+                os.path.join(server_path, "Logs")
+            ]
+            
+            found_logs = []
+            for log_dir in log_dirs:
+                if os.path.exists(log_dir):
+                    for file in os.listdir(log_dir):
+                        if file.endswith('.log'):
+                            found_logs.append(os.path.join(log_dir, file))
+            
+            if found_logs:
+                log_list = "\n".join([f"📄 {os.path.basename(log)}" for log in found_logs[:10]])  # Mostrar solo los primeros 10
+                self.add_log_message(f"✅ Logs encontrados ({len(found_logs)} total):\n{log_list}")
+            else:
+                self.add_log_message("⚠️ No se encontraron archivos de log")
+                
+        except Exception as e:
+            self.logger.error(f"Error al buscar logs: {e}")
+            self.add_log_message(f"❌ Error al buscar logs: {str(e)}")
+    
+    def get_current_server_path(self):
+        """Obtener la ruta del servidor actualmente seleccionado"""
+        try:
+            root_path = self.config_manager.get("server", "root_path", "").strip()
+            if not root_path:
+                return None
+            
+            # Buscar el primer servidor válido disponible
+            for item in os.listdir(root_path):
+                item_path = os.path.join(root_path, item)
+                if os.path.isdir(item_path) and item != "SteamCMD":
+                    # Verificar si es un directorio de servidor válido
+                    if any(os.path.exists(os.path.join(item_path, subdir)) 
+                           for subdir in ["ShooterGame", "Logs"]):
+                        return item_path
+            
+            return None
+            
+        except Exception as e:
+            self.logger.error(f"Error al obtener ruta del servidor: {e}")
+            return None
+    
+    def add_log_message(self, message):
+        """Agregar mensaje al área de logs"""
+        try:
+            timestamp = datetime.now().strftime("[%H:%M:%S]")
+            full_message = f"{timestamp} {message}\n"
+            
+            if hasattr(self, 'log_viewer'):
+                self.log_viewer.configure(state="normal")
+                self.log_viewer.insert("end", full_message)
+                self.log_viewer.see("end")
+                self.log_viewer.configure(state="disabled")
+                
+        except Exception as e:
+            self.logger.error(f"Error al agregar mensaje de log: {e}")
+    
+    def show_demo_chat_log(self):
+        """Mostrar contenido demo de log de chat"""
+        try:
+            demo_content = """=== LOG DE CHAT DEL SERVIDOR ARK ===
+[2025-01-08 19:05:12] [CHAT] Jugador1: Hola a todos!
+[2025-01-08 19:05:45] [CHAT] Jugador2: ¿Alguien quiere hacer una tribu?
+[2025-01-08 19:06:20] [CONNECT] Jugador3 se ha conectado al servidor
+[2025-01-08 19:06:55] [CHAT] Jugador3: ¡Hola! Soy nuevo
+[2025-01-08 19:07:30] [ADMIN] Administrador: Bienvenido al servidor!
+[2025-01-08 19:08:15] [CHAT] Jugador1: Te ayudo a empezar
+[2025-01-08 19:09:00] [DISCONNECT] Jugador2 se ha desconectado
+[2025-01-08 19:09:30] [CHAT] Jugador3: Gracias por la ayuda!
+
+=== ESTE ES CONTENIDO DE DEMOSTRACIÓN ===
+Para ver logs reales, asegúrate de:
+1. Tener un servidor instalado
+2. Que el servidor haya sido ejecutado al menos una vez
+3. Que los jugadores hayan enviado mensajes de chat
+"""
+            
+            if hasattr(self, 'log_viewer'):
+                self.log_viewer.configure(state="normal")
+                self.log_viewer.delete("1.0", "end")
+                self.log_viewer.insert("1.0", demo_content)
+                self.log_viewer.configure(state="disabled")
+                
+        except Exception as e:
+            self.logger.error(f"Error al mostrar demo de chat: {e}")
+    
+    def show_demo_error_log(self):
+        """Mostrar contenido demo de log de errores"""
+        try:
+            demo_content = """=== LOG DE ERRORES DEL SERVIDOR ARK ===
+[2025-01-08 19:00:12] [ERROR] Failed to load mod: ModID 123456789
+[2025-01-08 19:00:45] [WARNING] High memory usage detected: 85%
+[2025-01-08 19:01:20] [ERROR] Connection timeout for player: SteamID64_12345
+[2025-01-08 19:01:55] [WARNING] Server performance degraded
+[2025-01-08 19:02:30] [ERROR] Database query failed: timeout
+[2025-01-08 19:03:15] [INFO] Automatic restart scheduled in 30 minutes
+[2025-01-08 19:04:00] [ERROR] Asset loading failed: map_texture_001
+[2025-01-08 19:04:30] [WARNING] Disk space low: 15% remaining
+
+=== ESTE ES CONTENIDO DE DEMOSTRACIÓN ===
+Para ver logs reales de errores:
+1. Ejecuta el servidor con configuración de logs habilitada
+2. Los errores aparecerán automáticamente aquí
+3. Revisa regularmente para mantener el servidor estable
+"""
+            
+            if hasattr(self, 'log_viewer'):
+                self.log_viewer.configure(state="normal")
+                self.log_viewer.delete("1.0", "end")
+                self.log_viewer.insert("1.0", demo_content)
+                self.log_viewer.configure(state="disabled")
+                
+        except Exception as e:
+            self.logger.error(f"Error al mostrar demo de errores: {e}")
+    
+    def show_demo_server_log(self):
+        """Mostrar contenido demo de log del servidor"""
+        try:
+            demo_content = """=== LOG PRINCIPAL DEL SERVIDOR ARK ===
+[2025-01-08 19:00:00] [INFO] Server starting up...
+[2025-01-08 19:00:15] [INFO] Loading map: TheIsland_WP
+[2025-01-08 19:00:30] [INFO] Loading game mode: Survival
+[2025-01-08 19:00:45] [INFO] Loading mods: 3 mods found
+[2025-01-08 19:01:00] [INFO] Mod loaded: S+ (731604991)
+[2025-01-08 19:01:15] [INFO] Mod loaded: Awesome Spyglass (793605978)
+[2025-01-08 19:01:30] [INFO] Server ready for connections
+[2025-01-08 19:01:45] [INFO] Listening on port: 7777
+[2025-01-08 19:02:00] [INFO] Query port: 27015
+[2025-01-08 19:02:15] [INFO] Max players: 20
+[2025-01-08 19:02:30] [INFO] PvE mode enabled
+[2025-01-08 19:03:00] [INFO] Auto-save interval: 15 minutes
+
+=== ESTE ES CONTENIDO DE DEMOSTRACIÓN ===
+Este log contiene información general del servidor:
+- Inicialización y configuración
+- Estados de conexión
+- Información de mods
+- Eventos del sistema
+"""
+            
+            if hasattr(self, 'log_viewer'):
+                self.log_viewer.configure(state="normal")
+                self.log_viewer.delete("1.0", "end")
+                self.log_viewer.insert("1.0", demo_content)
+                self.log_viewer.configure(state="disabled")
+                
+        except Exception as e:
+            self.logger.error(f"Error al mostrar demo del servidor: {e}")
