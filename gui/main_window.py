@@ -62,6 +62,15 @@ class MainWindow:
         # Inicializar bandeja del sistema
         self.start_system_tray()
         
+        # Cargar última configuración
+        self.load_last_configuration()
+        
+        # Detectar si se inició con Windows
+        self.started_with_windows = self.detect_startup_with_windows()
+        
+        # Verificar auto-inicio si no hay bandeja disponible
+        self.check_auto_start_fallback()
+        
     def create_top_bar(self):
         """Crear la barra superior con menú, administración y estado del servidor"""
         # Frame principal de la barra superior
@@ -1762,6 +1771,192 @@ Versión de la app: {self.APP_VERSION}
             self.logger.error(f"Error al limpiar iconos de bandeja: {e}")
             show_error("Error", f"Error al limpiar iconos duplicados:\n{e}")
     
+    def auto_start_server(self):
+        """Auto-iniciar el servidor al iniciar la aplicación"""
+        try:
+            self.logger.info("Iniciando auto-inicio del servidor...")
+            
+            # Verificar que tengamos servidor y mapa seleccionados
+            if not self.selected_server:
+                # Intentar cargar el último servidor usado
+                last_server = self.config_manager.get("app", "last_server", "")
+                if last_server:
+                    self.selected_server = last_server
+                    self.logger.info(f"Usando último servidor: {last_server}")
+                else:
+                    self.logger.warning("No hay servidor seleccionado para auto-inicio")
+                    self.add_log_message("⚠️ Auto-inicio cancelado: No hay servidor seleccionado")
+                    return
+            
+            if not self.selected_map:
+                # Intentar cargar el último mapa usado
+                last_map = self.config_manager.get("app", "last_map", "")
+                if last_map:
+                    self.selected_map = last_map
+                    self.logger.info(f"Usando último mapa: {last_map}")
+                else:
+                    self.logger.warning("No hay mapa seleccionado para auto-inicio")
+                    self.add_log_message("⚠️ Auto-inicio cancelado: No hay mapa seleccionado")
+                    return
+            
+            # Verificar que el servidor no esté ya ejecutándose
+            if hasattr(self, 'server_panel') and hasattr(self.server_panel, 'server_manager'):
+                status = self.server_panel.server_manager.get_server_status()
+                if status == "Ejecutándose":
+                    self.logger.info("El servidor ya está ejecutándose, omitiendo auto-inicio")
+                    self.add_log_message("ℹ️ Servidor ya está ejecutándose")
+                    return
+            
+            # Iniciar el servidor
+            self.add_log_message(f"🚀 Auto-iniciando servidor: {self.selected_server} con mapa: {self.selected_map}")
+            
+            if hasattr(self, 'principal_panel'):
+                # Usar el método de inicio completo con configuraciones
+                self.principal_panel.start_server_with_config()
+                self.add_log_message("✅ Auto-inicio del servidor completado")
+                
+                # Notificar en la bandeja si está disponible
+                if hasattr(self, 'system_tray') and self.system_tray.is_available():
+                    self.system_tray.show_notification(
+                        "ARK Server Manager",
+                        f"Servidor '{self.selected_server}' iniciado automáticamente"
+                    )
+            else:
+                self.logger.error("Panel principal no disponible para auto-inicio")
+                self.add_log_message("❌ Error: Panel principal no disponible")
+                
+        except Exception as e:
+            self.logger.error(f"Error en auto-inicio del servidor: {e}")
+            self.add_log_message(f"❌ Error en auto-inicio: {e}")
+            
+            # Notificar error en la bandeja si está disponible
+            if hasattr(self, 'system_tray') and self.system_tray.is_available():
+                self.system_tray.show_notification(
+                    "ARK Server Manager - Error",
+                    "Error al auto-iniciar el servidor"
+                )
+    
+    def check_auto_start_fallback(self):
+        """Verificar auto-inicio cuando no hay bandeja del sistema"""
+        try:
+            # Solo hacer fallback si la bandeja no está disponible Y auto_start está activado
+            should_auto_start = False
+            
+            if hasattr(self, 'started_with_windows') and self.started_with_windows:
+                # Se inició con Windows - usar configuración específica
+                should_auto_start = self.app_settings.get_setting("auto_start_server_with_windows")
+            else:
+                # Se inició manualmente - usar configuración normal
+                should_auto_start = self.app_settings.get_setting("auto_start_server")
+            
+            if (not hasattr(self, 'system_tray') or 
+                not self.system_tray.is_available()) and should_auto_start:
+                
+                self.logger.info("Bandeja no disponible, usando fallback para auto-inicio")
+                # Programar auto-inicio con un retraso similar
+                self.root.after(2000, self.auto_start_server)
+                
+        except Exception as e:
+            self.logger.error(f"Error en check_auto_start_fallback: {e}")
+    
+    def load_last_configuration(self):
+        """Cargar la última configuración de servidor y mapa"""
+        try:
+            # Cargar último servidor
+            last_server = self.config_manager.get("app", "last_server", "")
+            if last_server:
+                self.selected_server = last_server
+                self.logger.info(f"Último servidor cargado: {last_server}")
+            
+            # Cargar último mapa
+            last_map = self.config_manager.get("app", "last_map", "")
+            if last_map:
+                self.selected_map = last_map
+                self.logger.info(f"Último mapa cargado: {last_map}")
+            
+            # Notificar a los paneles que se cargó la configuración
+            if last_server and hasattr(self, 'server_panel'):
+                # Programar actualización del panel después de que se inicialice completamente
+                self.root.after(500, lambda: self.update_panels_with_config(last_server, last_map))
+                
+        except Exception as e:
+            self.logger.error(f"Error al cargar última configuración: {e}")
+    
+    def update_panels_with_config(self, server_name, map_name):
+        """Actualizar paneles con la configuración cargada"""
+        try:
+            # Actualizar panel de servidor
+            if hasattr(self, 'server_panel') and server_name:
+                # Simular selección de servidor (esto debería actualizar las listas)
+                if hasattr(self.server_panel, 'on_server_selected'):
+                    self.server_panel.on_server_selected(server_name)
+                
+            # Actualizar panel principal con mapa
+            if hasattr(self, 'principal_panel') and server_name and map_name:
+                if hasattr(self.principal_panel, 'update_server_info'):
+                    self.principal_panel.update_server_info(server_name, map_name)
+                    
+            self.logger.info(f"Paneles actualizados con servidor: {server_name}, mapa: {map_name}")
+            
+        except Exception as e:
+            self.logger.error(f"Error al actualizar paneles: {e}")
+    
+    def detect_startup_with_windows(self):
+        """Detectar si la aplicación se inició automáticamente con Windows"""
+        try:
+            import sys
+            import psutil
+            import time
+            
+            # Método 1: Verificar argumentos de línea de comandos
+            if len(sys.argv) > 1:
+                for arg in sys.argv[1:]:
+                    if arg.lower() in ['--startup', '--autostart', '--windows-startup']:
+                        self.logger.info("Detectado inicio con Windows por argumentos")
+                        return True
+            
+            # Método 2: Verificar tiempo de inicio del proceso padre (Windows)
+            try:
+                current_process = psutil.Process()
+                parent_process = current_process.parent()
+                
+                if parent_process and parent_process.name().lower() in ['explorer.exe', 'winlogon.exe']:
+                    # Si el proceso padre es explorer o winlogon, probablemente inició con Windows
+                    
+                    # Verificar tiempo desde el inicio del sistema
+                    boot_time = psutil.boot_time()
+                    current_time = time.time()
+                    process_start_time = current_process.create_time()
+                    
+                    # Si el proceso se creó dentro de los primeros 2 minutos del inicio
+                    if (process_start_time - boot_time) < 120:  # 120 segundos = 2 minutos
+                        self.logger.info("Detectado inicio con Windows por tiempo de arranque")
+                        return True
+                        
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+            
+            # Método 3: Verificar si hay procesos de sesión recientes (Windows recién iniciado)
+            try:
+                # Si el sistema tiene menos de 5 minutos desde el arranque, probablemente es startup
+                boot_time = psutil.boot_time()
+                current_time = time.time()
+                
+                if (current_time - boot_time) < 300:  # 300 segundos = 5 minutos
+                    self.logger.info("Detectado inicio con Windows por boot time reciente")
+                    return True
+                    
+            except Exception:
+                pass
+            
+            # Por defecto, asumir que se inició manualmente
+            self.logger.info("Detectado inicio manual de la aplicación")
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"Error al detectar tipo de inicio: {e}")
+            return False
+    
     # ═══════════════════════════════════════════════════════════════
     # CONFIGURACIÓN DE EVENTOS Y BANDEJA DEL SISTEMA
     # ═══════════════════════════════════════════════════════════════
@@ -1800,9 +1995,26 @@ Versión de la app: {self.APP_VERSION}
                     self._tray_initialized = True
                     self.logger.info("Sistema de bandeja iniciado correctamente")
                     
-                    # Verificar si debe iniciar minimizado
+                    # Verificar configuraciones de inicio
                     if self.app_settings.get_setting("start_minimized"):
                         self.root.after(1000, self.minimize_to_tray)  # Esperar 1 segundo antes de minimizar
+                    
+                    # Verificar si debe auto-iniciar el servidor
+                    should_auto_start = False
+                    
+                    if hasattr(self, 'started_with_windows') and self.started_with_windows:
+                        # Se inició con Windows - usar configuración específica
+                        should_auto_start = self.app_settings.get_setting("auto_start_server_with_windows")
+                        if should_auto_start:
+                            self.logger.info("Auto-inicio activado: iniciado con Windows")
+                    else:
+                        # Se inició manualmente - usar configuración normal
+                        should_auto_start = self.app_settings.get_setting("auto_start_server")
+                        if should_auto_start:
+                            self.logger.info("Auto-inicio activado: iniciado manualmente")
+                    
+                    if should_auto_start:
+                        self.root.after(2000, self.auto_start_server)  # Esperar 2 segundos para que se cargue todo
                 else:
                     self.logger.warning("No se pudo iniciar el sistema de bandeja")
             else:

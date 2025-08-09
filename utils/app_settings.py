@@ -23,7 +23,8 @@ class AppSettings:
         # Configuraciones por defecto
         self.default_settings = {
             "startup_with_windows": False,
-            "auto_start_server": False,
+            "auto_start_server": False,  # Auto-inicio cuando se abre manualmente
+            "auto_start_server_with_windows": False,  # Auto-inicio cuando inicia con Windows
             "minimize_to_tray": True,  # Minimizar a bandeja en lugar de barra de tareas
             "always_on_top": False,
             "minimize_on_start": False,
@@ -264,4 +265,19 @@ start "" "{app_path}"
             return True
         except Exception as e:
             self.logger.error(f"Error al importar configuraciones: {e}")
+            return False
+    
+    def get_all_settings(self):
+        """Obtener todas las configuraciones"""
+        return self.settings.copy()
+    
+    def reset_to_defaults(self):
+        """Restablecer todas las configuraciones a valores por defecto"""
+        try:
+            self.settings = self.default_settings.copy()
+            self.save_settings()
+            self.logger.info("Configuraciones restablecidas a valores por defecto")
+            return True
+        except Exception as e:
+            self.logger.error(f"Error al restablecer configuraciones: {e}")
             return False

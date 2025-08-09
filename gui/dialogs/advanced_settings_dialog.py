@@ -135,20 +135,37 @@ class AdvancedSettingsDialog:
             text_color="gray"
         ).pack(side="left", padx=(10, 0), pady=10)
         
-        # Auto-start servidor
+        # Auto-start servidor (manual)
         autostart_frame = ctk.CTkFrame(main_frame)
         autostart_frame.pack(fill="x", pady=5)
         
         self.autostart_var = ctk.BooleanVar(value=self.app_settings.get_setting("auto_start_server"))
         ctk.CTkSwitch(
             autostart_frame,
-            text="🎮 Auto-iniciar servidor",
+            text="🎮 Auto-iniciar servidor (Manual)",
             variable=self.autostart_var
         ).pack(side="left", padx=10, pady=10)
         
         ctk.CTkLabel(
             autostart_frame,
-            text="Inicia automáticamente el último servidor usado al abrir la app",
+            text="Inicia automáticamente el servidor al abrir la aplicación manualmente",
+            text_color="gray"
+        ).pack(side="left", padx=(10, 0), pady=10)
+        
+        # Auto-start servidor (con Windows)
+        autostart_windows_frame = ctk.CTkFrame(main_frame)
+        autostart_windows_frame.pack(fill="x", pady=5)
+        
+        self.autostart_windows_var = ctk.BooleanVar(value=self.app_settings.get_setting("auto_start_server_with_windows"))
+        ctk.CTkSwitch(
+            autostart_windows_frame,
+            text="🖥️ Auto-iniciar servidor (Con Windows)",
+            variable=self.autostart_windows_var
+        ).pack(side="left", padx=10, pady=10)
+        
+        ctk.CTkLabel(
+            autostart_windows_frame,
+            text="Inicia automáticamente el servidor cuando la aplicación arranca con Windows",
             text_color="gray"
         ).pack(side="left", padx=(10, 0), pady=10)
         
@@ -678,6 +695,172 @@ class AdvancedSettingsDialog:
             else:
                 show_error(self.dialog, "Error", "Error al importar configuraciones")
     
+    def save_settings(self):
+        """Guardar todas las configuraciones"""
+        try:
+            # Configuraciones de inicio
+            if hasattr(self, 'startup_var'):
+                self.app_settings.set_setting("startup_with_windows", self.startup_var.get())
+            
+            if hasattr(self, 'autostart_var'):
+                self.app_settings.set_setting("auto_start_server", self.autostart_var.get())
+                
+            if hasattr(self, 'autostart_windows_var'):
+                self.app_settings.set_setting("auto_start_server_with_windows", self.autostart_windows_var.get())
+                
+            if hasattr(self, 'minimize_start_var'):
+                self.app_settings.set_setting("start_minimized", self.minimize_start_var.get())
+                
+            if hasattr(self, 'minimize_tray_var'):
+                self.app_settings.set_setting("minimize_to_tray", self.minimize_tray_var.get())
+                
+            if hasattr(self, 'close_tray_var'):
+                self.app_settings.set_setting("close_to_tray", self.close_tray_var.get())
+            
+            # Configuraciones de ventana
+            if hasattr(self, 'always_top_var'):
+                self.app_settings.set_setting("always_on_top", self.always_top_var.get())
+                
+            if hasattr(self, 'remember_position_var'):
+                self.app_settings.set_setting("remember_window_position", self.remember_position_var.get())
+            
+            # Otras configuraciones
+            if hasattr(self, 'auto_backup_var'):
+                self.app_settings.set_setting("auto_backup_on_start", self.auto_backup_var.get())
+                
+            if hasattr(self, 'confirm_exit_var'):
+                self.app_settings.set_setting("confirm_exit", self.confirm_exit_var.get())
+                
+            if hasattr(self, 'hide_console_var'):
+                self.app_settings.set_setting("hide_console", self.hide_console_var.get())
+                
+            if hasattr(self, 'auto_save_var'):
+                self.app_settings.set_setting("auto_save_config", self.auto_save_var.get())
+                
+            if hasattr(self, 'notification_sound_var'):
+                self.app_settings.set_setting("notification_sound", self.notification_sound_var.get())
+            
+            # Guardar configuraciones
+            self.app_settings.save_settings()
+            self.changes_made = False
+            
+            show_info(self.dialog, "Configuraciones guardadas", "Todas las configuraciones han sido guardadas correctamente.")
+            self.logger.info("Configuraciones avanzadas guardadas")
+            
+            # Cerrar diálogo
+            self.close_dialog()
+            
+        except Exception as e:
+            self.logger.error(f"Error al guardar configuraciones: {e}")
+            show_error(self.dialog, "Error", f"Error al guardar configuraciones:\n{e}")
+    
+    def reset_settings(self):
+        """Restablecer configuraciones a valores por defecto"""
+        try:
+            if ask_yes_no(self.dialog, "Restablecer configuraciones", "¿Estás seguro de que quieres restablecer todas las configuraciones a sus valores por defecto?"):
+                # Restablecer a valores por defecto
+                self.app_settings.reset_to_defaults()
+                
+                # Actualizar interfaz
+                self.load_current_settings()
+                
+                show_info(self.dialog, "Configuraciones restablecidas", "Todas las configuraciones han sido restablecidas a sus valores por defecto.")
+                self.logger.info("Configuraciones restablecidas a valores por defecto")
+                
+        except Exception as e:
+            self.logger.error(f"Error al restablecer configuraciones: {e}")
+            show_error(self.dialog, "Error", f"Error al restablecer configuraciones:\n{e}")
+    
+    def export_settings(self):
+        """Exportar configuraciones a archivo"""
+        try:
+            from tkinter import filedialog
+            import json
+            
+            file_path = filedialog.asksaveasfilename(
+                parent=self.dialog,
+                title="Exportar configuraciones",
+                defaultextension=".json",
+                filetypes=[("Archivos JSON", "*.json"), ("Todos los archivos", "*.*")]
+            )
+            
+            if file_path:
+                settings_data = self.app_settings.get_all_settings()
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(settings_data, f, indent=2, ensure_ascii=False)
+                
+                show_info(self.dialog, "Exportación completada", f"Configuraciones exportadas a:\n{file_path}")
+                self.logger.info(f"Configuraciones exportadas a: {file_path}")
+                
+        except Exception as e:
+            self.logger.error(f"Error al exportar configuraciones: {e}")
+            show_error(self.dialog, "Error", f"Error al exportar configuraciones:\n{e}")
+    
+    def import_settings(self):
+        """Importar configuraciones desde archivo"""
+        try:
+            from tkinter import filedialog
+            import json
+            
+            file_path = filedialog.askopenfilename(
+                parent=self.dialog,
+                title="Importar configuraciones",
+                filetypes=[("Archivos JSON", "*.json"), ("Todos los archivos", "*.*")]
+            )
+            
+            if file_path:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    settings_data = json.load(f)
+                
+                # Aplicar configuraciones importadas
+                for key, value in settings_data.items():
+                    self.app_settings.set_setting(key, value)
+                
+                # Guardar y actualizar interfaz
+                self.app_settings.save_settings()
+                self.load_current_settings()
+                
+                show_info(self.dialog, "Importación completada", f"Configuraciones importadas desde:\n{file_path}")
+                self.logger.info(f"Configuraciones importadas desde: {file_path}")
+                
+        except Exception as e:
+            self.logger.error(f"Error al importar configuraciones: {e}")
+            show_error(self.dialog, "Error", f"Error al importar configuraciones:\n{e}")
+    
+    def load_current_settings(self):
+        """Cargar configuraciones actuales en la interfaz"""
+        try:
+            # Actualizar variables de interfaz con valores actuales
+            if hasattr(self, 'startup_var'):
+                self.startup_var.set(self.app_settings.get_setting("startup_with_windows"))
+            if hasattr(self, 'autostart_var'):
+                self.autostart_var.set(self.app_settings.get_setting("auto_start_server"))
+            if hasattr(self, 'autostart_windows_var'):
+                self.autostart_windows_var.set(self.app_settings.get_setting("auto_start_server_with_windows"))
+            if hasattr(self, 'minimize_start_var'):
+                self.minimize_start_var.set(self.app_settings.get_setting("start_minimized"))
+            if hasattr(self, 'minimize_tray_var'):
+                self.minimize_tray_var.set(self.app_settings.get_setting("minimize_to_tray"))
+            if hasattr(self, 'close_tray_var'):
+                self.close_tray_var.set(self.app_settings.get_setting("close_to_tray"))
+            if hasattr(self, 'always_top_var'):
+                self.always_top_var.set(self.app_settings.get_setting("always_on_top"))
+            if hasattr(self, 'remember_position_var'):
+                self.remember_position_var.set(self.app_settings.get_setting("remember_window_position"))
+            if hasattr(self, 'auto_backup_var'):
+                self.auto_backup_var.set(self.app_settings.get_setting("auto_backup_on_start"))
+            if hasattr(self, 'confirm_exit_var'):
+                self.confirm_exit_var.set(self.app_settings.get_setting("confirm_exit"))
+            if hasattr(self, 'hide_console_var'):
+                self.hide_console_var.set(self.app_settings.get_setting("hide_console"))
+            if hasattr(self, 'auto_save_var'):
+                self.auto_save_var.set(self.app_settings.get_setting("auto_save_config"))
+            if hasattr(self, 'notification_sound_var'):
+                self.notification_sound_var.set(self.app_settings.get_setting("notification_sound"))
+                
+        except Exception as e:
+            self.logger.error(f"Error al cargar configuraciones actuales: {e}")
+
     def close_dialog(self):
         """Cerrar el diálogo"""
         if self.changes_made:
