@@ -1,7 +1,0 @@
-default:
-  address: "134.255.220.26:27020" # Reemplaza con la dirección IP y el puerto de tu servidor
-  password: "tucontraseña" # Reemplaza con la contraseña RCON de tu servidor
-  log: "rcon-default.log"
-  type: "rcon"
-  timeout: "10s"
-

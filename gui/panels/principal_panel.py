@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import os
 import threading
+import requests
 from datetime import datetime
 
 class PrincipalPanel:
@@ -96,7 +97,21 @@ class PrincipalPanel:
         self.port_entry.pack(fill="x", pady=(0, 6))
         
         # MultiHome
-        ctk.CTkLabel(col2_frame, text="MultiHome:", font=("Arial", 11, "bold")).pack(anchor="w", pady=(0, 2))
+        multihome_label_frame = ctk.CTkFrame(col2_frame, fg_color="transparent")
+        multihome_label_frame.pack(fill="x", pady=(0, 2))
+        
+        ctk.CTkLabel(multihome_label_frame, text="MultiHome:", font=("Arial", 11, "bold")).pack(side="left")
+        
+        self.ip_auto_button = ctk.CTkButton(
+            multihome_label_frame,
+            text="🌐 IP Pública",
+            command=self.get_public_ip,
+            width=80,
+            height=20,
+            font=("Arial", 9)
+        )
+        self.ip_auto_button.pack(side="right")
+        
         self.multihome_entry = ctk.CTkEntry(col2_frame, placeholder_text="127.0.0.1", width=200, height=28)
         self.multihome_entry.pack(fill="x", pady=(0, 6))
         
@@ -201,6 +216,10 @@ class PrincipalPanel:
             
             # Guardar en archivo
             self.config_manager.save()
+            
+            # Notificar al panel RCON para actualizar password
+            if hasattr(self.main_window, 'rcon_panel'):
+                self.main_window.rcon_panel.refresh_password_from_config()
             
             # Mostrar mensaje de éxito
             self.show_message("✅ Configuración guardada correctamente", "success")
@@ -345,6 +364,11 @@ class PrincipalPanel:
         # 4. Agregar ServerPVE por defecto (como en tu script)
         map_arg += "?ServerPVE=true"
         
+        # 4.5. Agregar argumentos RCON si está habilitado
+        if hasattr(self.main_window, 'rcon_panel') and self.main_window.rcon_panel.get_rcon_enabled():
+            rcon_port = self.main_window.rcon_panel.get_rcon_port()
+            map_arg += f"?RCONEnable=True?RCONPort={rcon_port}"
+        
         # 5. Obtener mods configurados (buscar por servidor/mapa específico primero)
         server_map_key = f"{self.selected_server}_{self.selected_map}" if self.selected_server and self.selected_map else "default"
         mod_ids = self.config_manager.get("server", f"mod_ids_{server_map_key}", "").strip()
@@ -366,6 +390,68 @@ class PrincipalPanel:
         """Actualizar información del servidor seleccionado"""
         self.selected_server = server_name
         self.selected_map = map_name
+    
+    def get_public_ip(self):
+        """Obtener IP pública automáticamente"""
+        def _get_ip():
+            try:
+                self.ip_auto_button.configure(text="🔄 Obteniendo...", state="disabled")
+                
+                # Intentar varios servicios para obtener la IP pública
+                services = [
+                    "https://api.ipify.org",
+                    "https://ipecho.net/plain",
+                    "https://icanhazip.com",
+                    "https://ident.me"
+                ]
+                
+                for service in services:
+                    try:
+                        response = requests.get(service, timeout=5)
+                        if response.status_code == 200:
+                            public_ip = response.text.strip()
+                            # Validar que sea una IP válida
+                            if self.is_valid_ip(public_ip):
+                                # Actualizar campo en el hilo principal
+                                self.parent.after(0, lambda: self.update_multihome_ip(public_ip))
+                                return
+                    except:
+                        continue
+                        
+                # Si no se pudo obtener IP
+                self.parent.after(0, lambda: self.show_ip_error())
+                
+            except Exception as e:
+                self.logger.error(f"Error al obtener IP pública: {e}")
+                self.parent.after(0, lambda: self.show_ip_error())
+            finally:
+                self.parent.after(0, lambda: self.ip_auto_button.configure(text="🌐 IP Pública", state="normal"))
+        
+        threading.Thread(target=_get_ip, daemon=True).start()
+    
+    def is_valid_ip(self, ip):
+        """Validar si una cadena es una IP válida"""
+        try:
+            parts = ip.split('.')
+            return len(parts) == 4 and all(0 <= int(part) <= 255 for part in parts)
+        except:
+            return False
+    
+    def update_multihome_ip(self, ip):
+        """Actualizar campo MultiHome con la IP obtenida"""
+        self.multihome_entry.delete(0, "end")
+        self.multihome_entry.insert(0, ip)
+        self.show_message(f"✅ IP pública obtenida: {ip}", "success")
+    
+    def show_ip_error(self):
+        """Mostrar error al no poder obtener IP"""
+        self.show_message("❌ No se pudo obtener la IP pública. Usando IP local.", "error")
+    
+    def refresh_rcon_args(self):
+        """Refrescar vista previa cuando cambian configuraciones RCON"""
+        # Este método puede ser llamado desde el panel RCON
+        # Para futuras implementaciones de vista previa en tiempo real
+        pass
     
     def preview_arguments(self):
         """Mostrar una vista previa de los argumentos que se generarán"""

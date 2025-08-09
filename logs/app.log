@@ -1134,3 +1134,341 @@
 2025-08-08 20:23:31 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
 2025-08-08 20:23:31 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
 2025-08-08 20:23:31 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:30:05 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 20:30:05 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 20:30:05 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 20:30:05 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 20:30:05 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 20:30:06 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:30:06 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:30:06 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:30:06 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 20:30:06 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 20:30:06 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:30:06 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:37:45 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 20:37:45 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 20:37:45 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 20:37:45 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 20:37:45 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 20:37:45 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:37:45 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:37:45 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:37:45 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 20:37:45 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 20:37:45 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:37:45 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:40:17 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 20:40:17 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 20:40:17 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 20:40:17 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 20:40:17 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 20:40:17 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:40:17 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:40:17 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:40:17 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 20:40:17 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 20:40:17 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:40:17 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:40:31 - ArkServerManager - INFO - Ejecutando comando RCON: rcon\rcon.exe -a 127.0.0.1:27020 -p  [comando oculto]
+2025-08-08 20:40:44 - ArkServerManager - INFO - Ejecutando comando RCON: rcon\rcon.exe -a 127.0.0.1:27020 -p  [comando oculto]
+2025-08-08 20:40:57 - ArkServerManager - INFO - Ejecutando comando RCON: rcon\rcon.exe -a 127.0.0.1:27020 -p  [comando oculto]
+2025-08-08 20:43:57 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 20:43:57 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 20:43:57 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 20:43:57 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 20:43:57 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 20:43:58 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:43:58 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:43:58 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:43:58 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 20:43:58 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 20:43:58 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:43:58 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:44:32 - ArkServerManager - INFO - Ejecutando comando RCON: rcon\rcon.exe -a 127.0.0.1:27020 -p ert [comando oculto]
+2025-08-08 20:44:42 - ArkServerManager - INFO - Ejecutando comando RCON: rcon\rcon.exe -a 127.0.0.1:27020 -p ert [comando oculto]
+2025-08-08 20:45:09 - ArkServerManager - INFO - Ejecutando comando RCON: rcon\rcon.exe -a 127.0.0.1:27020 -p ert [comando oculto]
+2025-08-08 20:53:38 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 20:53:38 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 20:53:38 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 20:53:38 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 20:53:38 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 20:53:38 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:53:38 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:53:38 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:53:38 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 20:53:38 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 20:53:38 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:53:38 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:54:40 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 20:54:40 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 20:54:40 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 20:54:40 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 20:54:40 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 20:54:40 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:54:40 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:54:40 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:54:40 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 20:54:40 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 20:54:40 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:54:40 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:55:18 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 20:55:18 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 20:55:18 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 20:55:18 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 20:55:18 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 20:55:18 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 20:55:18 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 20:55:18 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:55:18 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 20:55:18 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 20:55:18 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 20:55:18 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 20:55:49 - ArkServerManager - INFO - Ejecutando comando RCON: rcon\rcon.exe -a 127.0.0.1:27020 -p ert [comando oculto]
+2025-08-08 20:55:54 - ArkServerManager - INFO - Ejecutando comando RCON: rcon\rcon.exe -a 127.0.0.1:27020 -p ert [comando oculto]
+2025-08-08 20:56:10 - ArkServerManager - INFO - Ejecutando comando RCON: rcon\rcon.exe -a 127.0.0.1:27020 -p ert [comando oculto]
+2025-08-08 21:00:24 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 21:00:24 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 21:00:24 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 21:00:24 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 21:00:24 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 21:00:25 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 21:00:25 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 21:00:25 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:00:25 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 21:00:25 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 21:00:25 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:00:25 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 21:00:25 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.1, Puerto: 27020
+2025-08-08 21:00:25 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: '1', Habilitado: False
+2025-08-08 21:00:40 - ArkServerManager - INFO - Cambiando estado RCON switch a: 1
+2025-08-08 21:00:40 - ArkServerManager - INFO - Estado RCON guardado en configuración: '1'
+2025-08-08 21:00:55 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 21:00:55 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 21:00:55 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 21:00:55 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 21:00:55 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 21:00:55 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 21:00:55 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 21:00:55 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:00:55 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 21:00:55 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 21:00:55 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:00:55 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 21:00:55 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.1, Puerto: 27020
+2025-08-08 21:00:55 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: '1', Habilitado: True
+2025-08-08 21:01:51 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 21:01:52 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 21:01:52 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 21:01:52 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 21:01:52 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 21:01:52 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 21:01:52 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 21:01:52 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:01:52 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 21:01:52 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 21:01:52 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:01:52 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 21:01:52 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.1, Puerto: 27020
+2025-08-08 21:01:52 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: '1', Habilitado: True
+2025-08-08 21:02:04 - ArkServerManager - INFO - Guardando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-08 21:02:10 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 21:02:10 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 21:02:10 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 21:02:10 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 21:02:10 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 21:02:10 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 21:02:10 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 21:02:10 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:02:10 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 21:02:10 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 21:02:10 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:02:10 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 21:02:10 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-08 21:02:10 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: '1', Habilitado: True
+2025-08-08 21:02:18 - ArkServerManager - INFO - Ejecutando comando RCON: rcon\rcon.exe -a 127.0.0.12:27030 -p ert [comando oculto]
+2025-08-08 21:03:03 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 21:03:03 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 21:03:03 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 21:03:03 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 21:03:03 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 21:03:03 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 21:03:03 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 21:03:03 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:03:03 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 21:03:03 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 21:03:03 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:03:03 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 21:03:03 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-08 21:03:03 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: '1', Habilitado: True
+2025-08-08 21:03:38 - ArkServerManager - INFO - Configuración cargada correctamente
+2025-08-08 21:03:38 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 21:03:38 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 21:03:38 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 21:03:38 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 21:03:39 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 21:03:39 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 21:03:39 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:03:39 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 21:03:39 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 21:03:39 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:03:39 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 21:03:39 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-08 21:03:39 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: '1', Habilitado: True
+2025-08-08 21:10:24 - ArkServerManager - ERROR - Error al cargar D:\ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer\GameUserSettings.ini: While reading from 'D:\\ASA\\Prueba2\\ShooterGame\\Saved\\Config\\WindowsServer\\GameUserSettings.ini' [line 117]: option 'lastjoinedsessionpercategory' in section '/Script/ShooterGame.ShooterGameUserSettings' already exists
+2025-08-08 21:10:24 - ArkServerManager - ERROR - Error al cargar D:\ASA\Prueba\ShooterGame\Saved\Config\WindowsServer\GameUserSettings.ini: While reading from 'D:\\ASA\\Prueba\\ShooterGame\\Saved\\Config\\WindowsServer\\GameUserSettings.ini' [line 20]: option 'resourcesrespawnperiodmultiplier' in section 'ServerSettings' already exists
+2025-08-08 21:10:24 - ArkServerManager - ERROR - Error al cargar D:\ASA\Prueba\ShooterGame\Saved\Config\WindowsServer\Game.ini: While reading from 'D:\\ASA\\Prueba\\ShooterGame\\Saved\\Config\\WindowsServer\\Game.ini' [line 177]: option 'structuredamagemultiplier' in section '/script/shootergame.shootergamemode' already exists
+2025-08-08 21:10:24 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 21:10:24 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 21:10:24 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 21:10:24 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 21:10:25 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 21:10:25 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 21:10:25 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:10:25 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 21:10:25 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 21:10:25 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:10:25 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 21:10:25 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-08 21:10:25 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: '1', Habilitado: True
+2025-08-08 21:18:09 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 21:18:09 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 21:18:09 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 21:18:09 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 21:18:09 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 21:18:09 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 21:18:09 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:18:09 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 21:18:09 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 21:18:09 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:18:09 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 21:18:09 - ArkServerManager - INFO - Buscando configs en: D:/ASA
+2025-08-08 21:18:09 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer\GameUserSettings.ini
+2025-08-08 21:18:09 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba\ShooterGame\Saved\Config\WindowsServer\GameUserSettings.ini
+2025-08-08 21:18:09 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba\ShooterGame\Saved\Config\WindowsServer\Game.ini
+2025-08-08 21:18:09 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba2\Engine\Programs\CrashReportClient\Saved\Config\WindowsEditor\Engine.ini
+2025-08-08 21:18:09 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba\Engine\Programs\CrashReportClient\Saved\Config\WindowsEditor\Engine.ini
+2025-08-08 21:18:10 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:18:11 - ArkServerManager - ERROR - Error al actualizar estadísticas del sistema: main thread is not in main loop
+2025-08-08 21:18:13 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:18:14 - ArkServerManager - ERROR - Error al actualizar estadísticas del servidor: main thread is not in main loop
+2025-08-08 21:18:16 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:18:18 - ArkServerManager - ERROR - Error al actualizar estadísticas del sistema: main thread is not in main loop
+2025-08-08 21:18:19 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:18:20 - ArkServerManager - ERROR - Error al actualizar estadísticas del servidor: main thread is not in main loop
+2025-08-08 21:18:22 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-08 21:18:22 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: '1', Habilitado: True
+2025-08-08 21:18:22 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:18:37 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 21:18:37 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 21:18:37 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 21:18:37 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 21:18:37 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 21:18:37 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 21:18:37 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:18:37 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 21:18:37 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 21:18:37 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:18:37 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 21:18:37 - ArkServerManager - INFO - Buscando configs en: D:/ASA
+2025-08-08 21:18:37 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer\GameUserSettings.ini
+2025-08-08 21:18:37 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba\ShooterGame\Saved\Config\WindowsServer\GameUserSettings.ini
+2025-08-08 21:18:37 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba\ShooterGame\Saved\Config\WindowsServer\Game.ini
+2025-08-08 21:18:38 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba2\Engine\Programs\CrashReportClient\Saved\Config\WindowsEditor\Engine.ini
+2025-08-08 21:18:38 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba\Engine\Programs\CrashReportClient\Saved\Config\WindowsEditor\Engine.ini
+2025-08-08 21:18:38 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:18:39 - ArkServerManager - ERROR - Error al actualizar estadísticas del sistema: main thread is not in main loop
+2025-08-08 21:18:41 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:18:42 - ArkServerManager - ERROR - Error al actualizar estadísticas del servidor: main thread is not in main loop
+2025-08-08 21:18:44 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:18:46 - ArkServerManager - ERROR - Error al actualizar estadísticas del sistema: main thread is not in main loop
+2025-08-08 21:18:47 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:18:48 - ArkServerManager - ERROR - Error al actualizar estadísticas del servidor: main thread is not in main loop
+2025-08-08 21:18:50 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-08 21:18:50 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: '1', Habilitado: True
+2025-08-08 21:18:50 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:19:33 - ArkServerManager - INFO - Buscando configs en: D:/ASA
+2025-08-08 21:19:33 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer\GameUserSettings.ini
+2025-08-08 21:19:33 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba\ShooterGame\Saved\Config\WindowsServer\GameUserSettings.ini
+2025-08-08 21:19:34 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba\ShooterGame\Saved\Config\WindowsServer\Game.ini
+2025-08-08 21:19:34 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba2\Engine\Programs\CrashReportClient\Saved\Config\WindowsEditor\Engine.ini
+2025-08-08 21:19:34 - ArkServerManager - INFO - Encontrado archivo config: D:\ASA\Prueba\Engine\Programs\CrashReportClient\Saved\Config\WindowsEditor\Engine.ini
+2025-08-08 21:28:22 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 21:28:22 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 21:28:22 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 21:28:22 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 21:28:22 - ArkServerManager - INFO - Buscando ejecutable en: C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/Asa2/examples\test_config
+2025-08-08 21:28:22 - ArkServerManager - DEBUG - Ruta no existe: C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/Asa2/examples\test_config\ShooterGame\Binaries\Win64
+2025-08-08 21:28:22 - ArkServerManager - DEBUG - Ruta no existe: C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/Asa2/examples\test_config\ShooterGame\Binaries
+2025-08-08 21:28:22 - ArkServerManager - DEBUG - Ruta no existe: C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/Asa2/examples\test_config\Engine\Binaries\Win64
+2025-08-08 21:28:22 - ArkServerManager - DEBUG - Ruta no existe: C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/Asa2/examples\test_config\Binaries\Win64
+2025-08-08 21:28:22 - ArkServerManager - DEBUG - Ruta no existe: C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/Asa2/examples\test_config\Binaries
+2025-08-08 21:28:22 - ArkServerManager - INFO - Verificando ruta común: C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/Asa2/examples\test_config
+2025-08-08 21:28:22 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/Asa2/examples\test_config
+2025-08-08 21:28:22 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-08 21:28:22 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/Asa2/examples\test_config
+2025-08-08 21:28:22 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-08 21:28:22 - ArkServerManager - INFO - test_config/
+2025-08-08 21:28:22 - ArkServerManager - INFO -   Game.ini
+2025-08-08 21:28:22 - ArkServerManager - INFO -   GameUserSettings.ini
+2025-08-08 21:28:22 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 21:28:22 - ArkServerManager - INFO - Buscando configs en: C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/Asa2/examples
+2025-08-08 21:28:22 - ArkServerManager - INFO - Encontrado archivo config: C:\Users\roder\OneDrive\Desktop\Nuevacarpeta\Asa2\examples\GameUserSettings.ini
+2025-08-08 21:28:22 - ArkServerManager - INFO - Encontrado archivo config: C:\Users\roder\OneDrive\Desktop\Nuevacarpeta\Asa2\examples\test_config\GameUserSettings.ini
+2025-08-08 21:28:22 - ArkServerManager - INFO - Encontrado archivo config: C:\Users\roder\OneDrive\Desktop\Nuevacarpeta\Asa2\examples\Game.ini
+2025-08-08 21:28:22 - ArkServerManager - INFO - Encontrado archivo config: C:\Users\roder\OneDrive\Desktop\Nuevacarpeta\Asa2\examples\test_config\Game.ini
+2025-08-08 21:28:23 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:28:24 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-08 21:28:24 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: '1', Habilitado: True
+2025-08-08 21:39:37 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 21:39:37 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 21:39:37 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 21:39:37 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 21:39:38 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 21:39:38 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 21:39:38 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:39:38 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 21:39:38 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 21:39:38 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:39:38 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 21:39:38 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba\ShooterGame\Saved\Config\WindowsServer
+2025-08-08 21:39:38 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:39:39 - ArkServerManager - ERROR - Error al actualizar estadísticas del sistema: main thread is not in main loop
+2025-08-08 21:39:41 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:39:42 - ArkServerManager - ERROR - Error al actualizar estadísticas del servidor: main thread is not in main loop
+2025-08-08 21:39:44 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:39:45 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba
+2025-08-08 21:39:46 - ArkServerManager - ERROR - Error al actualizar estadísticas del sistema: main thread is not in main loop
+2025-08-08 21:39:47 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:39:48 - ArkServerManager - INFO - Cargado Game.ini para Prueba
+2025-08-08 21:39:48 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-08 21:39:48 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: '1', Habilitado: True
+2025-08-08 21:39:49 - ArkServerManager - ERROR - Error al actualizar estadísticas del servidor: main thread is not in main loop
+2025-08-08 21:41:36 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba\ShooterGame\Saved\Config\WindowsServer
+2025-08-08 21:41:43 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba
+2025-08-08 21:41:44 - ArkServerManager - INFO - Cargado Game.ini para Prueba
+2025-08-08 21:47:24 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 21:47:24 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 21:47:24 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 21:47:24 - ArkServerManager - INFO - Monitoreo iniciado
+2025-08-08 21:47:24 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 21:47:24 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 21:47:24 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:47:24 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 21:47:24 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 21:47:24 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 21:47:24 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 21:47:24 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba\ShooterGame\Saved\Config\WindowsServer
+2025-08-08 21:47:25 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:47:26 - ArkServerManager - ERROR - Error al actualizar estadísticas del sistema: main thread is not in main loop
+2025-08-08 21:47:28 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:47:29 - ArkServerManager - ERROR - Error al actualizar estadísticas del servidor: main thread is not in main loop
+2025-08-08 21:47:31 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:47:32 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba
+2025-08-08 21:47:33 - ArkServerManager - INFO - Cargado Game.ini para Prueba
+2025-08-08 21:47:33 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-08 21:47:33 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: '1', Habilitado: True
+2025-08-08 21:47:33 - ArkServerManager - ERROR - Error al actualizar estadísticas del sistema: main thread is not in main loop
+2025-08-08 21:47:34 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 21:47:35 - ArkServerManager - ERROR - Error al actualizar estadísticas del servidor: main thread is not in main loop
+2025-08-08 21:48:52 - ArkServerManager - ERROR - Error al actualizar estadísticas del servidor: process no longer exists (pid=356, name='powershell.exe')

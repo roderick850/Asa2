@@ -7,6 +7,7 @@ from .panels.backup_panel import BackupPanel
 from .panels.players_panel import PlayersPanel
 from .panels.mods_panel import ModsPanel
 from .panels.logs_panel import LogsPanel
+from .panels.rcon_panel import RconPanel
 
 class MainWindow:
     def __init__(self, root, config_manager, logger):
@@ -331,6 +332,17 @@ class MainWindow:
         )
         self.tab_reinicios.grid(row=0, column=4, padx=2, pady=2)
         
+        self.tab_rcon = ctk.CTkButton(
+            tabs_frame,
+            text="RCON",
+            command=lambda: self.show_tab("RCON"),
+            fg_color="gray",
+            hover_color="darkgray",
+            width=100,
+            height=25
+        )
+        self.tab_rcon.grid(row=0, column=5, padx=2, pady=2)
+        
         self.tab_logs = ctk.CTkButton(
             tabs_frame,
             text="Logs",
@@ -340,7 +352,7 @@ class MainWindow:
             width=100,
             height=25
         )
-        self.tab_logs.grid(row=0, column=5, padx=2, pady=2)
+        self.tab_logs.grid(row=0, column=6, padx=2, pady=2)
         
     def create_tabview(self):
         """Crear el sistema de pestañas principal"""
@@ -353,16 +365,18 @@ class MainWindow:
         self.tab_mods_content = self.tabview.add("Mods")
         self.tab_backup_content = self.tabview.add("Backup")
         self.tab_reinicios_content = self.tabview.add("Reinicios")
+        self.tab_rcon_content = self.tabview.add("RCON")
         self.tab_logs_content = self.tabview.add("Logs")
         
         # Crear paneles
         self.principal_panel = PrincipalPanel(self.tab_principal_content, self.config_manager, self.logger, self)
         # El ServerPanel ya no se muestra en la interfaz, pero se mantiene para funcionalidad backend
         self.server_panel = ServerPanel(None, self.config_manager, self.logger, self)
-        self.config_panel = ConfigPanel(self.tab_configuraciones_content, self.config_manager, self.logger)
+        self.config_panel = ConfigPanel(self.tab_configuraciones_content, self.config_manager, self.logger, self)
         self.mods_panel = ModsPanel(self.tab_mods_content, self.config_manager, self.logger, self)
         self.monitoring_panel = MonitoringPanel(self.tab_reinicios_content, self.config_manager, self.logger)
         self.backup_panel = BackupPanel(self.tab_backup_content, self.config_manager, self.logger)
+        self.rcon_panel = RconPanel(self.tab_rcon_content, self.config_manager, self.logger, self)
         self.logs_panel = LogsPanel(self.tab_logs_content, self.config_manager, self.logger)
         
         # Configurar callbacks para los botones
@@ -402,6 +416,7 @@ class MainWindow:
         self.tab_mods.configure(fg_color="gray")
         self.tab_backup.configure(fg_color="gray")
         self.tab_reinicios.configure(fg_color="gray")
+        self.tab_rcon.configure(fg_color="gray")
         self.tab_logs.configure(fg_color="gray")
         
         if tab_name == "Principal":
@@ -419,6 +434,9 @@ class MainWindow:
         elif tab_name == "Reinicios":
             self.tab_reinicios.configure(fg_color="blue")
             self.tabview.set("Reinicios")
+        elif tab_name == "RCON":
+            self.tab_rcon.configure(fg_color="blue")
+            self.tabview.set("RCON")
         elif tab_name == "Logs":
             self.tab_logs.configure(fg_color="blue")
             self.tabview.set("Logs")
@@ -520,6 +538,9 @@ class MainWindow:
         # Actualizar contexto de mods
         if hasattr(self, 'mods_panel'):
             self.mods_panel.update_server_map_context(server_name, self.selected_map)
+        # Actualizar panel de configuración
+        if hasattr(self, 'config_panel'):
+            self.config_panel.update_server_selection(server_name)
     
     def on_map_selected(self, map_name):
         """Maneja la selección de un mapa"""

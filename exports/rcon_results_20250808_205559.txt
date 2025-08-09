@@ -1,0 +1,7 @@
+[20:55:49] ▶️ Ejecutando: GetServerInfo
+[20:55:51] 📋 Resultado:
+❌ Error: cli: execute: auth: rcon: dial tcp 127.0.0.1:27020: connectex: No connection could be made because the target machine actively refused it.
+[20:55:54] ▶️ Ejecutando: GetServerInfo
+[20:55:56] 📋 Resultado:
+❌ Error: cli: execute: auth: rcon: dial tcp 127.0.0.1:27020: connectex: No connection could be made because the target machine actively refused it.
+
