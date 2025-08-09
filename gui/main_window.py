@@ -6,7 +6,7 @@ from .panels.monitoring_panel import MonitoringPanel
 from .panels.backup_panel import BackupPanel
 from .panels.players_panel import PlayersPanel
 from .panels.mods_panel import ModsPanel
-from .panels.logs_panel_new import LogsPanelNew
+from .panels.logs_panel import LogsPanel
 from .panels.rcon_panel import RconPanel
 
 class MainWindow:
@@ -381,7 +381,7 @@ class MainWindow:
         self.monitoring_panel = MonitoringPanel(self.tab_reinicios_content, self.config_manager, self.logger, self)
         self.backup_panel = BackupPanel(self.tab_backup_content, self.config_manager, self.logger, self)
         self.rcon_panel = RconPanel(self.tab_rcon_content, self.config_manager, self.logger, self)
-        self.logs_panel = LogsPanelNew(self.tab_logs_content, self.config_manager, self.logger, self)
+        self.logs_panel = LogsPanel(self.tab_logs_content, self.config_manager, self.logger, self)
         
         # Configurar callbacks para los botones
         self.setup_button_callbacks()
@@ -389,8 +389,8 @@ class MainWindow:
         # Inicializar la lista de servidores después de crear el server_panel
         self.refresh_servers_list()
         
-        # Cargar la última selección de servidor/mapa
-        self.load_last_server_map_selection()
+        # Cargar la última selección de servidor/mapa con un pequeño delay
+        self.root.after(200, self.load_last_server_map_selection)
         
         # Registrar evento de inicio de la aplicación
         if hasattr(self, 'server_event_logger'):
@@ -479,22 +479,13 @@ class MainWindow:
     
     def add_log_message(self, message):
         """Agregar mensaje al log del sistema"""
-        if hasattr(self, 'logs_text'):
-            # Habilitar temporalmente para escribir
-            self.logs_text.configure(state="normal")
-            
-            # Obtener timestamp actual
-            from datetime import datetime
-            timestamp = datetime.now().strftime("%H:%M:%S")
-            
-            # Agregar mensaje con timestamp
-            self.logs_text.insert("end", f"[{timestamp}] {message}\n")
-            
-            # Deshabilitar para solo lectura
-            self.logs_text.configure(state="disabled")
-            
-            # Hacer scroll al final
-            self.logs_text.see("end")
+        # Ahora usamos el logger principal en lugar del widget de logs
+        self.logger.info(message)
+        
+        # También actualizar el panel de logs si existe
+        if hasattr(self, 'logs_panel') and hasattr(self.logs_panel, 'load_content'):
+            # Programar la actualización para el siguiente ciclo de la GUI
+            self.root.after(100, self.logs_panel.load_content)
         
     def browse_root_path(self):
         """Buscar directorio raíz para servidores"""
@@ -682,37 +673,83 @@ class MainWindow:
             last_server = self.config_manager.get("app", "last_server", "")
             last_map = self.config_manager.get("app", "last_map", "")
             
+            self.logger.info(f"Intentando cargar última selección - Servidor: {last_server}, Mapa: {last_map}")
+            
             if last_server and hasattr(self, 'server_dropdown'):
                 # Verificar si el servidor existe en la lista
                 try:
                     current_values = self.server_dropdown.cget("values")
+                    self.logger.info(f"Valores actuales del dropdown de servidores: {current_values}")
                     if current_values and last_server in current_values:
                         self.server_dropdown.set(last_server)
                         self.selected_server = last_server
                         self.add_log_message(f"📂 Servidor restaurado: {last_server}")
-                except:
-                    pass
+                        self.logger.info(f"Servidor {last_server} establecido correctamente")
+                        
+                        # Simular la selección del servidor para cargar mapas
+                        self.on_server_selected(last_server)
+                    else:
+                        self.logger.warning(f"Servidor {last_server} no encontrado en la lista: {current_values}")
+                except Exception as e:
+                    self.logger.error(f"Error al establecer servidor: {e}")
             
+            # Restaurar el mapa después de un pequeño delay para permitir que se carguen los mapas
             if last_map and hasattr(self, 'map_dropdown'):
-                # Verificar si el mapa existe en la lista
-                try:
-                    current_values = self.map_dropdown.cget("values")
-                    if current_values and last_map in current_values:
-                        self.map_dropdown.set(last_map)
-                        self.selected_map = last_map
-                        self.add_log_message(f"🗺️ Mapa restaurado: {last_map}")
-                except:
-                    pass
-                    
-            # Notificar a los paneles si se cargó alguna selección
-            if last_server and last_map:
-                if hasattr(self, 'principal_panel'):
-                    self.principal_panel.update_server_info(last_server, last_map)
-                if hasattr(self, 'mods_panel'):
-                    self.mods_panel.update_server_map_context(last_server, last_map)
+                self.logger.info(f"Programando restauración del mapa {last_map} con delay")
+                self.root.after(500, lambda: self.restore_map_selection(last_map))
+            else:
+                self.logger.warning(f"No se puede restaurar mapa - last_map: {last_map}, tiene map_dropdown: {hasattr(self, 'map_dropdown')}")
                     
         except Exception as e:
             self.logger.error(f"Error al cargar última selección: {e}")
+    
+    def save_last_server_map_selection(self):
+        """Guardar la última selección de servidor y mapa"""
+        try:
+            if hasattr(self, 'selected_server') and self.selected_server:
+                self.config_manager.set("app", "last_server", self.selected_server)
+            
+            if hasattr(self, 'selected_map') and self.selected_map:
+                self.config_manager.set("app", "last_map", self.selected_map)
+            
+            self.config_manager.save()
+            
+        except Exception as e:
+            self.logger.error(f"Error al guardar última selección: {e}")
+    
+    def restore_map_selection(self, last_map):
+        """Restaurar la selección del mapa después de que se hayan cargado los mapas"""
+        try:
+            self.logger.info(f"Iniciando restauración del mapa: {last_map}")
+            if hasattr(self, 'map_dropdown'):
+                # Intentar hasta 10 veces con un delay de 100ms cada una
+                max_attempts = 10
+                attempt = 0
+                
+                def try_restore():
+                    nonlocal attempt
+                    attempt += 1
+                    
+                    current_values = self.map_dropdown.cget("values")
+                    self.logger.info(f"Intento {attempt}: Valores actuales del dropdown de mapas: {current_values}")
+                    if current_values and last_map in current_values:
+                        self.map_dropdown.set(last_map)
+                        # Importante: Llamar manualmente a on_map_selected para disparar todas las callbacks
+                        self.on_map_selected(last_map)
+                        self.add_log_message(f"🗺️ Mapa restaurado: {last_map}")
+                        return True
+                    elif attempt < max_attempts:
+                        # Intentar de nuevo después de 100ms
+                        self.root.after(100, try_restore)
+                        return False
+                    else:
+                        self.logger.warning(f"No se pudo restaurar el mapa {last_map} después de {max_attempts} intentos")
+                        return False
+                
+                try_restore()
+                
+        except Exception as e:
+            self.logger.error(f"Error al restaurar selección de mapa: {e}")
     
     def start_server(self):
         """Inicia el servidor"""

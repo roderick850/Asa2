@@ -2,6 +2,7 @@ import customtkinter as ctk
 import os
 import threading
 import requests
+import configparser
 from datetime import datetime
 
 class PrincipalPanel:
@@ -217,6 +218,9 @@ class PrincipalPanel:
             # Guardar en archivo
             self.config_manager.save()
             
+            # Guardar en GameUserSettings.ini
+            self.save_to_gameusersettings()
+            
             # Notificar al panel RCON para actualizar password
             if hasattr(self.main_window, 'rcon_panel'):
                 self.main_window.rcon_panel.refresh_password_from_config()
@@ -227,6 +231,166 @@ class PrincipalPanel:
         except Exception as e:
             self.logger.error(f"Error al guardar configuración: {e}")
             self.show_message(f"❌ Error al guardar: {str(e)}", "error")
+    
+    def save_to_gameusersettings(self):
+        """Guardar ServerPassword, AdminPassword y SessionName en GameUserSettings.ini"""
+        try:
+            # Obtener servidor actual desde main_window si está disponible
+            if not self.main_window or not hasattr(self.main_window, 'selected_server'):
+                return
+            
+            selected_server = self.main_window.selected_server
+            if not selected_server:
+                return
+            
+            # Construir ruta al archivo GameUserSettings.ini
+            server_path = self.config_manager.get("server", "root_path", "")
+            if not server_path:
+                return
+            
+            gameusersettings_path = os.path.join(
+                server_path, 
+                selected_server, 
+                "ShooterGame", 
+                "Saved", 
+                "Config", 
+                "WindowsServer", 
+                "GameUserSettings.ini"
+            )
+            
+            # Crear directorio si no existe
+            os.makedirs(os.path.dirname(gameusersettings_path), exist_ok=True)
+            
+            # Leer archivo existente o crear uno nuevo
+            config = configparser.ConfigParser()
+            config.optionxform = str  # Preservar mayúsculas/minúsculas
+            if os.path.exists(gameusersettings_path):
+                try:
+                    config.read(gameusersettings_path, encoding='utf-8')
+                except configparser.DuplicateOptionError as e:
+                    if self.logger:
+                        self.logger.warning(f"Archivo GameUserSettings.ini tiene opciones duplicadas: {e}")
+                    # Crear un nuevo config si hay problemas de duplicación
+                    config = configparser.ConfigParser()
+                    config.optionxform = str
+            
+            # Crear secciones si no existen
+            if 'ServerSettings' not in config:
+                config.add_section('ServerSettings')
+            if 'SessionSettings' not in config:
+                config.add_section('SessionSettings')
+            if '/Script/Engine.GameSession' not in config:
+                config.add_section('/Script/Engine.GameSession')
+            
+            # Guardar ServerPassword y AdminPassword en [ServerSettings]
+            server_password = self.server_password_entry.get()
+            admin_password = self.admin_password_entry.get()
+            
+            if server_password:
+                config.set('ServerSettings', 'ServerPassword', server_password)
+            elif config.has_option('ServerSettings', 'ServerPassword'):
+                config.remove_option('ServerSettings', 'ServerPassword')
+                
+            if admin_password:
+                config.set('ServerSettings', 'ServerAdminPassword', admin_password)
+            elif config.has_option('ServerSettings', 'ServerAdminPassword'):
+                config.remove_option('ServerSettings', 'ServerAdminPassword')
+            
+            # Guardar SessionName en [SessionSettings]
+            session_name = self.session_name_entry.get()
+            if session_name:
+                config.set('SessionSettings', 'SessionName', session_name)
+            elif config.has_option('SessionSettings', 'SessionName'):
+                config.remove_option('SessionSettings', 'SessionName')
+            
+            # Guardar MaxPlayers en [/Script/Engine.GameSession]
+            max_players = self.max_players_entry.get()
+            if max_players:
+                config.set('/Script/Engine.GameSession', 'MaxPlayers', max_players)
+            elif config.has_option('/Script/Engine.GameSession', 'MaxPlayers'):
+                config.remove_option('/Script/Engine.GameSession', 'MaxPlayers')
+            
+            # Escribir archivo
+            with open(gameusersettings_path, 'w', encoding='utf-8') as configfile:
+                config.write(configfile)
+            
+            if self.logger:
+                self.logger.info(f"Configuración guardada en GameUserSettings.ini: {gameusersettings_path}")
+                
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al guardar en GameUserSettings.ini: {e}")
+            print(f"Error al guardar en GameUserSettings.ini: {e}")
+    
+    def load_from_gameusersettings(self):
+        """Cargar ServerPassword, AdminPassword y SessionName desde GameUserSettings.ini"""
+        try:
+            # Obtener servidor actual desde main_window si está disponible
+            if not self.main_window or not hasattr(self.main_window, 'selected_server'):
+                return
+            
+            selected_server = self.main_window.selected_server
+            if not selected_server:
+                return
+            
+            # Construir ruta al archivo GameUserSettings.ini
+            server_path = self.config_manager.get("server", "root_path", "")
+            if not server_path:
+                return
+            
+            gameusersettings_path = os.path.join(
+                server_path, 
+                selected_server, 
+                "ShooterGame", 
+                "Saved", 
+                "Config", 
+                "WindowsServer", 
+                "GameUserSettings.ini"
+            )
+            
+            if not os.path.exists(gameusersettings_path):
+                return
+            
+            # Leer archivo
+            config = configparser.ConfigParser()
+            config.optionxform = str  # Preservar mayúsculas/minúsculas
+            try:
+                config.read(gameusersettings_path, encoding='utf-8')
+            except configparser.DuplicateOptionError as e:
+                if self.logger:
+                    self.logger.warning(f"Error leyendo GameUserSettings.ini: {e}")
+                return
+            
+            # Cargar valores en los campos
+            if config.has_section('ServerSettings'):
+                # ServerPassword
+                if config.has_option('ServerSettings', 'ServerPassword'):
+                    self.server_password_entry.delete(0, "end")
+                    self.server_password_entry.insert(0, config.get('ServerSettings', 'ServerPassword'))
+                
+                # ServerAdminPassword
+                if config.has_option('ServerSettings', 'ServerAdminPassword'):
+                    self.admin_password_entry.delete(0, "end")
+                    self.admin_password_entry.insert(0, config.get('ServerSettings', 'ServerAdminPassword'))
+            
+            if config.has_section('SessionSettings'):
+                # SessionName
+                if config.has_option('SessionSettings', 'SessionName'):
+                    self.session_name_entry.delete(0, "end")
+                    self.session_name_entry.insert(0, config.get('SessionSettings', 'SessionName'))
+            
+            if config.has_section('/Script/Engine.GameSession'):
+                # MaxPlayers
+                if config.has_option('/Script/Engine.GameSession', 'MaxPlayers'):
+                    self.max_players_entry.delete(0, "end")
+                    self.max_players_entry.insert(0, config.get('/Script/Engine.GameSession', 'MaxPlayers'))
+            
+            if self.logger:
+                self.logger.info(f"Configuración cargada desde GameUserSettings.ini: {gameusersettings_path}")
+                
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al cargar desde GameUserSettings.ini: {e}")
     
     def load_configuration(self):
         """Cargar configuración desde archivo"""
@@ -244,6 +408,9 @@ class PrincipalPanel:
             # Cargar valores
             self.load_saved_config()
             
+            # Cargar también desde GameUserSettings.ini
+            self.load_from_gameusersettings()
+            
             self.show_message("✅ Configuración cargada correctamente", "success")
             
         except Exception as e:
@@ -252,13 +419,27 @@ class PrincipalPanel:
     
     def start_server_with_config(self):
         """Iniciar servidor con la configuración actual"""
+        # Obtener servidor y mapa desde main_window
+        selected_server = None
+        selected_map = None
+        
+        if self.main_window and hasattr(self.main_window, 'selected_server'):
+            selected_server = self.main_window.selected_server
+            selected_map = self.main_window.selected_map
+        
+        # Fallback a las variables locales si no están disponibles en main_window
+        if not selected_server:
+            selected_server = self.selected_server
+        if not selected_map:
+            selected_map = self.selected_map
+        
         # Verificar si hay un servidor seleccionado
-        if not self.selected_server:
+        if not selected_server:
             self.show_message("❌ Debe seleccionar un servidor primero", "error")
             return
         
         # Verificar si hay un mapa seleccionado
-        if not self.selected_map:
+        if not selected_map:
             self.show_message("❌ Debe seleccionar un mapa primero", "error")
             return
         
@@ -270,14 +451,14 @@ class PrincipalPanel:
         
         # Iniciar servidor con argumentos personalizados
         try:
-            self.show_message(f"🚀 Iniciando servidor {self.selected_server} con mapa {self.selected_map}", "info")
+            self.show_message(f"🚀 Iniciando servidor {selected_server} con mapa {selected_map}", "info")
             
             # Llamar al método de inicio del servidor con argumentos personalizados
             if self.server_manager:
                 self.server_manager.start_server_with_args(
                     self.add_status_message, 
-                    self.selected_server, 
-                    self.selected_map, 
+                    selected_server, 
+                    selected_map, 
                     server_args
                 )
                 
@@ -295,6 +476,8 @@ class PrincipalPanel:
         selected_map = None
         if hasattr(self.main_window, 'selected_map') and self.main_window.selected_map:
             selected_map = self.main_window.selected_map
+        elif self.selected_map:
+            selected_map = self.selected_map
         
         # Mapear nombres de mapas a sus identificadores técnicos
         map_identifiers = {
@@ -320,10 +503,6 @@ class PrincipalPanel:
             map_arg = "TheIsland_WP?listen"
         
         # 2. Agregar parámetros básicos en el orden correcto
-        # ServerPassword (si existe)
-        if self.server_password_entry.get():
-            map_arg += f"?ServerPassword={self.server_password_entry.get()}"
-        
         # Port
         port = self.port_entry.get() or "7777"
         map_arg += f"?Port={port}"
@@ -332,21 +511,9 @@ class PrincipalPanel:
         query_port = self.query_port_entry.get() or "27015"
         map_arg += f"?QueryPort={query_port}"
         
-        # MaxPlayers
-        if self.max_players_entry.get():
-            map_arg += f"?MaxPlayers={self.max_players_entry.get()}"
-        
         # MultiHome (usar valor del campo o por defecto)
         multihome = self.multihome_entry.get() or "127.0.0.1"
         map_arg += f"?MultiHome={multihome}"
-        
-        # SessionName (si existe)
-        if self.session_name_entry.get():
-            map_arg += f"?SessionName={self.session_name_entry.get()}"
-        
-        # AdminPassword (si existe)
-        if self.admin_password_entry.get():
-            map_arg += f"?AdminPassword={self.admin_password_entry.get()}"
         
         # 3. Procesar argumentos personalizados antes del final
         custom_args = self.custom_args_text.get("1.0", "end-1c").strip()
@@ -370,7 +537,14 @@ class PrincipalPanel:
             map_arg += f"?RCONEnable=True?RCONPort={rcon_port}"
         
         # 5. Obtener mods configurados (buscar por servidor/mapa específico primero)
-        server_map_key = f"{self.selected_server}_{self.selected_map}" if self.selected_server and self.selected_map else "default"
+        # Obtener servidor seleccionado
+        selected_server = None
+        if hasattr(self.main_window, 'selected_server') and self.main_window.selected_server:
+            selected_server = self.main_window.selected_server
+        elif self.selected_server:
+            selected_server = self.selected_server
+            
+        server_map_key = f"{selected_server}_{selected_map}" if selected_server and selected_map else "default"
         mod_ids = self.config_manager.get("server", f"mod_ids_{server_map_key}", "").strip()
         
         # Fallback a la configuración general si no hay específica
@@ -390,6 +564,9 @@ class PrincipalPanel:
         """Actualizar información del servidor seleccionado"""
         self.selected_server = server_name
         self.selected_map = map_name
+        
+        # Cargar configuración específica del servidor desde GameUserSettings.ini
+        self.load_from_gameusersettings()
     
     def get_public_ip(self):
         """Obtener IP pública automáticamente"""

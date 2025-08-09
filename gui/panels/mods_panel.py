@@ -39,6 +39,32 @@ class ModsPanel(ctk.CTkFrame):
         self.load_current_server_map()  # Cargar último servidor/mapa
         self.load_installed_mods()  # Cargar mods del servidor/mapa actual
         
+        # Actualizar UI inicial después de cargar datos
+        self.after(100, self.refresh_initial_tabs)
+    
+    def refresh_initial_tabs(self):
+        """Refrescar pestañas con contenido inicial"""
+        try:
+            # Refrescar pestañas de favoritos e instalados
+            self.refresh_favorites_tab()
+            self.refresh_installed_tab()
+            self.update_mods_ids_entry()
+            
+            # Mostrar mensaje de bienvenida
+            if self.favorite_mods or self.installed_mods:
+                status_msg = "✅ Mods cargados: "
+                if self.favorite_mods:
+                    status_msg += f"{len(self.favorite_mods)} favoritos "
+                if self.installed_mods:
+                    status_msg += f"{len(self.installed_mods)} instalados"
+                self.show_message(status_msg, "success")
+            else:
+                self.show_message("💡 Busca mods usando la barra de búsqueda o haz clic en 'Populares'", "info")
+                
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al refrescar pestañas iniciales: {e}")
+        
     def create_widgets(self):
         """Crear todos los widgets del panel"""
         # Configurar el grid principal
@@ -146,8 +172,9 @@ class ModsPanel(ctk.CTkFrame):
         # Label inicial
         self.favorites_status_label = ctk.CTkLabel(
             self.favorites_scroll_frame,
-            text="⭐ Tus mods favoritos aparecerán aquí\nMarca mods como favoritos desde los resultados de búsqueda",
-            font=("Arial", 12)
+            text="⭐ MODS FAVORITOS\n\nTus mods favoritos aparecerán aquí.\nMarca mods como favoritos desde los resultados de búsqueda.\n\n🔍 Busca mods o haz clic en 'Populares' para empezar.",
+            font=("Arial", 12),
+            justify="center"
         )
         self.favorites_status_label.pack(pady=50)
         
@@ -160,8 +187,9 @@ class ModsPanel(ctk.CTkFrame):
         # Label inicial
         self.installed_status_label = ctk.CTkLabel(
             self.installed_scroll_frame,
-            text="📦 Los mods instalados aparecerán aquí\nInstala mods desde los resultados de búsqueda",
-            font=("Arial", 12)
+            text="📦 MODS INSTALADOS\n\nLos mods instalados para el servidor actual aparecerán aquí.\nInstala mods desde los resultados de búsqueda.\n\n💡 Los mods se guardan por servidor y mapa.",
+            font=("Arial", 12),
+            justify="center"
         )
         self.installed_status_label.pack(pady=50)
         
@@ -774,8 +802,9 @@ class ModsPanel(ctk.CTkFrame):
         if not self.installed_mods:
             self.installed_status_label = ctk.CTkLabel(
                 self.installed_scroll_frame,
-                text="📦 Los mods instalados aparecerán aquí\nInstala mods desde los resultados de búsqueda",
-                font=("Arial", 12)
+                text="📦 MODS INSTALADOS\n\nNo hay mods instalados para este servidor.\nInstala mods desde los resultados de búsqueda.\n\n💡 Los mods se guardan por servidor y mapa.",
+                font=("Arial", 12),
+                justify="center"
             )
             self.installed_status_label.pack(pady=50)
             return
