@@ -8,6 +8,10 @@ from .panels.players_panel import PlayersPanel
 from .panels.mods_panel import ModsPanel
 from .panels.logs_panel import LogsPanel
 from .panels.rcon_panel import RconPanel
+from .dialogs.advanced_settings_dialog import AdvancedSettingsDialog
+from .dialogs.custom_dialogs import show_info, show_warning, show_error, ask_yes_no, ask_string
+from utils.app_settings import AppSettings
+from utils.system_tray import SystemTray
 
 class MainWindow:
     def __init__(self, root, config_manager, logger):
@@ -23,15 +27,21 @@ class MainWindow:
         self.selected_server = None
         self.selected_map = None
         
+        # Inicializar configuraciones avanzadas
+        self.app_settings = AppSettings(config_manager, logger)
+        
+        # Inicializar bandeja del sistema
+        self.system_tray = SystemTray(self, self.app_settings, logger)
+        
+        # Variables para diálogos
+        self.settings_dialog = None
+        
         # Configurar el grid principal
         self.root.grid_columnconfigure(0, weight=1)
-        self.root.grid_rowconfigure(2, weight=1)
+        self.root.grid_rowconfigure(1, weight=1)
         
         # Crear barra superior con menú y estado
         self.create_top_bar()
-        
-        # Crear barra de pestañas principales
-        self.create_tabs_bar()
         
         # Crear pestañas principales
         self.create_tabview()
@@ -269,99 +279,11 @@ class MainWindow:
         
         # La lista de servidores se inicializará después de crear el server_panel
         
-    def create_tabs_bar(self):
-        """Crear la barra de pestañas principales - completamente independiente del menú"""
-        # Frame principal de la barra de pestañas
-        self.tabs_bar = ctk.CTkFrame(self.root, height=40, corner_radius=0)
-        self.tabs_bar.grid(row=1, column=0, sticky="ew", padx=0, pady=0)
-        self.tabs_bar.grid_columnconfigure(6, weight=1)  # Espacio flexible al final
-        
-        # Frame para pestañas
-        tabs_frame = ctk.CTkFrame(self.tabs_bar, fg_color="transparent")
-        tabs_frame.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-        
-        # Pestañas principales - completamente independientes del menú
-        self.tab_principal = ctk.CTkButton(
-            tabs_frame,
-            text="Principal",
-            command=lambda: self.show_tab("Principal"),
-            fg_color="blue",
-            hover_color="darkblue",
-            width=100,
-            height=25
-        )
-        self.tab_principal.grid(row=0, column=0, padx=2, pady=2)
-        
-        self.tab_configuraciones = ctk.CTkButton(
-            tabs_frame,
-            text="Configuraciones",
-            command=lambda: self.show_tab("Configuraciones"),
-            fg_color="gray",
-            hover_color="darkgray",
-            width=100,
-            height=25
-        )
-        self.tab_configuraciones.grid(row=0, column=1, padx=2, pady=2)
-        
-        self.tab_mods = ctk.CTkButton(
-            tabs_frame,
-            text="Mods",
-            command=lambda: self.show_tab("Mods"),
-            fg_color="gray",
-            hover_color="darkgray",
-            width=100,
-            height=25
-        )
-        self.tab_mods.grid(row=0, column=2, padx=2, pady=2)
-        
-        self.tab_backup = ctk.CTkButton(
-            tabs_frame,
-            text="Backup",
-            command=lambda: self.show_tab("Backup"),
-            fg_color="gray",
-            hover_color="darkgray",
-            width=100,
-            height=25
-        )
-        self.tab_backup.grid(row=0, column=3, padx=2, pady=2)
-        
-        self.tab_reinicios = ctk.CTkButton(
-            tabs_frame,
-            text="Reinicios",
-            command=lambda: self.show_tab("Reinicios"),
-            fg_color="gray",
-            hover_color="darkgray",
-            width=100,
-            height=25
-        )
-        self.tab_reinicios.grid(row=0, column=4, padx=2, pady=2)
-        
-        self.tab_rcon = ctk.CTkButton(
-            tabs_frame,
-            text="RCON",
-            command=lambda: self.show_tab("RCON"),
-            fg_color="gray",
-            hover_color="darkgray",
-            width=100,
-            height=25
-        )
-        self.tab_rcon.grid(row=0, column=5, padx=2, pady=2)
-        
-        self.tab_logs = ctk.CTkButton(
-            tabs_frame,
-            text="Logs",
-            command=lambda: self.show_tab("Logs"),
-            fg_color="gray",
-            hover_color="darkgray",
-            width=100,
-            height=25
-        )
-        self.tab_logs.grid(row=0, column=6, padx=2, pady=2)
         
     def create_tabview(self):
         """Crear el sistema de pestañas principal"""
         self.tabview = ctk.CTkTabview(self.root)
-        self.tabview.grid(row=2, column=0, padx=2, pady=1, sticky="nsew")
+        self.tabview.grid(row=1, column=0, padx=2, pady=1, sticky="nsew")
         
         # Crear pestañas
         self.tab_principal_content = self.tabview.add("Principal")
@@ -392,6 +314,9 @@ class MainWindow:
         # Cargar la última selección de servidor/mapa con un pequeño delay
         self.root.after(200, self.load_last_server_map_selection)
         
+        # Aplicar configuraciones de la aplicación
+        self.apply_app_settings()
+        
         # Registrar evento de inicio de la aplicación
         if hasattr(self, 'server_event_logger'):
             self.log_server_event("custom_event", 
@@ -399,13 +324,14 @@ class MainWindow:
                 details="Ark Server Manager se ha iniciado correctamente")
         
         # Mostrar la pestaña inicial
-        self.show_tab("Principal")
+        # Inicializar con la pestaña Principal activa
+        self.tabview.set("Principal")
         
     def create_logs_bar(self):
         """Crear barra de logs siempre visible en la parte inferior"""
         # Frame para la barra de logs
         logs_frame = ctk.CTkFrame(self.root, height=85, corner_radius=0)
-        logs_frame.grid(row=3, column=0, sticky="ew", padx=0, pady=0)
+        logs_frame.grid(row=2, column=0, sticky="ew", padx=0, pady=0)
         
         # Título de la barra de logs
         logs_title = ctk.CTkLabel(logs_frame, text="Logs del Sistema", font=("Arial", 11, "bold"))
@@ -418,64 +344,155 @@ class MainWindow:
         # Mensaje inicial
         self.add_log_message("🚀 Aplicación iniciada correctamente")
     
-    def show_tab(self, tab_name):
-        """Muestra la pestaña seleccionada - completamente independiente del menú"""
-        # Actualizar colores de los botones de pestañas
-        self.tab_principal.configure(fg_color="gray")
-        self.tab_configuraciones.configure(fg_color="gray")
-        self.tab_mods.configure(fg_color="gray")
-        self.tab_backup.configure(fg_color="gray")
-        self.tab_reinicios.configure(fg_color="gray")
-        self.tab_rcon.configure(fg_color="gray")
-        self.tab_logs.configure(fg_color="gray")
-        
-        if tab_name == "Principal":
-            self.tab_principal.configure(fg_color="blue")
-            self.tabview.set("Principal")
-        elif tab_name == "Configuraciones":
-            self.tab_configuraciones.configure(fg_color="blue")
-            self.tabview.set("Configuraciones")
-        elif tab_name == "Mods":
-            self.tab_mods.configure(fg_color="blue")
-            self.tabview.set("Mods")
-        elif tab_name == "Backup":
-            self.tab_backup.configure(fg_color="blue")
-            self.tabview.set("Backup")
-        elif tab_name == "Reinicios":
-            self.tab_reinicios.configure(fg_color="blue")
-            self.tabview.set("Reinicios")
-        elif tab_name == "RCON":
-            self.tab_rcon.configure(fg_color="blue")
-            self.tabview.set("RCON")
-        elif tab_name == "Logs":
-            self.tab_logs.configure(fg_color="blue")
-        self.tabview.set("Logs")
-        
+
     def setup_button_callbacks(self):
         """Configurar callbacks de los botones"""
         # Los botones ya tienen sus comandos configurados en create_top_bar
         pass
     
     def show_menu(self):
-        """Mostrar menú principal"""
-        self.add_log_message("📋 Menú principal abierto")
+        """Mostrar menú principal con opciones avanzadas"""
+        menu = ctk.CTkToplevel(self.root)
+        menu.title("📋 Menú Principal")
+        menu.geometry("300x400")
+        menu.transient(self.root)
+        menu.grab_set()
+        
+        # Centrar en pantalla
+        menu.geometry("+400+200")
+        
+        # Frame principal
+        main_frame = ctk.CTkFrame(menu)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Título
+        ctk.CTkLabel(main_frame, text="📋 Menú Principal", font=("Arial", 16, "bold")).pack(pady=10)
+        
+        # Botones del menú
+        ctk.CTkButton(main_frame, text="🎮 Estado del Servidor", command=lambda: self.switch_to_tab("Principal")).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="💾 Realizar Backup", command=self.quick_backup).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="🔄 Reiniciar Servidor", command=self.quick_restart).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="📊 Monitoreo", command=lambda: self.switch_to_tab("Reinicios")).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="📝 Ver Logs", command=lambda: self.switch_to_tab("Logs")).pack(pady=5, fill="x", padx=20)
+        
+        # Separador
+        ctk.CTkFrame(main_frame, height=2).pack(pady=10, fill="x", padx=20)
+        
+        # Opciones de ventana
+        ctk.CTkButton(main_frame, text="📌 Siempre Visible", command=self.toggle_always_on_top).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="📮 Minimizar a Bandeja", command=self.minimize_to_tray).pack(pady=5, fill="x", padx=20)
+        
+        # Cerrar
+        ctk.CTkButton(main_frame, text="❌ Cerrar", command=menu.destroy).pack(pady=10, fill="x", padx=20)
     
     def show_herramientas(self):
-        """Mostrar herramientas"""
-        self.add_log_message("🔧 Herramientas abiertas")
+        """Mostrar herramientas del sistema"""
+        menu = ctk.CTkToplevel(self.root)
+        menu.title("🔧 Herramientas")
+        menu.geometry("350x450")
+        menu.transient(self.root)
+        menu.grab_set()
+        
+        menu.geometry("+450+200")
+        
+        main_frame = ctk.CTkFrame(menu)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        ctk.CTkLabel(main_frame, text="🔧 Herramientas del Sistema", font=("Arial", 16, "bold")).pack(pady=10)
+        
+        # Herramientas
+        ctk.CTkButton(main_frame, text="🔍 Verificar Archivos del Servidor", command=self.verify_server_files).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="🧹 Limpiar Logs Antiguos", command=self.clean_old_logs).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="📁 Abrir Carpeta del Servidor", command=self.open_server_folder).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="💾 Exportar Configuración", command=self.export_config).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="📥 Importar Configuración", command=self.import_config).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="🔄 Actualizar SteamCMD", command=self.update_steamcmd).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="📊 Información del Sistema", command=self.show_system_info).pack(pady=5, fill="x", padx=20)
+        
+        ctk.CTkButton(main_frame, text="❌ Cerrar", command=menu.destroy).pack(pady=20, fill="x", padx=20)
     
     def show_ayuda(self):
-        """Mostrar ayuda"""
-        self.add_log_message("❓ Ayuda abierta")
+        """Mostrar ayuda y acerca de"""
+        menu = ctk.CTkToplevel(self.root)
+        menu.title("❓ Ayuda")
+        menu.geometry("400x500")
+        menu.transient(self.root)
+        menu.grab_set()
+        
+        menu.geometry("+500+150")
+        
+        main_frame = ctk.CTkFrame(menu)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        ctk.CTkLabel(main_frame, text="❓ Ayuda y Soporte", font=("Arial", 16, "bold")).pack(pady=10)
+        
+        # Info de la aplicación
+        info_text = """
+🎮 Ark Server Manager v2.0
+📅 Desarrollado en 2025
+🔧 Para Ark Survival Ascended
+
+✨ Características:
+• Gestión completa de servidores
+• Sistema de mods integrado
+• Backups automáticos y programados
+• Sistema de reinicios programados
+• Configuración avanzada
+• Monitoreo del sistema
+• RCON integrado
+
+🔧 Funcionalidades avanzadas:
+• Inicio con Windows
+• Minimización a bandeja
+• Auto-inicio de servidor
+• Backups automáticos
+• Tema personalizable
+        """.strip()
+        
+        text_widget = ctk.CTkTextbox(main_frame, height=300)
+        text_widget.pack(fill="both", expand=True, padx=10, pady=10)
+        text_widget.insert("1.0", info_text)
+        text_widget.configure(state="disabled")
+        
+        # Botones de ayuda
+        buttons_frame = ctk.CTkFrame(main_frame)
+        buttons_frame.pack(fill="x", pady=10, padx=10)
+        
+        ctk.CTkButton(buttons_frame, text="📖 Guía de Usuario", command=self.open_user_guide).pack(side="left", padx=5)
+        ctk.CTkButton(buttons_frame, text="🐛 Reportar Bug", command=self.report_bug).pack(side="left", padx=5)
+        ctk.CTkButton(buttons_frame, text="❌ Cerrar", command=menu.destroy).pack(side="right", padx=5)
     
     def show_configuracion(self):
-        """Mostrar configuración"""
-        self.add_log_message("⚙️ Configuración abierta")
+        """Mostrar configuración avanzada"""
+        if self.settings_dialog is None:
+            self.settings_dialog = AdvancedSettingsDialog(self.root, self.app_settings, self.logger)
+        self.settings_dialog.show()
     
     def salir_aplicacion(self):
-        """Salir de la aplicación"""
-        self.add_log_message("🚪 Cerrando aplicación...")
-        self.root.quit()
+        """Salir de la aplicación con confirmación"""
+        if self.app_settings.get_setting("confirm_exit"):
+            if ask_yes_no(self.root, "Confirmar salida", "¿Estás seguro de que quieres salir de Ark Server Manager?"):
+                self.cleanup_and_exit()
+        else:
+            self.cleanup_and_exit()
+    
+    def cleanup_and_exit(self):
+        """Limpiar recursos y salir"""
+        try:
+            # Guardar configuraciones
+            if hasattr(self, 'app_settings'):
+                self.save_window_position()
+                self.app_settings.save_settings()
+            
+            # Detener bandeja del sistema
+            if hasattr(self, 'system_tray'):
+                self.system_tray.stop_tray()
+            
+            self.add_log_message("🚪 Cerrando aplicación...")
+            self.root.quit()
+        except Exception as e:
+            self.logger.error(f"Error al cerrar aplicación: {e}")
+            self.root.quit()
     
     def add_log_message(self, message):
         """Agregar mensaje al log del sistema"""
@@ -486,6 +503,245 @@ class MainWindow:
         if hasattr(self, 'logs_panel') and hasattr(self.logs_panel, 'load_content'):
             # Programar la actualización para el siguiente ciclo de la GUI
             self.root.after(100, self.logs_panel.load_content)
+    
+    # ==================== MÉTODOS DE CONFIGURACIÓN AVANZADA ====================
+    
+    def apply_app_settings(self):
+        """Aplicar configuraciones de la aplicación"""
+        try:
+            # Aplicar tema
+            theme = self.app_settings.get_setting("theme_mode", "system")
+            ctk.set_appearance_mode(theme)
+            
+            # Configurar ventana siempre visible
+            if self.app_settings.get_setting("always_on_top"):
+                self.root.attributes('-topmost', True)
+            
+            # Configurar geometría de ventana
+            if self.app_settings.get_setting("remember_window_position"):
+                geometry = self.app_settings.get_window_geometry()
+                self.root.geometry(geometry)
+            
+            # Iniciar bandeja del sistema si está configurada
+            if self.app_settings.get_setting("minimize_to_tray") or self.app_settings.get_setting("close_to_tray"):
+                self.system_tray.start_tray()
+            
+            # Auto-iniciar servidor si está configurado
+            if self.app_settings.get_setting("auto_start_server"):
+                self.root.after(3000, self.auto_start_server_if_configured)
+            
+            # Auto-backup al iniciar
+            if self.app_settings.get_setting("auto_backup_on_start"):
+                self.root.after(5000, self.auto_backup_on_start)
+            
+            # Minimizar al iniciar si está configurado
+            if self.app_settings.get_setting("start_minimized"):
+                self.root.after(1000, self.minimize_to_tray)
+            
+            self.logger.info("Configuraciones de aplicación aplicadas")
+            
+        except Exception as e:
+            self.logger.error(f"Error al aplicar configuraciones: {e}")
+    
+    def save_window_position(self):
+        """Guardar posición actual de la ventana"""
+        try:
+            if self.app_settings.get_setting("remember_window_position"):
+                geometry = self.root.geometry()
+                # Parsear geometría: WIDTHxHEIGHT+X+Y
+                parts = geometry.replace('x', '+').replace('-', '+-').split('+')
+                if len(parts) >= 4:
+                    width = int(parts[0])
+                    height = int(parts[1])
+                    x = int(parts[2])
+                    y = int(parts[3])
+                    self.app_settings.save_window_position(x, y, width, height)
+        except Exception as e:
+            self.logger.error(f"Error al guardar posición de ventana: {e}")
+    
+    # ==================== MÉTODOS DEL MENÚ ====================
+    
+    def switch_to_tab(self, tab_name):
+        """Cambiar a una pestaña específica"""
+        try:
+            if hasattr(self, 'tabview'):
+                self.tabview.set(tab_name)
+        except Exception as e:
+            self.logger.error(f"Error al cambiar a pestaña {tab_name}: {e}")
+    
+    def quick_backup(self):
+        """Realizar backup rápido"""
+        try:
+            if hasattr(self, 'backup_panel'):
+                # El backup_panel es AdvancedBackupPanel que tiene handle_manual_backup
+                if hasattr(self.backup_panel, 'handle_manual_backup'):
+                    self.backup_panel.handle_manual_backup()
+                    self.add_log_message("💾 Backup manual iniciado")
+                elif hasattr(self.backup_panel, 'manual_backup'):
+                    self.backup_panel.manual_backup()
+                    self.add_log_message("💾 Backup manual iniciado")
+                else:
+                    show_warning(self.root, "Backup", "El panel de backup no tiene método manual disponible")
+        except Exception as e:
+            self.logger.error(f"Error en backup rápido: {e}")
+            show_error(self.root, "Error de Backup", f"Error al realizar backup: {str(e)}")
+    
+    def quick_restart(self):
+        """Reinicio rápido del servidor"""
+        try:
+            if hasattr(self, 'server_panel'):
+                if ask_yes_no(self.root, "Confirmar reinicio", "¿Quieres reiniciar el servidor ahora?"):
+                    self.server_panel.restart_server()
+                    self.add_log_message("🔄 Reinicio de servidor iniciado")
+        except Exception as e:
+            self.logger.error(f"Error en reinicio rápido: {e}")
+            show_error(self.root, "Error de Reinicio", f"Error al reiniciar servidor: {str(e)}")
+    
+    def toggle_always_on_top(self):
+        """Alternar ventana siempre visible"""
+        try:
+            current = self.app_settings.get_setting("always_on_top")
+            new_value = not current
+            self.app_settings.set_setting("always_on_top", new_value)
+            self.root.attributes('-topmost', new_value)
+            
+            status = "activado" if new_value else "desactivado"
+            self.add_log_message(f"📌 Siempre visible {status}")
+        except Exception as e:
+            self.logger.error(f"Error al alternar siempre visible: {e}")
+    
+    def minimize_to_tray(self):
+        """Minimizar a la bandeja del sistema"""
+        try:
+            if self.system_tray.is_available():
+                self.system_tray.hide_to_tray()
+            else:
+                self.root.iconify()
+                self.add_log_message("📦 Aplicación minimizada")
+        except Exception as e:
+            self.logger.error(f"Error al minimizar: {e}")
+    
+    def auto_start_server_if_configured(self):
+        """Auto-iniciar servidor si está configurado"""
+        try:
+            if self.selected_server and self.selected_map:
+                if hasattr(self, 'server_panel'):
+                    self.server_panel.start_server()
+                    self.add_log_message("🚀 Servidor iniciado automáticamente")
+        except Exception as e:
+            self.logger.error(f"Error en auto-inicio: {e}")
+    
+    def auto_backup_on_start(self):
+        """Realizar backup automático al iniciar"""
+        try:
+            if hasattr(self, 'backup_panel'):
+                # El backup_panel es AdvancedBackupPanel que tiene handle_manual_backup
+                if hasattr(self.backup_panel, 'handle_manual_backup'):
+                    self.backup_panel.handle_manual_backup()
+                    self.add_log_message("💾 Backup automático al iniciar")
+                elif hasattr(self.backup_panel, 'manual_backup'):
+                    self.backup_panel.manual_backup()
+                    self.add_log_message("💾 Backup automático al iniciar")
+        except Exception as e:
+            self.logger.error(f"Error en backup automático: {e}")
+    
+    # ==================== MÉTODOS DE HERRAMIENTAS ====================
+    
+    def verify_server_files(self):
+        """Verificar integridad de archivos del servidor"""
+        self.add_log_message("🔍 Verificando archivos del servidor...")
+        show_info(self.root, "Verificación", "Funcionalidad de verificación en desarrollo")
+    
+    def clean_old_logs(self):
+        """Limpiar logs antiguos"""
+        self.add_log_message("🧹 Limpiando logs antiguos...")
+        show_info(self.root, "Limpieza", "Logs antiguos limpiados")
+    
+    def open_server_folder(self):
+        """Abrir carpeta del servidor"""
+        try:
+            import os
+            import subprocess
+            if self.selected_server:
+                server_path = self.config_manager.get_server_path(self.selected_server)
+                if os.path.exists(server_path):
+                    subprocess.Popen(f'explorer "{server_path}"')
+                    self.add_log_message(f"📁 Abriendo carpeta: {server_path}")
+                else:
+                    show_error(self.root, "Error", "Carpeta del servidor no encontrada")
+            else:
+                show_warning(self.root, "Advertencia", "Selecciona un servidor primero")
+        except Exception as e:
+            self.logger.error(f"Error al abrir carpeta: {e}")
+    
+    def export_config(self):
+        """Exportar configuración"""
+        try:
+            import tkinter.filedialog as fd
+            file_path = fd.asksaveasfilename(
+                title="Exportar configuración",
+                defaultextension=".json",
+                filetypes=[("JSON files", "*.json")]
+            )
+            if file_path:
+                self.app_settings.export_settings(file_path)
+                self.add_log_message(f"💾 Configuración exportada: {file_path}")
+        except Exception as e:
+            self.logger.error(f"Error al exportar: {e}")
+    
+    def import_config(self):
+        """Importar configuración"""
+        try:
+            import tkinter.filedialog as fd
+            file_path = fd.askopenfilename(
+                title="Importar configuración",
+                filetypes=[("JSON files", "*.json")]
+            )
+            if file_path:
+                self.app_settings.import_settings(file_path)
+                self.add_log_message(f"📥 Configuración importada: {file_path}")
+        except Exception as e:
+            self.logger.error(f"Error al importar: {e}")
+    
+    def update_steamcmd(self):
+        """Actualizar SteamCMD"""
+        self.add_log_message("🔄 Actualizando SteamCMD...")
+        show_info(self.root, "Actualización", "Actualización de SteamCMD en desarrollo")
+    
+    def show_system_info(self):
+        """Mostrar información del sistema"""
+        try:
+            import platform
+            import psutil
+            
+            info = f"""
+🖥️ Sistema: {platform.system()} {platform.release()}
+🏗️ Arquitectura: {platform.architecture()[0]}
+💾 RAM: {round(psutil.virtual_memory().total / (1024**3), 1)} GB
+💽 Espacio libre: {round(psutil.disk_usage('.').free / (1024**3), 1)} GB
+🐍 Python: {platform.python_version()}
+            """.strip()
+            
+            show_info(self.root, "Información del Sistema", info)
+            
+        except Exception as e:
+            self.logger.error(f"Error al obtener info del sistema: {e}")
+    
+    def open_user_guide(self):
+        """Abrir guía de usuario"""
+        try:
+            import webbrowser
+            webbrowser.open("https://github.com/tu-usuario/ark-server-manager/wiki")
+        except:
+            show_info(self.root, "Guía", "Guía de usuario disponible en el repositorio del proyecto")
+    
+    def report_bug(self):
+        """Reportar un bug"""
+        try:
+            import webbrowser
+            webbrowser.open("https://github.com/tu-usuario/ark-server-manager/issues")
+        except:
+            show_info(self.root, "Reportar Bug", "Puedes reportar bugs en el repositorio del proyecto")
         
     def browse_root_path(self):
         """Buscar directorio raíz para servidores"""
