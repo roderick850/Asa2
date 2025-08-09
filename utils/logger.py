@@ -22,11 +22,17 @@ class Logger:
         if is_compiled():
             # En ejecutable: Solo ERROR y WARNING para inicio rápido
             self.log_level = logging.WARNING
-            print("🚀 Modo ejecutable: Logs de debug deshabilitados para inicio rápido")
+            try:
+                print("🚀 Modo ejecutable: Logs de debug deshabilitados para inicio rápido")
+            except UnicodeEncodeError:
+                print("Modo ejecutable: Logs de debug deshabilitados para inicio rapido")
         else:
             # En desarrollo: Todos los logs incluido DEBUG
             self.log_level = logging.INFO
-            print("🔧 Modo desarrollo: Logs de debug habilitados")
+            try:
+                print("🔧 Modo desarrollo: Logs de debug habilitados")
+            except UnicodeEncodeError:
+                print("Modo desarrollo: Logs de debug habilitados")
         
         # Crear directorio de logs si no existe
         log_dir = os.path.dirname(self.log_file)
@@ -93,11 +99,27 @@ class Logger:
     
     def debug(self, message):
         """Registrar mensaje de debug"""
-        self.logger.debug(message)
+        # En ejecutable, omitir debug para rendimiento
+        if not is_compiled():
+            self.logger.debug(message)
     
     def info(self, message):
         """Registrar mensaje informativo"""
-        self.logger.info(message)
+        # En ejecutable, filtrar mensajes: solo los importantes
+        if is_compiled():
+            # Solo mostrar mensajes críticos del usuario (no debug técnico)
+            critical_keywords = [
+                "Auto-iniciando servidor", "Servidor iniciado", "Servidor detenido",
+                "Error en auto-inicio", "Auto-inicio cancelado", "Conectado", "Desconectado",
+                "Backup completado", "Error crítico", "Instalación completada"
+            ]
+            
+            # Verificar si es un mensaje importante para el usuario
+            if any(keyword in message for keyword in critical_keywords):
+                self.logger.warning(message)  # Usar WARNING para asegurar que se muestre
+        else:
+            # En desarrollo, mostrar todos los mensajes info
+            self.logger.info(message)
     
     def warning(self, message):
         """Registrar mensaje de advertencia"""

@@ -101,6 +101,9 @@ class AdvancedSettingsDialog:
         # Manejar cierre de ventana
         self.dialog.protocol("WM_DELETE_WINDOW", self.close_dialog)
         
+        # Cargar configuraciones actuales para asegurar sincronización
+        self.load_current_settings()
+        
     def create_startup_tab(self):
         """Crear pestaña de configuraciones de inicio"""
         tab = self.notebook.add("🚀 Inicio")
@@ -627,6 +630,7 @@ class AdvancedSettingsDialog:
             settings_to_save = {
                 "startup_with_windows": self.startup_var.get(),
                 "auto_start_server": self.autostart_var.get(),
+                "auto_start_server_with_windows": self.autostart_windows_var.get(),  # ✅ AGREGADO
                 "start_minimized": self.start_minimized_var.get(),
                 "auto_backup_on_start": self.auto_backup_var.get(),
                 "minimize_to_tray": self.minimize_tray_var.get(),
@@ -644,6 +648,9 @@ class AdvancedSettingsDialog:
             # Aplicar configuraciones
             for key, value in settings_to_save.items():
                 self.app_settings.set_setting(key, value)
+                # Log específico para configuraciones críticas
+                if key in ['auto_start_server', 'auto_start_server_with_windows']:
+                    self.logger.info(f"💾 Guardando {key}: {value}")
             
             # Guardar al archivo
             self.app_settings.save_settings()
@@ -830,36 +837,74 @@ class AdvancedSettingsDialog:
     def load_current_settings(self):
         """Cargar configuraciones actuales en la interfaz"""
         try:
+            self.logger.info("🔄 Iniciando sincronización de configuraciones...")
+            
+            # Forzar recarga de configuraciones desde archivo
+            if hasattr(self.app_settings, 'load_settings'):
+                self.app_settings.load_settings()
+                self.logger.info("✅ Configuraciones recargadas desde archivo")
+            else:
+                self.logger.warning("⚠️ AppSettings no tiene método load_settings")
+            
             # Actualizar variables de interfaz con valores actuales
-            if hasattr(self, 'startup_var'):
-                self.startup_var.set(self.app_settings.get_setting("startup_with_windows"))
-            if hasattr(self, 'autostart_var'):
-                self.autostart_var.set(self.app_settings.get_setting("auto_start_server"))
-            if hasattr(self, 'autostart_windows_var'):
-                self.autostart_windows_var.set(self.app_settings.get_setting("auto_start_server_with_windows"))
-            if hasattr(self, 'minimize_start_var'):
-                self.minimize_start_var.set(self.app_settings.get_setting("start_minimized"))
-            if hasattr(self, 'minimize_tray_var'):
-                self.minimize_tray_var.set(self.app_settings.get_setting("minimize_to_tray"))
-            if hasattr(self, 'close_tray_var'):
-                self.close_tray_var.set(self.app_settings.get_setting("close_to_tray"))
-            if hasattr(self, 'always_top_var'):
-                self.always_top_var.set(self.app_settings.get_setting("always_on_top"))
-            if hasattr(self, 'remember_position_var'):
-                self.remember_position_var.set(self.app_settings.get_setting("remember_window_position"))
-            if hasattr(self, 'auto_backup_var'):
-                self.auto_backup_var.set(self.app_settings.get_setting("auto_backup_on_start"))
-            if hasattr(self, 'confirm_exit_var'):
-                self.confirm_exit_var.set(self.app_settings.get_setting("confirm_exit"))
-            if hasattr(self, 'hide_console_var'):
-                self.hide_console_var.set(self.app_settings.get_setting("hide_console"))
-            if hasattr(self, 'auto_save_var'):
-                self.auto_save_var.set(self.app_settings.get_setting("auto_save_config"))
-            if hasattr(self, 'notification_sound_var'):
-                self.notification_sound_var.set(self.app_settings.get_setting("notification_sound"))
+            settings_map = {
+                'startup_var': 'startup_with_windows',
+                'autostart_var': 'auto_start_server',
+                'autostart_windows_var': 'auto_start_server_with_windows',
+                'minimize_start_var': 'start_minimized',
+                'minimize_tray_var': 'minimize_to_tray',
+                'close_tray_var': 'close_to_tray',
+                'always_top_var': 'always_on_top',
+                'remember_position_var': 'remember_window_position',
+                'auto_backup_var': 'auto_backup_on_start',
+                'confirm_exit_var': 'confirm_exit',
+                'hide_console_var': 'hide_console',
+                'auto_save_var': 'auto_save_config',
+                'notification_sound_var': 'notification_sound'
+            }
+            
+            successful_updates = 0
+            failed_updates = 0
+            
+            for var_name, setting_key in settings_map.items():
+                if hasattr(self, var_name):
+                    try:
+                        current_value = self.app_settings.get_setting(setting_key)
+                        var_obj = getattr(self, var_name)
+                        
+                        # Verificar que la variable existe y tiene método set
+                        if hasattr(var_obj, 'set'):
+                            old_value = var_obj.get() if hasattr(var_obj, 'get') else "UNKNOWN"
+                            var_obj.set(current_value)
+                            successful_updates += 1
+                            
+                            # Log detallado para configuraciones críticas
+                            if setting_key in ['auto_start_server', 'auto_start_server_with_windows', 'startup_with_windows']:
+                                self.logger.info(f"🔄 {setting_key}: {old_value} → {current_value}")
+                        else:
+                            self.logger.error(f"❌ Variable {var_name} no tiene método set()")
+                            failed_updates += 1
+                            
+                    except Exception as e:
+                        self.logger.error(f"❌ Error al actualizar {var_name} ({setting_key}): {e}")
+                        failed_updates += 1
+                else:
+                    self.logger.warning(f"⚠️ Variable {var_name} no existe en el diálogo")
+                    failed_updates += 1
+            
+            self.logger.info(f"✅ Sincronización completada: {successful_updates} exitosas, {failed_updates} fallidas")
                 
         except Exception as e:
-            self.logger.error(f"Error al cargar configuraciones actuales: {e}")
+            self.logger.error(f"❌ Error crítico al cargar configuraciones actuales: {e}")
+            # Intentar recarga básica como fallback
+            try:
+                self.logger.info("🔄 Intentando recarga básica...")
+                if hasattr(self, 'autostart_windows_var') and hasattr(self.app_settings, 'get_setting'):
+                    value = self.app_settings.get_setting('auto_start_server_with_windows')
+                    self.autostart_windows_var.set(value)
+                    self.logger.info(f"🔄 Recarga básica: auto_start_server_with_windows = {value}")
+            except Exception as fallback_error:
+                self.logger.error(f"❌ Recarga básica falló: {fallback_error}")
 
     def close_dialog(self):
         """Cerrar el diálogo"""

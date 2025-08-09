@@ -37,6 +37,7 @@ for src, dst in essential_dirs:
 hiddenimports = [
     # GUI
     'customtkinter',
+    'CTkMessagebox',
     'tkinter',
     'tkinter.ttk',
     'tkinter.filedialog',

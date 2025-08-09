@@ -16,5 +16,22 @@
       "dateInstalled": "2025-08-08T20:22:47.836744"
     }
   ],
-  "Prueba2_TheIsland_WP": []
+  "Prueba2_TheIsland_WP": [],
+  "Prueba_The Center": [
+    {
+      "id": "940975",
+      "name": "Cybers Structures QoL+ (Crossplay)",
+      "dateInstalled": "2025-08-09T15:39:58.095700"
+    },
+    {
+      "id": "928793",
+      "name": "Pelayori's Cryo Storage (Crossplay!)",
+      "dateInstalled": "2025-08-09T15:39:59.938887"
+    },
+    {
+      "id": "929420",
+      "name": "Super Spyglass Plus",
+      "dateInstalled": "2025-08-09T15:40:01.631112"
+    }
+  ]
 }

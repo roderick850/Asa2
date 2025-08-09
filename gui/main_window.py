@@ -18,7 +18,7 @@ from utils.system_tray import SystemTray
 
 class MainWindow:
 
-    APP_VERSION = "0.1"
+    APP_VERSION = "1.0"
     
     def __init__(self, root, config_manager, logger):
         self.root = root
@@ -67,6 +67,10 @@ class MainWindow:
         
         # Detectar si se inició con Windows
         self.started_with_windows = self.detect_startup_with_windows()
+        
+        # Debug: Mostrar todas las configuraciones para diagnóstico
+        if hasattr(self.app_settings, 'debug_all_settings'):
+            self.app_settings.debug_all_settings()
         
         # Verificar auto-inicio si no hay bandeja disponible
         self.check_auto_start_fallback()
@@ -576,13 +580,15 @@ class MainWindow:
                 geometry = self.app_settings.get_window_geometry()
                 self.root.geometry(geometry)
             
-            # Iniciar bandeja del sistema si está configurada
-            if self.app_settings.get_setting("minimize_to_tray") or self.app_settings.get_setting("close_to_tray"):
-                self.system_tray.start_tray()
+            # Detectar tipo de inicio
+            self.started_with_windows = self.detect_startup_with_windows()
             
-            # Auto-iniciar servidor si está configurado
-            if self.app_settings.get_setting("auto_start_server"):
-                self.root.after(3000, self.auto_start_server_if_configured)
+            # Iniciar bandeja del sistema (que manejará el auto-inicio)
+            if self.app_settings.get_setting("minimize_to_tray") or self.app_settings.get_setting("close_to_tray"):
+                self.start_system_tray()
+            else:
+                # Si no hay bandeja, usar fallback para auto-inicio
+                self.check_auto_start_fallback()
             
             # Auto-backup al iniciar
             if self.app_settings.get_setting("auto_backup_on_start"):
@@ -715,15 +721,7 @@ class MainWindow:
         except Exception as e:
             self.logger.error(f"Error al minimizar: {e}")
     
-    def auto_start_server_if_configured(self):
-        """Auto-iniciar servidor si está configurado"""
-        try:
-            if self.selected_server and self.selected_map:
-                if hasattr(self, 'server_panel'):
-                    self.server_panel.start_server()
-                    self.add_log_message("🚀 Servidor iniciado automáticamente")
-        except Exception as e:
-            self.logger.error(f"Error en auto-inicio: {e}")
+
     
     def auto_backup_on_start(self):
         """Realizar backup automático al iniciar"""
@@ -1854,25 +1852,86 @@ Versión de la app: {self.APP_VERSION}
                 
                 self.logger.info("Bandeja no disponible, usando fallback para auto-inicio")
                 # Programar auto-inicio con un retraso similar
-                self.root.after(2000, self.auto_start_server)
+                self.root.after(2000, self.auto_start_server_if_configured)
                 
         except Exception as e:
             self.logger.error(f"Error en check_auto_start_fallback: {e}")
     
+    def detect_startup_with_windows(self):
+        """Detectar si la aplicación fue iniciada por Windows"""
+        try:
+            import sys
+            import time
+            import psutil
+            
+            # Criterio 1: Argumento --windows-startup (más confiable)
+            if "--windows-startup" in sys.argv:
+                self.logger.info("✅ Detección: argumento --windows-startup encontrado")
+                return True
+            
+            # Criterio 2: Verificar proceso padre + tiempo de arranque
+            try:
+                current_process = psutil.Process()
+                parent_process = current_process.parent()
+                
+                if parent_process:
+                    parent_name = parent_process.name().lower()
+                    self.logger.info(f"🔍 Proceso padre: {parent_name}")
+                    
+                    # Verificar si el proceso padre es del sistema Windows
+                    system_processes = ['explorer.exe', 'winlogon.exe', 'userinit.exe']
+                    is_system_parent = parent_name in system_processes
+                    
+                    # Verificar tiempo de arranque reciente (menos de 10 minutos)
+                    boot_time = psutil.boot_time()
+                    current_time = time.time()
+                    uptime_minutes = (current_time - boot_time) / 60
+                    recent_boot = uptime_minutes < 10
+                    
+                    self.logger.info(f"🔍 Proceso padre del sistema: {is_system_parent}")
+                    self.logger.info(f"🔍 Arranque reciente ({uptime_minutes:.1f} min): {recent_boot}")
+                    
+                    # Ambos criterios deben cumplirse para detectar inicio con Windows
+                    if is_system_parent and recent_boot:
+                        self.logger.info("✅ Detección: inicio con Windows por proceso padre + arranque reciente")
+                        return True
+                
+            except Exception as e:
+                self.logger.warning(f"Error al verificar proceso padre: {e}")
+            
+            self.logger.info("❌ No se detectó inicio desde Windows")
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"Error en detect_startup_with_windows: {e}")
+            return False
+    
     def load_last_configuration(self):
         """Cargar la última configuración de servidor y mapa"""
         try:
+            self.logger.info("🔄 Cargando última configuración...")
+            
+            # Verificar configuraciones de auto-inicio
+            auto_start_manual = self.app_settings.get_setting("auto_start_server")
+            auto_start_windows = self.app_settings.get_setting("auto_start_server_with_windows")
+            self.logger.info(f"📋 Auto-inicio manual: {auto_start_manual}")
+            self.logger.info(f"🖥️ Auto-inicio con Windows: {auto_start_windows}")
+            
             # Cargar último servidor
             last_server = self.config_manager.get("app", "last_server", "")
             if last_server:
                 self.selected_server = last_server
-                self.logger.info(f"Último servidor cargado: {last_server}")
+                self.logger.info(f"🖥️ Último servidor cargado: {last_server}")
+            else:
+                self.logger.warning("⚠️ No hay servidor guardado en configuración")
             
             # Cargar último mapa
             last_map = self.config_manager.get("app", "last_map", "")
             if last_map:
                 self.selected_map = last_map
-                self.logger.info(f"Último mapa cargado: {last_map}")
+                self.logger.info(f"🗺️ Último mapa cargado: {last_map}")
+            else:
+                self.logger.warning("⚠️ No hay mapa guardado en configuración")
             
             # Notificar a los paneles que se cargó la configuración
             if last_server and hasattr(self, 'server_panel'):
@@ -1880,7 +1939,7 @@ Versión de la app: {self.APP_VERSION}
                 self.root.after(500, lambda: self.update_panels_with_config(last_server, last_map))
                 
         except Exception as e:
-            self.logger.error(f"Error al cargar última configuración: {e}")
+            self.logger.error(f"❌ Error al cargar última configuración: {e}")
     
     def update_panels_with_config(self, server_name, map_name):
         """Actualizar paneles con la configuración cargada"""
@@ -1901,6 +1960,74 @@ Versión de la app: {self.APP_VERSION}
         except Exception as e:
             self.logger.error(f"Error al actualizar paneles: {e}")
     
+    def auto_start_server_if_configured(self):
+        """Auto-iniciar servidor si hay configuración válida"""
+        try:
+            # Evitar ejecuciones duplicadas
+            if hasattr(self, 'auto_start_attempted') and self.auto_start_attempted:
+                return False
+            self.auto_start_attempted = True
+            
+            import os
+            
+            # Verificar configuración de último servidor y mapa (sin logs innecesarios)
+            last_server = self.config_manager.get("app", "last_server", "")
+            last_map = self.config_manager.get("app", "last_map", "")
+            
+            if not last_server:
+                self.add_log_message("⚠️ Auto-inicio cancelado: No hay servidor configurado")
+                return False
+            
+            if not last_map:
+                self.add_log_message("⚠️ Auto-inicio cancelado: No hay mapa configurado")
+                return False
+            
+            # Verificar que el servidor existe
+            server_executable = self.config_manager.get("server", f"executable_path_{last_server.lower()}", "")
+            if not server_executable or not os.path.exists(server_executable):
+                self.add_log_message(f"⚠️ Auto-inicio cancelado: Servidor '{last_server}' no encontrado")
+                return False
+            
+            # Mensaje único importante para el usuario
+            self.logger.info(f"Auto-iniciando servidor '{last_server}' con mapa '{last_map}'")
+            self.add_log_message(f"🚀 Auto-iniciando servidor '{last_server}' con mapa '{last_map}'...")
+            
+            # Actualizar paneles con la configuración
+            if hasattr(self, 'server_panel'):
+                # Configurar paneles silenciosamente
+                if hasattr(self.server_panel, 'server_combo'):
+                    try:
+                        self.server_panel.server_combo.set(last_server)
+                        self.server_panel.on_server_selected()
+                    except Exception:
+                        pass  # Error silencioso para no ralentizar
+                
+                if hasattr(self.server_panel, 'map_combo'):
+                    try:
+                        self.server_panel.map_combo.set(last_map)
+                    except Exception:
+                        pass  # Error silencioso para no ralentizar
+                
+                # Iniciar servidor
+                if hasattr(self.server_panel, 'start_server'):
+                    try:
+                        # Programar inicio con un pequeño retraso
+                        self.root.after(1000, self.server_panel.start_server)
+                        return True
+                    except Exception as e:
+                        self.add_log_message(f"❌ Error en auto-inicio: {e}")
+                else:
+                    self.add_log_message("❌ Auto-inicio falló: Método no disponible")
+            else:
+                self.add_log_message("❌ Auto-inicio falló: Panel no disponible")
+            
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"❌ Error crítico en auto-inicio: {e}")
+            self.add_log_message(f"❌ Error en auto-inicio: {e}")
+            return False
+    
     def detect_startup_with_windows(self):
         """Detectar si la aplicación se inició automáticamente con Windows"""
         try:
@@ -1908,53 +2035,60 @@ Versión de la app: {self.APP_VERSION}
             import psutil
             import time
             
-            # Método 1: Verificar argumentos de línea de comandos
+            # Método 1: Verificar argumentos de línea de comandos (más rápido y confiable)
             if len(sys.argv) > 1:
                 for arg in sys.argv[1:]:
                     if arg.lower() in ['--startup', '--autostart', '--windows-startup']:
-                        self.logger.info("Detectado inicio con Windows por argumentos")
+                        # Solo log importante: detectado exitosamente
+                        self.logger.info("Auto-iniciando servidor desde Windows")
                         return True
             
-            # Método 2: Verificar tiempo de inicio del proceso padre (Windows)
+            # Método 2: Verificar proceso padre (solo si es necesario)
             try:
                 current_process = psutil.Process()
                 parent_process = current_process.parent()
                 
-                if parent_process and parent_process.name().lower() in ['explorer.exe', 'winlogon.exe']:
-                    # Si el proceso padre es explorer o winlogon, probablemente inició con Windows
-                    
-                    # Verificar tiempo desde el inicio del sistema
+                if not parent_process:
+                    return False
+                
+                parent_name = parent_process.name().lower()
+                
+                if parent_name in ['explorer.exe', 'winlogon.exe']:
+                    # Verificar tiempo de arranque (simplificado)
                     boot_time = psutil.boot_time()
-                    current_time = time.time()
                     process_start_time = current_process.create_time()
+                    time_since_boot = process_start_time - boot_time
                     
                     # Si el proceso se creó dentro de los primeros 2 minutos del inicio
-                    if (process_start_time - boot_time) < 120:  # 120 segundos = 2 minutos
-                        self.logger.info("Detectado inicio con Windows por tiempo de arranque")
+                    if time_since_boot < 120:  # 120 segundos = 2 minutos
+                        self.logger.info("Auto-iniciando servidor desde Windows")
                         return True
                         
             except (psutil.NoSuchProcess, psutil.AccessDenied):
+                # Error silencioso para no ralentizar el inicio
                 pass
             
-            # Método 3: Verificar si hay procesos de sesión recientes (Windows recién iniciado)
+            # Método 3: Verificar tiempo de arranque del sistema (simplificado)
             try:
-                # Si el sistema tiene menos de 5 minutos desde el arranque, probablemente es startup
                 boot_time = psutil.boot_time()
                 current_time = time.time()
+                time_since_boot = current_time - boot_time
                 
-                if (current_time - boot_time) < 300:  # 300 segundos = 5 minutos
-                    self.logger.info("Detectado inicio con Windows por boot time reciente")
+                # Si el sistema arrancó hace menos de 5 minutos
+                if time_since_boot < 300:  # 300 segundos = 5 minutos
+                    self.logger.info("Auto-iniciando servidor desde Windows")
                     return True
                     
             except Exception:
+                # Error silencioso para no ralentizar
                 pass
             
-            # Por defecto, asumir que se inició manualmente
-            self.logger.info("Detectado inicio manual de la aplicación")
+            # Por defecto: inicio manual (sin log para ser más rápido)
             return False
             
         except Exception as e:
-            self.logger.error(f"Error al detectar tipo de inicio: {e}")
+            # Solo registrar errores críticos
+            self.logger.error(f"Error crítico en detección de inicio: {e}")
             return False
     
     # ═══════════════════════════════════════════════════════════════
@@ -2006,15 +2140,15 @@ Versión de la app: {self.APP_VERSION}
                         # Se inició con Windows - usar configuración específica
                         should_auto_start = self.app_settings.get_setting("auto_start_server_with_windows")
                         if should_auto_start:
-                            self.logger.info("Auto-inicio activado: iniciado con Windows")
+                            self.logger.info("✅ Auto-inicio activado: iniciado con Windows")
                     else:
                         # Se inició manualmente - usar configuración normal
                         should_auto_start = self.app_settings.get_setting("auto_start_server")
                         if should_auto_start:
-                            self.logger.info("Auto-inicio activado: iniciado manualmente")
+                            self.logger.info("✅ Auto-inicio activado: iniciado manualmente")
                     
                     if should_auto_start:
-                        self.root.after(2000, self.auto_start_server)  # Esperar 2 segundos para que se cargue todo
+                        self.root.after(2000, self.auto_start_server_if_configured)  # Esperar 2 segundos para que se cargue todo
                 else:
                     self.logger.warning("No se pudo iniciar el sistema de bandeja")
             else:

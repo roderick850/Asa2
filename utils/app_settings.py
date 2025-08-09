@@ -57,12 +57,15 @@ class AppSettings:
                 # Combinar con defaults para nuevas opciones
                 settings = self.default_settings.copy()
                 settings.update(loaded_settings)
+                self.settings = settings  # ✅ ACTUALIZAR self.settings
                 return settings
             else:
-                return self.default_settings.copy()
+                self.settings = self.default_settings.copy()  # ✅ ACTUALIZAR self.settings
+                return self.settings
         except Exception as e:
             self.logger.error(f"Error al cargar configuraciones: {e}")
-            return self.default_settings.copy()
+            self.settings = self.default_settings.copy()  # ✅ ACTUALIZAR self.settings
+            return self.settings
     
     def save_settings(self):
         """Guardar configuraciones a archivo"""
@@ -81,7 +84,11 @@ class AppSettings:
     
     def get_setting(self, key, default=None):
         """Obtener una configuración específica"""
-        return self.settings.get(key, default if default is not None else self.default_settings.get(key))
+        value = self.settings.get(key, default if default is not None else self.default_settings.get(key))
+        # Solo hacer log debug si está configurado para ello
+        if hasattr(self.logger, 'should_log_debug') and self.logger.should_log_debug():
+            self.logger.debug(f"📋 Configuración '{key}': {value}")
+        return value
     
     def set_setting(self, key, value):
         """Establecer una configuración específica"""
@@ -126,9 +133,10 @@ class AppSettings:
             
             with winreg.OpenKey(reg_key, reg_path, 0, winreg.KEY_ALL_ACCESS) as key:
                 if enabled:
-                    # Agregar entrada de registro
+                    # Agregar entrada de registro con argumento para detectar inicio automático
                     app_path = self.app_path.replace('/', '\\')  # Normalizar path
-                    winreg.SetValueEx(key, self.app_name, 0, winreg.REG_SZ, f'"{app_path}"')
+                    startup_command = f'"{app_path}" --windows-startup'
+                    winreg.SetValueEx(key, self.app_name, 0, winreg.REG_SZ, startup_command)
                     self.logger.info("Inicio automático habilitado via registro")
                 else:
                     # Eliminar entrada de registro
@@ -165,11 +173,11 @@ class AppSettings:
             link_path = os.path.join(startup_folder, f"{self.app_name}.bat")
             
             if enabled:
-                # Crear archivo .bat en la carpeta de inicio
+                # Crear archivo .bat en la carpeta de inicio con argumento para detectar inicio automático
                 app_path = self.app_path.replace('/', '\\')
                 bat_content = f'''@echo off
 cd /d "{os.path.dirname(app_path)}"
-start "" "{app_path}"
+start "" "{app_path}" --windows-startup
 '''
                 try:
                     with open(link_path, 'w', encoding='utf-8') as f:
@@ -281,3 +289,32 @@ start "" "{app_path}"
         except Exception as e:
             self.logger.error(f"Error al restablecer configuraciones: {e}")
             return False
+    
+    def debug_all_settings(self):
+        """Mostrar todas las configuraciones actuales para debug"""
+        try:
+            self.logger.info("🔧 === CONFIGURACIONES ACTUALES ===")
+            self.logger.info(f"📂 Archivo de configuración: {self.config_file}")
+            
+            # Configuraciones relacionadas con auto-inicio
+            startup_settings = [
+                "startup_with_windows",
+                "auto_start_server", 
+                "auto_start_server_with_windows",
+                "start_minimized",
+                "minimize_to_tray"
+            ]
+            
+            self.logger.info("🚀 Configuraciones de inicio:")
+            for key in startup_settings:
+                value = self.settings.get(key, self.default_settings.get(key, "NOT_SET"))
+                self.logger.info(f"   {key}: {value}")
+            
+            self.logger.info("📋 Todas las configuraciones:")
+            for key, value in self.settings.items():
+                self.logger.info(f"   {key}: {value}")
+                
+            self.logger.info("🔧 === FIN CONFIGURACIONES ===")
+            
+        except Exception as e:
+            self.logger.error(f"Error al mostrar configuraciones: {e}")

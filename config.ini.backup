@@ -1,0 +1,57 @@
+[server]
+path = 
+port = 7777
+max_players = 70
+name = Mi Servidor Ark
+root_path = D:/ASA
+install_path = C:/Users/roder/OneDrive/Desktop/Nuevacarpeta\servers
+steamcmd_path = D:/ASA\SteamCMD\steamcmd.exe
+executable_path_prueba = D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+session_name = Juegando
+server_password = 4r3p3r4
+admin_password = c4rd3n4l
+message = ¡Bienvenido al servidor!
+duration = 10
+pve_mode = True
+query_port = 27015
+custom_args = 
+executable_path_ark_server = C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/ARK_Server\ARK_Server\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+executable_path_prueba2 = D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+multihome = roderick850.tplinkdns.com
+mod_ids = 
+
+[game]
+xp_multiplier = 1.0
+harvest_multiplier = 1.0
+taming_multiplier = 1.0
+day_night_speed = 1.0
+
+[advanced]
+data_path = 
+logs_path = 
+additional_params = 
+
+[backup]
+source_path = 
+destination_path = 
+frequency_hours = 24
+retain_backups = 7
+
+[logs]
+logs_path = 
+max_log_size_mb = 100
+retain_logs_days = 30
+
+[app]
+theme = dark
+language = es
+auto_start_monitoring = false
+auto_start_backup = false
+last_server = Prueba
+last_map = The Center
+
+[rcon]
+ip = 127.0.0.12
+port = 27030
+enable_startup_args = True
+

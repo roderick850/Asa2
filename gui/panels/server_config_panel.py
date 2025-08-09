@@ -4,7 +4,11 @@ import os
 import subprocess
 import platform
 from pathlib import Path
-from tkinter import messagebox
+try:
+    from CTkMessagebox import CTkMessagebox
+except ImportError:
+    from tkinter import messagebox as fallback_messagebox
+    CTkMessagebox = None
 import re
 
 class ServerConfigPanel(ctk.CTkFrame):
@@ -94,11 +98,16 @@ class ServerConfigPanel(ctk.CTkFrame):
         
         self.search_entry = ctk.CTkEntry(
             search_frame,
-            placeholder_text="Buscar: max, multiplier, enable, port, server...",
+            placeholder_text="🔍 Buscar parámetros...",
             width=350
         )
         self.search_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        
+        # Deshabilitar autocompletado y configurar eventos de búsqueda
         self.search_entry.bind("<KeyRelease>", self.on_search_change)
+        self.search_entry.bind("<Button-1>", self.on_search_click)
+        self.search_entry.bind("<FocusIn>", self.on_search_focus_in)
+        self.search_entry.bind("<FocusOut>", self.on_search_focus_out)
         
         clear_button = ctk.CTkButton(
             search_frame,
@@ -324,23 +333,43 @@ class ServerConfigPanel(ctk.CTkFrame):
         
         row = 0
         for section_name in config.sections():
-            # Crear frame para la sección
-            section_frame = ctk.CTkFrame(self.tab_contents[ini_type])
-            section_frame.pack(fill="x", padx=5, pady=5)
+            # Crear frame para la sección con mejor diseño
+            section_frame = ctk.CTkFrame(
+                self.tab_contents[ini_type], 
+                corner_radius=12,
+                border_width=2
+            )
+            section_frame.pack(fill="x", padx=12, pady=8)
             section_frame.grid_columnconfigure(1, weight=1)
             
-            # Título de la sección
+            # Header de la sección con icono y estilo mejorado
+            header_frame = ctk.CTkFrame(section_frame, corner_radius=8, height=50)
+            header_frame.pack(fill="x", padx=8, pady=(8, 4))
+            header_frame.grid_columnconfigure(0, weight=1)
+            header_frame.pack_propagate(False)
+            
+            section_icon = self.get_section_icon(section_name)
             section_label = ctk.CTkLabel(
-                section_frame,
-                text=f"📁 [{section_name}]",
-                font=ctk.CTkFont(size=13, weight="bold"),
+                header_frame,
+                text=f"{section_icon} [{section_name}]",
+                font=ctk.CTkFont(size=14, weight="bold"),
                 anchor="w"
             )
-            section_label.pack(fill="x", padx=10, pady=(10, 5))
+            section_label.pack(side="left", padx=15, pady=12)
             
-            # Contenedor para las opciones
-            options_frame = ctk.CTkFrame(section_frame)
-            options_frame.pack(fill="x", padx=10, pady=(0, 10))
+            # Contador de parámetros
+            param_count = len(config[section_name].items())
+            count_label = ctk.CTkLabel(
+                header_frame,
+                text=f"({param_count} parámetros)",
+                font=ctk.CTkFont(size=11),
+                text_color="gray"
+            )
+            count_label.pack(side="right", padx=15, pady=12)
+            
+            # Contenedor para las opciones con mejor espaciado
+            options_frame = ctk.CTkFrame(section_frame, fg_color="transparent")
+            options_frame.pack(fill="x", padx=8, pady=(4, 8))
             options_frame.grid_columnconfigure(1, weight=1)
             
             self.config_widgets[ini_type][section_name] = {}
@@ -354,91 +383,271 @@ class ServerConfigPanel(ctk.CTkFrame):
                 self.config_widgets[ini_type][section_name][key] = widget
                 option_row += 1
     
+    def get_section_icon(self, section_name):
+        """Obtener icono según la sección"""
+        section_lower = section_name.lower()
+        
+        if 'server' in section_lower:
+            return "🖥️"  # Servidor
+        elif 'game' in section_lower:
+            return "🎮"  # Juego
+        elif 'engine' in section_lower:
+            return "⚙️"  # Motor
+        elif 'settings' in section_lower:
+            return "⚙️"  # Configuraciones
+        elif 'session' in section_lower:
+            return "🔗"  # Sesión
+        elif 'script' in section_lower:
+            return "📜"  # Script
+        elif 'user' in section_lower:
+            return "👤"  # Usuario
+        elif 'admin' in section_lower:
+            return "👑"  # Administrador
+        elif 'log' in section_lower:
+            return "📋"  # Logs
+        elif 'world' in section_lower:
+            return "🌍"  # Mundo
+        else:
+            return "📁"  # Carpeta genérica
+    
     def create_parameter_widget(self, parent, key, value, row):
         """Crear widget apropiado para un parámetro"""
         # Detectar tipo de dato
         data_type = self.detect_data_type(key, value)
         
-        # Frame para el parámetro
-        param_frame = ctk.CTkFrame(parent)
-        param_frame.grid(row=row, column=0, columnspan=2, sticky="ew", padx=5, pady=2)
+        # Frame para el parámetro con mejor diseño
+        param_frame = ctk.CTkFrame(parent, corner_radius=8, border_width=1)
+        param_frame.grid(row=row, column=0, columnspan=2, sticky="ew", padx=8, pady=4)
         param_frame.grid_columnconfigure(1, weight=1)
         
-        # Label del parámetro
+        # Crear icono según el tipo de dato
+        type_icon = self.get_type_icon(data_type)
+        
+        # Label del parámetro con icono y mejor tipografía
+        label_text = f"{type_icon} {key}"
         label = ctk.CTkLabel(
             param_frame,
-            text=f"{key}:",
-            font=ctk.CTkFont(size=11),
+            text=label_text,
+            font=ctk.CTkFont(size=12, weight="normal"),
             anchor="w",
-            width=200
+            width=240
         )
-        label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        label.grid(row=0, column=0, padx=12, pady=8, sticky="w")
         
-        # Widget apropiado según el tipo
+        # Widget apropiado según el tipo con mejor estilo
         if data_type == bool:
+            # Frame contenedor para el switch y label
+            switch_frame = ctk.CTkFrame(param_frame, fg_color="transparent")
+            switch_frame.grid(row=0, column=1, padx=12, pady=8, sticky="w")
+            
             widget = ctk.CTkSwitch(
-                param_frame,
+                switch_frame,
                 text="",
-                width=50
+                width=60,
+                height=28
             )
-            # Establecer valor inicial
-            if value.lower() in ['true', '1', 'yes', 'on']:
+            widget.pack(side="left")
+            
+            # Label de estado
+            status_label = ctk.CTkLabel(
+                switch_frame,
+                text="",
+                font=ctk.CTkFont(size=11),
+                width=80
+            )
+            status_label.pack(side="left", padx=(8, 0))
+            
+            # Establecer valor inicial y texto
+            bool_value = str(value).lower() in ['true', '1', 'yes', 'on']
+            if bool_value:
                 widget.select()
-        
-        elif data_type in [int, float]:
+                status_label.configure(text="Activado", text_color="green")
+            else:
+                status_label.configure(text="Desactivado", text_color="gray")
+            
+            # Función para actualizar el estado visual
+            def update_status():
+                if widget.get():
+                    status_label.configure(text="Activado", text_color="green")
+                else:
+                    status_label.configure(text="Desactivado", text_color="gray")
+            
+            widget.configure(command=update_status)
+            
+        elif data_type == int:
             widget = ctk.CTkEntry(
                 param_frame,
-                placeholder_text=f"Valor {data_type.__name__}",
-                width=150
+                placeholder_text="🔢 Número entero (ej: 1, 10, 100)",
+                width=280,
+                height=32,
+                corner_radius=8,
+                font=ctk.CTkFont(size=11)
             )
             widget.insert(0, str(value))
-        
+            
+            # Validación numérica en tiempo real
+            def validate_int(event=None):
+                try:
+                    val = widget.get().strip()
+                    if val:
+                        if not (val.lstrip('-').isdigit() and val.count('-') <= 1 and (not val.startswith('-') or len(val) > 1)):
+                            widget.configure(border_color=("red", "red"))
+                        else:
+                            widget.configure(border_color=("gray", "gray"))
+                    else:
+                        widget.configure(border_color=("gray", "gray"))
+                except:
+                    widget.configure(border_color=("red", "red"))
+            
+            widget.bind('<KeyRelease>', validate_int)
+            
+        elif data_type == float:
+            widget = ctk.CTkEntry(
+                param_frame,
+                placeholder_text="📊 Número decimal (ej: 1.0, 2.5, 10.75)",
+                width=280,
+                height=32,
+                corner_radius=8,
+                font=ctk.CTkFont(size=11)
+            )
+            widget.insert(0, str(value))
+            
+            # Validación numérica en tiempo real
+            def validate_float(event=None):
+                try:
+                    val = widget.get().strip()
+                    if val:
+                        float(val)
+                        widget.configure(border_color=("gray", "gray"))
+                    else:
+                        widget.configure(border_color=("gray", "gray"))
+                except ValueError:
+                    widget.configure(border_color=("red", "red"))
+            
+            widget.bind('<KeyRelease>', validate_float)
+            
         else:  # string
             # Si el valor es muy largo, usar textbox
-            if len(str(value)) > 50:
+            if len(str(value)) > 60:
                 widget = ctk.CTkTextbox(
                     param_frame,
-                    height=60,
-                    width=300
+                    height=70,
+                    width=280,
+                    corner_radius=8,
+                    font=ctk.CTkFont(size=11),
+                    wrap="word"
                 )
                 widget.insert("1.0", str(value))
             else:
                 widget = ctk.CTkEntry(
                     param_frame,
-                    placeholder_text="Valor de texto",
-                    width=300
+                    placeholder_text="📝 Texto (ej: Nombre del servidor)",
+                    width=280,
+                    height=32,
+                    corner_radius=8,
+                    font=ctk.CTkFont(size=11)
                 )
                 widget.insert(0, str(value))
         
-        widget.grid(row=0, column=1, padx=10, pady=5, sticky="ew")
+        # Posicionar widget (excepto para booleanos que ya están posicionados)
+        if data_type != bool:
+            widget.grid(row=0, column=1, padx=12, pady=8, sticky="ew")
         
         return widget
+    
+    def get_type_icon(self, data_type):
+        """Obtener icono según el tipo de dato"""
+        if data_type == bool:
+            return "☑️"  # Switch/checkbox
+        elif data_type == int:
+            return "🔢"  # Número entero
+        elif data_type == float:
+            return "📊"  # Número decimal
+        else:
+            return "📝"  # Texto
     
     def detect_data_type(self, key, value):
         """Detectar tipo de dato basado en clave y valor"""
         key_lower = key.lower()
         value_str = str(value).lower().strip()
         
-        # Verificar booleanos
-        if (any(pattern in key_lower for pattern in ['enable', 'allow', 'show', 'use', 'auto', 'force', 'pve', 'pvp']) or
-            value_str in ['true', 'false', '1', '0', 'yes', 'no', 'on', 'off']):
+        # Patrones específicos para booleanos (estas claves siempre son booleanas)
+        boolean_key_patterns = [
+            'enable', 'allow', 'show', 'use', 'auto', 'force', 'pve', 'pvp', 
+            'disable', 'prevent', 'hide', 'block', 'secure', 'protect',
+            'is', 'has', 'can', 'should', 'must', 'need', 'require',
+            'carry', 'flyer', 'flying', 'enabled', 'location'
+        ]
+        
+        # Patrones específicos que siempre son numéricos (nunca booleanos)
+        numeric_key_patterns = [
+            'difficulty', 'override', 'multiplier', 'rate', 'amount', 'count',
+            'max', 'min', 'limit', 'size', 'length', 'width', 'height',
+            'time', 'duration', 'interval', 'delay', 'timeout', 'port',
+            'level', 'exp', 'damage', 'health', 'speed', 'weight',
+            'taming', 'structure', 'resistance'
+        ]
+        
+        # Patrones específicos que siempre son string (nunca booleanos o números)
+        # NOTA: Ser muy específico para evitar falsos positivos
+        string_key_patterns = [
+            'password', 'sessionname', 'servername', 'message', 'motd', 'adminpassword', 
+            'modid', 'filepath', 'url', 'hostname', 'description',
+            'title', 'welcomemessage', 'command'
+        ]
+        
+        # 1. Verificar si debe ser string (tiene prioridad máxima)
+        if any(pattern in key_lower for pattern in string_key_patterns):
+            return str
+        
+        # 2. Verificar valores explícitamente booleanos PRIMERO
+        if value_str in ['true', 'false', 'yes', 'no', 'on', 'off']:
             return bool
         
-        # Verificar números flotantes
+        # 3. Verificar si debe ser booleano por clave
+        if any(pattern in key_lower for pattern in boolean_key_patterns):
+            # Si la clave sugiere booleano Y el valor es 0/1
+            if value_str in ['1', '0']:
+                return bool
+        
+        # 4. Verificar si debe ser numérico por clave
+        if any(pattern in key_lower for pattern in numeric_key_patterns):
+            try:
+                if '.' in value_str:
+                    float(value_str)
+                    return float
+                else:
+                    int(value_str)
+                    return int
+            except ValueError:
+                return str  # Si no puede convertir a número, es string
+        
+        # 5. Intentar detectar números por valor
         try:
-            if '.' in value_str and float(value_str):
+            # Verificar números flotantes
+            if '.' in value_str:
+                float(value_str)
                 return float
-        except:
+        except ValueError:
             pass
         
-        # Verificar enteros
         try:
+            # Verificar enteros (incluyendo negativos)
             if value_str.isdigit() or (value_str.startswith('-') and value_str[1:].isdigit()):
-                return int
-        except:
+                int(value_str)
+                # Solo retornar int si NO parece ser booleano por clave
+                if not any(pattern in key_lower for pattern in boolean_key_patterns):
+                    return int
+                else:
+                    # Si la clave sugiere booleano pero el valor es numérico, verificar más
+                    if value_str in ['0', '1']:
+                        return bool
+                    else:
+                        return int
+        except ValueError:
             pass
         
-        # Por defecto, string
+        # 6. Por defecto, string
         return str
     
     def on_search_change(self, event=None):
@@ -450,12 +659,9 @@ class ServerConfigPanel(ctk.CTkFrame):
         
         # Mostrar indicador de búsqueda pendiente
         current_text = self.search_entry.get().strip()
-        if current_text:
-            # Cambiar placeholder para indicar que está esperando
-            if len(current_text) >= 2:  # Solo mostrar "buscando" si hay al menos 2 caracteres
-                self.search_entry.configure(placeholder_text="🔍 Buscando...")
-            else:
-                self.search_entry.configure(placeholder_text="Buscar: max, multiplier, enable, port, server...")
+        if current_text and len(current_text) >= 2:
+            # Solo mostrar "buscando" si hay al menos 2 caracteres
+            self.search_entry.configure(placeholder_text="🔍 Buscando...")
         
         # Programar nueva búsqueda después de 300ms de inactividad (reducido para mejor UX)
         self.search_timeout_id = self.after(300, self._execute_search)
@@ -467,7 +673,7 @@ class ServerConfigPanel(ctk.CTkFrame):
             self.search_filter = search_text
             
             # Restaurar placeholder original
-            self.search_entry.configure(placeholder_text="Buscar: max, multiplier, enable, port, server...")
+            self.search_entry.configure(placeholder_text="🔍 Buscar parámetros...")
             
             # Si no hay filtro, restaurar orden original
             if not search_text:
@@ -480,7 +686,7 @@ class ServerConfigPanel(ctk.CTkFrame):
         except Exception as e:
             self.logger.error(f"Error durante la búsqueda: {e}")
             # Restaurar placeholder incluso en caso de error
-            self.search_entry.configure(placeholder_text="Buscar: max, multiplier, enable, port, server...")
+            self.search_entry.configure(placeholder_text="🔍 Buscar parámetros...")
         finally:
             # Limpiar el timeout ID
             self.search_timeout_id = None
@@ -815,23 +1021,57 @@ class ServerConfigPanel(ctk.CTkFrame):
             self.search_timeout_id = None
         
         self.search_entry.delete(0, "end")
-        # Restaurar placeholder original
-        self.search_entry.configure(placeholder_text="Buscar: max, multiplier, enable, port, server...")
+        # Restaurar placeholder original sin autocompletado
+        self.search_entry.configure(placeholder_text="🔍 Buscar parámetros...")
         self.show_all_widgets()
+    
+    def on_search_click(self, event=None):
+        """Manejar clic en el campo de búsqueda"""
+        # Limpiar placeholder y enfocar el campo
+        try:
+            current_text = self.search_entry.get()
+            if current_text:
+                # Si hay texto, seleccionarlo todo
+                self.search_entry.select_range(0, "end")
+            else:
+                # Si no hay texto, cambiar placeholder para indicar que está activo
+                self.search_entry.configure(placeholder_text="Escribir aquí...")
+        except Exception:
+            pass
+    
+    def on_search_focus_in(self, event=None):
+        """Manejar cuando el campo de búsqueda recibe el foco"""
+        try:
+            # Cambiar placeholder cuando está enfocado para mayor claridad
+            if not self.search_entry.get().strip():
+                self.search_entry.configure(placeholder_text="Escribir aquí...")
+        except Exception:
+            pass
+    
+    def on_search_focus_out(self, event=None):
+        """Manejar cuando el campo de búsqueda pierde el foco"""
+        try:
+            # Restaurar placeholder original cuando pierde el foco
+            if not self.search_entry.get().strip():
+                self.search_entry.configure(placeholder_text="🔍 Buscar parámetros...")
+        except Exception:
+            pass
     
     def open_config_folder(self):
         """Abrir la carpeta de configuraciones del servidor actual"""
         if not self.current_server:
-            messagebox.showwarning(
+            self.show_ctk_message(
                 "Sin servidor",
-                "No hay ningún servidor seleccionado.\nPor favor, selecciona un servidor primero."
+                "No hay ningún servidor seleccionado.\nPor favor, selecciona un servidor primero.",
+                "warning"
             )
             return
         
         if not self.current_server_path:
-            messagebox.showerror(
+            self.show_ctk_message(
                 "Error de ruta",
-                "No se pudo determinar la ruta del servidor.\nVerifica que el servidor esté correctamente configurado."
+                "No se pudo determinar la ruta del servidor.\nVerifica que el servidor esté correctamente configurado.",
+                "error"
             )
             return
         
@@ -843,14 +1083,16 @@ class ServerConfigPanel(ctk.CTkFrame):
             try:
                 os.makedirs(config_folder, exist_ok=True)
                 self.logger.info(f"Carpeta de configuración creada: {config_folder}")
-                messagebox.showinfo(
+                self.show_ctk_message(
                     "Carpeta creada",
-                    f"La carpeta de configuración no existía y ha sido creada:\n{config_folder}"
+                    f"La carpeta de configuración no existía y ha sido creada:\n{config_folder}",
+                    "info"
                 )
             except Exception as e:
-                messagebox.showerror(
+                self.show_ctk_message(
                     "Error al crear carpeta",
-                    f"No se pudo crear la carpeta de configuración:\n{config_folder}\n\nError: {e}"
+                    f"No se pudo crear la carpeta de configuración:\n{config_folder}\n\nError: {e}",
+                    "error"
                 )
                 return
         
@@ -867,9 +1109,10 @@ class ServerConfigPanel(ctk.CTkFrame):
             
         except Exception as e:
             self.logger.error(f"Error al abrir carpeta: {e}")
-            messagebox.showerror(
+            self.show_ctk_message(
                 "Error",
-                f"No se pudo abrir la carpeta de configuración:\n{config_folder}\n\nError: {e}\n\nPuedes navegar manualmente a esta ubicación."
+                f"No se pudo abrir la carpeta de configuración:\n{config_folder}\n\nError: {e}\n\nPuedes navegar manualmente a esta ubicación.",
+                "error"
             )
     
     def _update_open_folder_button(self):
@@ -926,7 +1169,7 @@ class ServerConfigPanel(ctk.CTkFrame):
         """Guardar todas las configuraciones modificadas"""
         try:
             if not self.current_server:
-                messagebox.showwarning("Advertencia", "No hay servidor seleccionado")
+                self.show_ctk_message("Advertencia", "No hay servidor seleccionado", "warning")
                 return
             
             saved_files = 0
@@ -941,14 +1184,14 @@ class ServerConfigPanel(ctk.CTkFrame):
             
             if saved_files > 0:
                 self.status_label.configure(text=f"✅ {saved_files} archivos guardados")
-                messagebox.showinfo("Éxito", f"Se guardaron {saved_files} archivos de configuración")
+                self.show_ctk_message("Éxito", f"Se guardaron {saved_files} archivos de configuración", "info")
             else:
                 self.status_label.configure(text="⚠️ No hay cambios para guardar")
                 
         except Exception as e:
             self.logger.error(f"Error al guardar configuraciones: {e}")
             self.status_label.configure(text=f"❌ Error al guardar: {str(e)}")
-            messagebox.showerror("Error", f"Error al guardar configuraciones:\n{str(e)}")
+            self.show_ctk_message("Error", f"Error al guardar configuraciones:\n{str(e)}", "error")
     
     def save_ini_file(self, ini_type, config_path):
         """Guardar un archivo INI específico"""
@@ -982,9 +1225,14 @@ class ServerConfigPanel(ctk.CTkFrame):
                     except Exception as e:
                         self.logger.warning(f"Error al obtener valor de {key}: {e}")
             
-            # Escribir archivo
+            # Escribir archivo sin espacios alrededor del =
             with open(file_path, 'w', encoding='utf-8') as f:
-                config.write(f)
+                # Escribir manualmente para evitar espacios alrededor del =
+                for section_name in config.sections():
+                    f.write(f"[{section_name}]\n")
+                    for key, value in config[section_name].items():
+                        f.write(f"{key}={value}\n")
+                    f.write("\n")  # Línea en blanco entre secciones
             
             self.logger.info(f"Guardado {file_path}")
             return True
@@ -1004,3 +1252,30 @@ class ServerConfigPanel(ctk.CTkFrame):
             self.main_window.add_log_message(message)
         else:
             self.logger.info(message)
+    
+    def show_ctk_message(self, title, message, icon="info"):
+        """Mostrar mensaje usando CustomTkinter o fallback a tkinter"""
+        try:
+            if CTkMessagebox:
+                # Usar CustomTkinter MessageBox
+                CTkMessagebox(
+                    title=title,
+                    message=message,
+                    icon=icon,
+                    width=400,
+                    height=200
+                )
+            else:
+                # Fallback a tkinter
+                if icon == "info":
+                    fallback_messagebox.showinfo(title, message)
+                elif icon == "warning":
+                    fallback_messagebox.showwarning(title, message)
+                elif icon == "error":
+                    fallback_messagebox.showerror(title, message)
+                else:
+                    fallback_messagebox.showinfo(title, message)
+        except Exception as e:
+            self.logger.error(f"Error al mostrar mensaje: {e}")
+            # Fallback final a tkinter estándar
+            fallback_messagebox.showinfo(title, message)

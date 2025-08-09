@@ -104,10 +104,15 @@ class ConfigManager:
         self.save()
     
     def save(self):
-        """Guardar configuración en archivo"""
+        """Guardar configuración en archivo sin espacios alrededor del ="""
         try:
             with open(self.config_file, 'w', encoding='utf-8') as f:
-                self.config.write(f)
+                # Escribir manualmente para evitar espacios alrededor del =
+                for section_name in self.config.sections():
+                    f.write(f"[{section_name}]\n")
+                    for key, value in self.config[section_name].items():
+                        f.write(f"{key}={value}\n")
+                    f.write("\n")  # Línea en blanco entre secciones
         except Exception as e:
             print(f"Error al guardar configuración: {e}")
     

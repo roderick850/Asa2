@@ -3,6 +3,7 @@ import requests
 import json
 import threading
 import os
+import sys
 from datetime import datetime
 from tkinter import messagebox
 import webbrowser
@@ -41,6 +42,27 @@ class ModsPanel(ctk.CTkFrame):
         
         # Actualizar UI inicial después de cargar datos
         self.after(100, self.refresh_initial_tabs)
+    
+    def get_data_directory(self):
+        """Obtener directorio de datos correcto para ejecutable y desarrollo"""
+        try:
+            if hasattr(sys, '_MEIPASS'):
+                # Si estamos en un ejecutable de PyInstaller
+                base_dir = os.path.dirname(sys.executable)
+            else:
+                # Si estamos en desarrollo
+                base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            
+            data_dir = os.path.join(base_dir, "data")
+            os.makedirs(data_dir, exist_ok=True)
+            return data_dir
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al obtener directorio de datos: {e}")
+            # Fallback a directorio relativo
+            fallback_dir = os.path.join(os.path.dirname(__file__), "..", "..", "data")
+            os.makedirs(fallback_dir, exist_ok=True)
+            return fallback_dir
     
     def refresh_initial_tabs(self):
         """Refrescar pestañas con contenido inicial"""
@@ -1085,8 +1107,8 @@ class ModsPanel(ctk.CTkFrame):
     def load_installed_mods(self):
         """Cargar mods instalados desde archivo por servidor/mapa"""
         try:
-            mods_file = os.path.join(os.path.dirname(__file__), "..", "..", "data", "installed_mods_by_server.json")
-            os.makedirs(os.path.dirname(mods_file), exist_ok=True)
+            data_dir = self.get_data_directory()
+            mods_file = os.path.join(data_dir, "installed_mods_by_server.json")
             
             all_mods = {}
             if os.path.exists(mods_file):
@@ -1109,8 +1131,8 @@ class ModsPanel(ctk.CTkFrame):
     def save_installed_mods(self):
         """Guardar mods instalados a archivo por servidor/mapa"""
         try:
-            mods_file = os.path.join(os.path.dirname(__file__), "..", "..", "data", "installed_mods_by_server.json")
-            os.makedirs(os.path.dirname(mods_file), exist_ok=True)
+            data_dir = self.get_data_directory()
+            mods_file = os.path.join(data_dir, "installed_mods_by_server.json")
             
             # Cargar archivo existente
             all_mods = {}
@@ -1134,8 +1156,8 @@ class ModsPanel(ctk.CTkFrame):
     def load_favorite_mods(self):
         """Cargar mods favoritos desde archivo"""
         try:
-            favs_file = os.path.join(os.path.dirname(__file__), "..", "..", "data", "favorite_mods.json")
-            os.makedirs(os.path.dirname(favs_file), exist_ok=True)
+            data_dir = self.get_data_directory()
+            favs_file = os.path.join(data_dir, "favorite_mods.json")
             
             if os.path.exists(favs_file):
                 with open(favs_file, 'r', encoding='utf-8') as f:
@@ -1147,8 +1169,8 @@ class ModsPanel(ctk.CTkFrame):
     def save_favorite_mods(self):
         """Guardar mods favoritos a archivo"""
         try:
-            favs_file = os.path.join(os.path.dirname(__file__), "..", "..", "data", "favorite_mods.json")
-            os.makedirs(os.path.dirname(favs_file), exist_ok=True)
+            data_dir = self.get_data_directory()
+            favs_file = os.path.join(data_dir, "favorite_mods.json")
             
             with open(favs_file, 'w', encoding='utf-8') as f:
                 json.dump(self.favorite_mods, f, indent=2, ensure_ascii=False)
