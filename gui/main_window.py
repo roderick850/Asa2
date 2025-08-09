@@ -889,6 +889,8 @@ class MainWindow:
             self.server_panel.on_server_selected(server_name)
         if hasattr(self, 'principal_panel'):
             self.principal_panel.update_server_info(server_name, self.selected_map)
+            # Cargar configuraciones existentes de GameUserSettings.ini
+            self.principal_panel.load_from_gameusersettings()
         # Actualizar contexto de mods
         if hasattr(self, 'mods_panel'):
             self.mods_panel.update_server_map_context(server_name, self.selected_map)

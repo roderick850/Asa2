@@ -72,6 +72,13 @@ class AdvancedSettingsDialog:
         
         ctk.CTkButton(
             buttons_frame,
+            text="🔍 Verificar",
+            command=self.verify_settings_integrity,
+            width=120
+        ).grid(row=0, column=1, padx=5, pady=10)
+        
+        ctk.CTkButton(
+            buttons_frame,
             text="🔄 Restablecer",
             command=self.reset_settings,
             width=120
@@ -624,13 +631,19 @@ class AdvancedSettingsDialog:
             pass
     
     def save_settings(self):
-        """Guardar todas las configuraciones"""
+        """Guardar todas las configuraciones con verificación robusta"""
         try:
-            # Recopilar todos los valores
+            self.logger.info("🔄 Iniciando proceso de guardado desde diálogo...")
+            
+            # Forzar recarga antes de guardar para sincronizar
+            self.app_settings.load_settings()
+            self.logger.info("✅ Configuraciones recargadas antes de guardar")
+            
+            # Recopilar todos los valores con verificación
             settings_to_save = {
                 "startup_with_windows": self.startup_var.get(),
                 "auto_start_server": self.autostart_var.get(),
-                "auto_start_server_with_windows": self.autostart_windows_var.get(),  # ✅ AGREGADO
+                "auto_start_server_with_windows": self.autostart_windows_var.get(),
                 "start_minimized": self.start_minimized_var.get(),
                 "auto_backup_on_start": self.auto_backup_var.get(),
                 "minimize_to_tray": self.minimize_tray_var.get(),
@@ -645,23 +658,81 @@ class AdvancedSettingsDialog:
                 "hide_console": self.hide_console_var.get()
             }
             
-            # Aplicar configuraciones
+            self.logger.info(f"📝 Configuraciones recopiladas: {len(settings_to_save)} items")
+            
+            # Log de configuraciones críticas ANTES de aplicar
+            critical_settings = ["auto_start_server", "startup_with_windows", "auto_start_server_with_windows"]
+            for key in critical_settings:
+                if key in settings_to_save:
+                    self.logger.info(f"🔍 ANTES - {key}: {settings_to_save[key]}")
+            
+            # Aplicar configuraciones una por una con verificación
+            successful_sets = 0
+            failed_sets = 0
+            
             for key, value in settings_to_save.items():
-                self.app_settings.set_setting(key, value)
-                # Log específico para configuraciones críticas
-                if key in ['auto_start_server', 'auto_start_server_with_windows']:
-                    self.logger.info(f"💾 Guardando {key}: {value}")
+                try:
+                    # Verificar valor anterior
+                    old_value = self.app_settings.get_setting(key)
+                    
+                    # Aplicar nuevo valor
+                    self.app_settings.set_setting(key, value)
+                    
+                    # Verificar que se aplicó
+                    new_value = self.app_settings.get_setting(key)
+                    
+                    if new_value == value:
+                        successful_sets += 1
+                        if key in critical_settings:
+                            self.logger.info(f"✅ {key}: {old_value} → {new_value}")
+                    else:
+                        failed_sets += 1
+                        self.logger.error(f"❌ {key}: no se aplicó correctamente (esperado: {value}, actual: {new_value})")
+                        
+                except Exception as e:
+                    failed_sets += 1
+                    self.logger.error(f"❌ Error al aplicar {key}: {e}")
             
-            # Guardar al archivo
+            self.logger.info(f"📊 Aplicación: {successful_sets} exitosas, {failed_sets} fallidas")
+            
+            if failed_sets > 0:
+                self.logger.warning(f"⚠️ Algunas configuraciones no se aplicaron correctamente")
+            
+            # Guardar al archivo con verificación
+            self.logger.info("💾 Guardando al archivo...")
             self.app_settings.save_settings()
+            self.logger.info("✅ save_settings() completado")
             
-            show_info(self.dialog, "Éxito", "Configuraciones guardadas correctamente")
+            # Verificación post-guardado: recargar y verificar
+            self.logger.info("🔍 Verificando persistencia...")
+            self.app_settings.load_settings()
+            
+            verification_passed = True
+            for key in critical_settings:
+                if key in settings_to_save:
+                    expected_value = settings_to_save[key]
+                    actual_value = self.app_settings.get_setting(key)
+                    if expected_value == actual_value:
+                        self.logger.info(f"✅ VERIFICADO - {key}: {actual_value}")
+                    else:
+                        self.logger.error(f"❌ FALLÓ VERIFICACIÓN - {key}: esperado {expected_value}, actual {actual_value}")
+                        verification_passed = False
+            
+            if verification_passed:
+                self.logger.info("🎉 TODAS LAS CONFIGURACIONES VERIFICADAS EXITOSAMENTE")
+                show_info(self.dialog, "Éxito", "✅ Configuraciones guardadas y verificadas correctamente")
+            else:
+                self.logger.error("❌ FALLÓ LA VERIFICACIÓN DE ALGUNAS CONFIGURACIONES")
+                show_warning(self.dialog, "Advertencia", "⚠️ Configuraciones guardadas, pero algunas pueden no haberse aplicado correctamente. Revisa los logs.")
+            
             self.changes_made = False
-            self.close_dialog()
+            
+            # NO cerrar automáticamente para que el usuario pueda verificar
+            # self.close_dialog()
             
         except Exception as e:
-            self.logger.error(f"Error al guardar configuraciones: {e}")
-            show_error(self.dialog, "Error", f"Error al guardar configuraciones: {e}")
+            self.logger.error(f"❌ Error crítico al guardar configuraciones: {e}")
+            show_error(self.dialog, "Error", f"❌ Error crítico al guardar configuraciones:\n{e}")
     
     def reset_settings(self):
         """Restablecer configuraciones por defecto"""
@@ -702,64 +773,7 @@ class AdvancedSettingsDialog:
             else:
                 show_error(self.dialog, "Error", "Error al importar configuraciones")
     
-    def save_settings(self):
-        """Guardar todas las configuraciones"""
-        try:
-            # Configuraciones de inicio
-            if hasattr(self, 'startup_var'):
-                self.app_settings.set_setting("startup_with_windows", self.startup_var.get())
-            
-            if hasattr(self, 'autostart_var'):
-                self.app_settings.set_setting("auto_start_server", self.autostart_var.get())
-                
-            if hasattr(self, 'autostart_windows_var'):
-                self.app_settings.set_setting("auto_start_server_with_windows", self.autostart_windows_var.get())
-                
-            if hasattr(self, 'minimize_start_var'):
-                self.app_settings.set_setting("start_minimized", self.minimize_start_var.get())
-                
-            if hasattr(self, 'minimize_tray_var'):
-                self.app_settings.set_setting("minimize_to_tray", self.minimize_tray_var.get())
-                
-            if hasattr(self, 'close_tray_var'):
-                self.app_settings.set_setting("close_to_tray", self.close_tray_var.get())
-            
-            # Configuraciones de ventana
-            if hasattr(self, 'always_top_var'):
-                self.app_settings.set_setting("always_on_top", self.always_top_var.get())
-                
-            if hasattr(self, 'remember_position_var'):
-                self.app_settings.set_setting("remember_window_position", self.remember_position_var.get())
-            
-            # Otras configuraciones
-            if hasattr(self, 'auto_backup_var'):
-                self.app_settings.set_setting("auto_backup_on_start", self.auto_backup_var.get())
-                
-            if hasattr(self, 'confirm_exit_var'):
-                self.app_settings.set_setting("confirm_exit", self.confirm_exit_var.get())
-                
-            if hasattr(self, 'hide_console_var'):
-                self.app_settings.set_setting("hide_console", self.hide_console_var.get())
-                
-            if hasattr(self, 'auto_save_var'):
-                self.app_settings.set_setting("auto_save_config", self.auto_save_var.get())
-                
-            if hasattr(self, 'notification_sound_var'):
-                self.app_settings.set_setting("notification_sound", self.notification_sound_var.get())
-            
-            # Guardar configuraciones
-            self.app_settings.save_settings()
-            self.changes_made = False
-            
-            show_info(self.dialog, "Configuraciones guardadas", "Todas las configuraciones han sido guardadas correctamente.")
-            self.logger.info("Configuraciones avanzadas guardadas")
-            
-            # Cerrar diálogo
-            self.close_dialog()
-            
-        except Exception as e:
-            self.logger.error(f"Error al guardar configuraciones: {e}")
-            show_error(self.dialog, "Error", f"Error al guardar configuraciones:\n{e}")
+
     
     def reset_settings(self):
         """Restablecer configuraciones a valores por defecto"""
@@ -905,6 +919,50 @@ class AdvancedSettingsDialog:
                     self.logger.info(f"🔄 Recarga básica: auto_start_server_with_windows = {value}")
             except Exception as fallback_error:
                 self.logger.error(f"❌ Recarga básica falló: {fallback_error}")
+
+    def verify_settings_integrity(self):
+        """Verificar la integridad de las configuraciones"""
+        try:
+            self.logger.info("🔍 Iniciando verificación de integridad...")
+            
+            # Recargar configuraciones desde archivo
+            self.app_settings.load_settings()
+            
+            # Verificar que las variables de UI coincidan con app_settings
+            critical_mappings = {
+                'startup_var': 'startup_with_windows',
+                'autostart_var': 'auto_start_server',
+                'autostart_windows_var': 'auto_start_server_with_windows'
+            }
+            
+            integrity_ok = True
+            
+            for var_name, setting_key in critical_mappings.items():
+                if hasattr(self, var_name):
+                    var_obj = getattr(self, var_name)
+                    ui_value = var_obj.get()
+                    settings_value = self.app_settings.get_setting(setting_key)
+                    
+                    if ui_value == settings_value:
+                        self.logger.info(f"✅ {setting_key}: UI={ui_value}, Settings={settings_value}")
+                    else:
+                        self.logger.warning(f"⚠️ {setting_key}: DESINCRONIZADO - UI={ui_value}, Settings={settings_value}")
+                        integrity_ok = False
+                        
+                        # Sincronizar UI con settings
+                        var_obj.set(settings_value)
+                        self.logger.info(f"🔄 Sincronizado {setting_key} UI con Settings: {settings_value}")
+            
+            if integrity_ok:
+                self.logger.info("🎉 INTEGRIDAD VERIFICADA: UI y Settings sincronizados")
+            else:
+                self.logger.warning("⚠️ INTEGRIDAD RESTAURADA: Se aplicaron correcciones")
+            
+            return integrity_ok
+            
+        except Exception as e:
+            self.logger.error(f"❌ Error en verificación de integridad: {e}")
+            return False
 
     def close_dialog(self):
         """Cerrar el diálogo"""

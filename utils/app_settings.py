@@ -16,9 +16,28 @@ class AppSettings:
     def __init__(self, config_manager, logger):
         self.config_manager = config_manager
         self.logger = logger
-        self.settings_file = "data/app_settings.json"
+        
+        # Construir ruta absoluta para que funcione tanto en inicio manual como desde Windows
+        if getattr(sys, 'frozen', False):
+            # Si es executable compilado, usar directorio del .exe
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            # Si es desarrollo, usar directorio raíz del proyecto
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        
+        self.settings_file = os.path.join(base_dir, "data", "app_settings.json")
         self.app_name = "ArkServerManager"
         self.app_path = sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__)
+        
+        # Crear directorio data si no existe
+        data_dir = os.path.dirname(self.settings_file)
+        os.makedirs(data_dir, exist_ok=True)
+        
+        # Log de la ruta para debugging
+        self.logger.debug(f"AppSettings: Ruta del archivo de configuraciones: {self.settings_file}")
+        self.logger.debug(f"AppSettings: Directorio base: {base_dir}")
+        self.logger.debug(f"AppSettings: ¿Es ejecutable compilado?: {getattr(sys, 'frozen', False)}")
+        self.logger.debug(f"AppSettings: ¿Existe archivo?: {os.path.exists(self.settings_file)}")
         
         # Configuraciones por defecto
         self.default_settings = {
@@ -68,18 +87,56 @@ class AppSettings:
             return self.settings
     
     def save_settings(self):
-        """Guardar configuraciones a archivo"""
+        """Guardar configuraciones a archivo con logging robusto"""
         try:
             # Crear directorio si no existe
             os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
             
+            # Log antes de guardar
+            self.logger.info("💾 Iniciando guardado de configuraciones...")
+            self.logger.debug(f"Archivo destino: {self.settings_file}")
+            self.logger.debug(f"Configuraciones a guardar: {len(self.settings)} items")
+            
+            # Verificar configuraciones críticas antes de guardar
+            critical_settings = [
+                'auto_start_server',
+                'startup_with_windows', 
+                'auto_start_server_with_windows'
+            ]
+            
+            for setting in critical_settings:
+                value = self.settings.get(setting, "NO_ENCONTRADO")
+                self.logger.info(f"🔍 {setting}: {value}")
+            
+            # Escribir al archivo
             with open(self.settings_file, 'w', encoding='utf-8') as f:
                 json.dump(self.settings, f, indent=2, ensure_ascii=False)
             
+            # Verificar que se escribió correctamente
+            if os.path.exists(self.settings_file):
+                file_size = os.path.getsize(self.settings_file)
+                self.logger.info(f"✅ Archivo guardado exitosamente ({file_size} bytes)")
+                
+                # Verificar contenido leyendo de vuelta
+                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                    saved_data = json.load(f)
+                
+                # Verificar configuraciones críticas en el archivo
+                for setting in critical_settings:
+                    file_value = saved_data.get(setting, "NO_ENCONTRADO")
+                    memory_value = self.settings.get(setting, "NO_ENCONTRADO")
+                    if file_value == memory_value:
+                        self.logger.info(f"✅ {setting} verificado: {file_value}")
+                    else:
+                        self.logger.error(f"❌ {setting} desincronizado: memoria={memory_value}, archivo={file_value}")
+                        
+            else:
+                self.logger.error("❌ El archivo no se creó después del guardado")
+                
             self.logger.info("Configuraciones guardadas correctamente")
             return True
         except Exception as e:
-            self.logger.error(f"Error al guardar configuraciones: {e}")
+            self.logger.error(f"❌ Error crítico al guardar configuraciones: {e}")
             return False
     
     def get_setting(self, key, default=None):

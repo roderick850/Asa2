@@ -3,6 +3,7 @@ import configparser
 import os
 import subprocess
 import platform
+import time
 from pathlib import Path
 try:
     from CTkMessagebox import CTkMessagebox
@@ -98,16 +99,18 @@ class ServerConfigPanel(ctk.CTkFrame):
         
         self.search_entry = ctk.CTkEntry(
             search_frame,
-            placeholder_text="🔍 Buscar parámetros...",
+            placeholder_text="Escribir aquí para buscar...",
             width=350
         )
         self.search_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
         
-        # Deshabilitar autocompletado y configurar eventos de búsqueda
+        # Variables para manejo del buscador
+        self.search_placeholder_active = True
+        self.last_search_text = ""
+        
+        # Configurar eventos de búsqueda (solo el necesario)
         self.search_entry.bind("<KeyRelease>", self.on_search_change)
-        self.search_entry.bind("<Button-1>", self.on_search_click)
         self.search_entry.bind("<FocusIn>", self.on_search_focus_in)
-        self.search_entry.bind("<FocusOut>", self.on_search_focus_out)
         
         clear_button = ctk.CTkButton(
             search_frame,
@@ -137,6 +140,15 @@ class ServerConfigPanel(ctk.CTkFrame):
             width=120
         )
         self.open_folder_button.pack(side="left", padx=5, pady=5)
+        
+        # Botón para corregir capitalización de INIs
+        fix_caps_button = ctk.CTkButton(
+            buttons_frame,
+            text="🔧 Corregir Capitalización",
+            command=self.fix_ini_capitalization,
+            width=150
+        )
+        fix_caps_button.pack(side="left", padx=5, pady=5)
         
         save_button = ctk.CTkButton(
             buttons_frame,
@@ -657,23 +669,21 @@ class ServerConfigPanel(ctk.CTkFrame):
             self.after_cancel(self.search_timeout_id)
             self.search_timeout_id = None
         
-        # Mostrar indicador de búsqueda pendiente
+        # Obtener texto actual
         current_text = self.search_entry.get().strip()
-        if current_text and len(current_text) >= 2:
-            # Solo mostrar "buscando" si hay al menos 2 caracteres
-            self.search_entry.configure(placeholder_text="🔍 Buscando...")
         
-        # Programar nueva búsqueda después de 300ms de inactividad (reducido para mejor UX)
-        self.search_timeout_id = self.after(300, self._execute_search)
+        # Solo proceder si el texto realmente cambió
+        if current_text != self.last_search_text:
+            self.last_search_text = current_text
+            
+            # Programar nueva búsqueda después de 500ms para dar tiempo al usuario
+            self.search_timeout_id = self.after(500, self._execute_search)
     
     def _execute_search(self):
         """Ejecutar la búsqueda real después del debounce"""
         try:
             search_text = self.search_entry.get().lower().strip()
             self.search_filter = search_text
-            
-            # Restaurar placeholder original
-            self.search_entry.configure(placeholder_text="🔍 Buscar parámetros...")
             
             # Si no hay filtro, restaurar orden original
             if not search_text:
@@ -685,8 +695,6 @@ class ServerConfigPanel(ctk.CTkFrame):
             
         except Exception as e:
             self.logger.error(f"Error durante la búsqueda: {e}")
-            # Restaurar placeholder incluso en caso de error
-            self.search_entry.configure(placeholder_text="🔍 Buscar parámetros...")
         finally:
             # Limpiar el timeout ID
             self.search_timeout_id = None
@@ -1021,39 +1029,16 @@ class ServerConfigPanel(ctk.CTkFrame):
             self.search_timeout_id = None
         
         self.search_entry.delete(0, "end")
-        # Restaurar placeholder original sin autocompletado
-        self.search_entry.configure(placeholder_text="🔍 Buscar parámetros...")
+        self.last_search_text = ""
         self.show_all_widgets()
-    
-    def on_search_click(self, event=None):
-        """Manejar clic en el campo de búsqueda"""
-        # Limpiar placeholder y enfocar el campo
-        try:
-            current_text = self.search_entry.get()
-            if current_text:
-                # Si hay texto, seleccionarlo todo
-                self.search_entry.select_range(0, "end")
-            else:
-                # Si no hay texto, cambiar placeholder para indicar que está activo
-                self.search_entry.configure(placeholder_text="Escribir aquí...")
-        except Exception:
-            pass
     
     def on_search_focus_in(self, event=None):
         """Manejar cuando el campo de búsqueda recibe el foco"""
         try:
-            # Cambiar placeholder cuando está enfocado para mayor claridad
-            if not self.search_entry.get().strip():
-                self.search_entry.configure(placeholder_text="Escribir aquí...")
-        except Exception:
-            pass
-    
-    def on_search_focus_out(self, event=None):
-        """Manejar cuando el campo de búsqueda pierde el foco"""
-        try:
-            # Restaurar placeholder original cuando pierde el foco
-            if not self.search_entry.get().strip():
-                self.search_entry.configure(placeholder_text="🔍 Buscar parámetros...")
+            # Solo seleccionar el texto si existe
+            current_text = self.search_entry.get()
+            if current_text:
+                self.search_entry.select_range(0, "end")
         except Exception:
             pass
     
@@ -1279,3 +1264,227 @@ class ServerConfigPanel(ctk.CTkFrame):
             self.logger.error(f"Error al mostrar mensaje: {e}")
             # Fallback final a tkinter estándar
             fallback_messagebox.showinfo(title, message)
+    
+    def fix_ini_capitalization(self):
+        """Corregir capitalización de parámetros en archivos INI existentes"""
+        try:
+            # Verificar que hay un servidor seleccionado
+            if not hasattr(self.main_window, 'selected_server') or not self.main_window.selected_server:
+                self.show_ctk_message(
+                    "Sin Servidor",
+                    "Por favor, selecciona un servidor primero.",
+                    "warning"
+                )
+                return
+            
+            server_name = self.main_window.selected_server
+            
+            # Obtener ruta del servidor
+            server_path = self.config_manager.get("server", "root_path", "")
+            if not server_path:
+                self.show_ctk_message(
+                    "Error",
+                    "No se ha configurado la ruta del servidor.",
+                    "error"
+                )
+                return
+            
+            config_path = os.path.join(
+                server_path, 
+                server_name, 
+                "ShooterGame", 
+                "Saved", 
+                "Config", 
+                "WindowsServer"
+            )
+            
+            if not os.path.exists(config_path):
+                self.show_ctk_message(
+                    "Error",
+                    f"No se encontró la carpeta de configuración:\n{config_path}",
+                    "error"
+                )
+                return
+            
+            # Definir capitalización correcta para parámetros comunes
+            correct_capitalization = {
+                'ServerSettings': {
+                    'difficultyoffset': 'DifficultyOffset',
+                    'overrideofficialdifficulty': 'OverrideOfficialDifficulty', 
+                    'serverpassword': 'ServerPassword',
+                    'serveradminpassword': 'ServerAdminPassword',
+                    'maxplayers': 'MaxPlayers',
+                    'showmapplayerlocation': 'ShowMapPlayerLocation',
+                    'serverhardcore': 'ServerHardcore',
+                    'serverpve': 'ServerPVE',
+                    'allowthirdpersonplayer': 'AllowThirdPersonPlayer',
+                    'servercrosshair': 'ServerCrosshair',
+                    'rconport': 'RCONPort',
+                    'rconpassword': 'RCONPassword',
+                    'servername': 'ServerName',
+                    'allowflyercarrypve': 'AllowFlyerCarryPVE',
+                    'preventdownloadsurvivors': 'PreventDownloadSurvivors',
+                    'preventdownloaditems': 'PreventDownloadItems',
+                    'preventdownloaddinos': 'PreventDownloadDinos',
+                    'serverforcenoHUD': 'ServerForceNoHUD',
+                    'mapplayerlocation': 'MapPlayerLocation',
+                    'proximiteychat': 'ProximityChat',
+                    'notributedownloads': 'NoTributeDownloads',
+                    'globalvoicechat': 'GlobalVoiceChat'
+                },
+                'SessionSettings': {
+                    'sessionname': 'SessionName'
+                },
+                '/Script/Engine.GameSession': {
+                    'maxplayers': 'MaxPlayers'
+                },
+                '/script/shootergame.shootergamemode': {
+                    'xpmultiplier': 'XPMultiplier',
+                    'tamingspeedmultiplier': 'TamingSpeedMultiplier',
+                    'harvestamountmultiplier': 'HarvestAmountMultiplier',
+                    'resourcesrespawnperiodmultiplier': 'ResourcesRespawnPeriodMultiplier',
+                    'playercharacterwaterdrainmultiplier': 'PlayerCharacterWaterDrainMultiplier',
+                    'playercharacterfooddrainmultiplier': 'PlayerCharacterFoodDrainMultiplier',
+                    'dinocharacterfooddrainmultiplier': 'DinoCharacterFoodDrainMultiplier',
+                    'playercharacterstaminadrainmultiplier': 'PlayerCharacterStaminaDrainMultiplier',
+                    'dinocharacterstaminadrainmultiplier': 'DinoCharacterStaminaDrainMultiplier',
+                    'playercharacterhealthrecoverymultiplier': 'PlayerCharacterHealthRecoveryMultiplier',
+                    'dinocharacterhealthrecoverymultiplier': 'DinoCharacterHealthRecoveryMultiplier',
+                    'dinocountmultiplier': 'DinoCountMultiplier',
+                    'layeggintervalmultiplier': 'LayEggIntervalMultiplier',
+                    'matingintervalmultiplier': 'MatingIntervalMultiplier',
+                    'babymaturespeedmultiplier': 'BabyMatureSpeedMultiplier',
+                    'babyfoodconsumptionspeedmultiplier': 'BabyFoodConsumptionSpeedMultiplier',
+                    'cropgrowthspeedmultiplier': 'CropGrowthSpeedMultiplier',
+                    'cropdecayspeedmultiplier': 'CropDecaySpeedMultiplier'
+                }
+            }
+            
+            # Archivos a corregir
+            ini_files = [
+                ('GameUserSettings.ini', 'GameUserSettings.ini'),
+                ('Game.ini', 'Game.ini'),
+                ('Engine.ini', 'Engine.ini')
+            ]
+            
+            corrected_files = []
+            issues_found = []
+            
+            for ini_filename, display_name in ini_files:
+                ini_path = os.path.join(config_path, ini_filename)
+                
+                if not os.path.exists(ini_path):
+                    continue
+                
+                self.logger.info(f"🔧 Analizando {display_name}...")
+                
+                # Leer archivo y detectar problemas de capitalización
+                try:
+                    with open(ini_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    original_content = content
+                    current_section = None
+                    lines = content.split('\n')
+                    corrected_lines = []
+                    corrections_made = 0
+                    
+                    for line in lines:
+                        original_line = line
+                        
+                        # Detectar secciones
+                        if line.strip().startswith('[') and line.strip().endswith(']'):
+                            current_section = line.strip()[1:-1]
+                            corrected_lines.append(line)
+                            continue
+                        
+                        # Procesar parámetros
+                        if '=' in line and current_section:
+                            key_part, value_part = line.split('=', 1)
+                            key = key_part.strip()
+                            key_lower = key.lower()
+                            
+                            # Buscar si este parámetro necesita corrección
+                            correct_key = None
+                            for section_pattern, corrections in correct_capitalization.items():
+                                # Coincidencia exacta o pattern matching para secciones script
+                                if (current_section == section_pattern or 
+                                    (section_pattern.startswith('/script/') and 
+                                     current_section.lower() == section_pattern.lower())):
+                                    if key_lower in corrections:
+                                        correct_key = corrections[key_lower]
+                                        break
+                            
+                            if correct_key and correct_key != key:
+                                # Corregir capitalización
+                                corrected_line = f"{correct_key}={value_part}"
+                                corrected_lines.append(corrected_line)
+                                corrections_made += 1
+                                self.logger.info(f"  ✅ Corregido: {key} → {correct_key}")
+                            else:
+                                corrected_lines.append(line)
+                        else:
+                            corrected_lines.append(line)
+                    
+                    if corrections_made > 0:
+                        # Crear backup
+                        backup_path = f"{ini_path}.backup_caps_{int(time.time())}"
+                        with open(backup_path, 'w', encoding='utf-8') as f:
+                            f.write(original_content)
+                        
+                        # Guardar archivo corregido
+                        corrected_content = '\n'.join(corrected_lines)
+                        with open(ini_path, 'w', encoding='utf-8') as f:
+                            f.write(corrected_content)
+                        
+                        corrected_files.append(f"{display_name} ({corrections_made} correcciones)")
+                        self.logger.info(f"✅ {display_name} corregido con {corrections_made} cambios")
+                    else:
+                        self.logger.info(f"ℹ️ {display_name} ya tiene capitalización correcta")
+                        
+                except Exception as e:
+                    error_msg = f"Error procesando {display_name}: {str(e)}"
+                    issues_found.append(error_msg)
+                    self.logger.error(error_msg)
+            
+            # Mostrar resultados
+            if corrected_files or issues_found:
+                result_message = "🔧 CORRECCIÓN DE CAPITALIZACIÓN COMPLETADA\n\n"
+                
+                if corrected_files:
+                    result_message += "✅ ARCHIVOS CORREGIDOS:\n"
+                    for file_info in corrected_files:
+                        result_message += f"  • {file_info}\n"
+                    result_message += "\n"
+                
+                if issues_found:
+                    result_message += "⚠️ PROBLEMAS ENCONTRADOS:\n"
+                    for issue in issues_found:
+                        result_message += f"  • {issue}\n"
+                    result_message += "\n"
+                
+                result_message += "📄 Los archivos originales se guardaron como backup.\n"
+                result_message += "🔄 Recarga las configuraciones para ver los cambios."
+                
+                self.show_ctk_message(
+                    "Corrección Completada",
+                    result_message,
+                    "info"
+                )
+                
+                # Recargar configuraciones automáticamente
+                self.load_current_server_configs()
+            else:
+                self.show_ctk_message(
+                    "Sin Correcciones",
+                    "No se encontraron problemas de capitalización en los archivos INI.",
+                    "info"
+                )
+                
+        except Exception as e:
+            self.logger.error(f"Error en corrección de capitalización: {e}")
+            self.show_ctk_message(
+                "Error",
+                f"Error al corregir capitalización:\n{str(e)}",
+                "error"
+            )

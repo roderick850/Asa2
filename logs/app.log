@@ -8484,3 +8484,62 @@
 2025-08-09 16:06:56 - ArkServerManager - INFO - Deteniendo icono de bandeja...
 2025-08-09 16:06:56 - ArkServerManager - INFO - Bandeja del sistema detenida correctamente
 2025-08-09 16:06:56 - ArkServerManager - INFO - Bandeja del sistema detenida
+2025-08-09 17:28:12 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:28:12 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:28:12 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:28:12 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:29:07 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:29:07 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:30:27 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:30:27 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:30:27 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:30:27 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:31:39 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:31:39 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:37:09 - ArkServerManager - INFO - 💾 Iniciando guardado de configuraciones...
+2025-08-09 17:37:09 - ArkServerManager - INFO - 🔍 auto_start_server: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - 🔍 startup_with_windows: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - 🔍 auto_start_server_with_windows: True
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ Archivo guardado exitosamente (704 bytes)
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ auto_start_server verificado: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ startup_with_windows verificado: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ auto_start_server_with_windows verificado: True
+2025-08-09 17:37:09 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:37:09 - ArkServerManager - INFO - 💾 Iniciando guardado de configuraciones...
+2025-08-09 17:37:09 - ArkServerManager - INFO - 🔍 auto_start_server: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - 🔍 startup_with_windows: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - 🔍 auto_start_server_with_windows: True
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ Archivo guardado exitosamente (704 bytes)
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ auto_start_server verificado: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ startup_with_windows verificado: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ auto_start_server_with_windows verificado: True
+2025-08-09 17:37:09 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:37:09 - ArkServerManager - INFO - 💾 Iniciando guardado de configuraciones...
+2025-08-09 17:37:09 - ArkServerManager - INFO - 🔍 auto_start_server: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - 🔍 startup_with_windows: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - 🔍 auto_start_server_with_windows: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ Archivo guardado exitosamente (705 bytes)
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ auto_start_server verificado: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ startup_with_windows verificado: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ auto_start_server_with_windows verificado: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:37:09 - ArkServerManager - INFO - 💾 Iniciando guardado de configuraciones...
+2025-08-09 17:37:09 - ArkServerManager - INFO - 🔍 auto_start_server: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - 🔍 startup_with_windows: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - 🔍 auto_start_server_with_windows: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ Archivo guardado exitosamente (705 bytes)
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ auto_start_server verificado: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ startup_with_windows verificado: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - ✅ auto_start_server_with_windows verificado: False
+2025-08-09 17:37:09 - ArkServerManager - INFO - Configuraciones guardadas correctamente
+2025-08-09 17:56:49 - ArkServerManager - INFO - DEBUG: Clave ServerSettings.ServerPassword ya existe, no duplicada
+2025-08-09 17:56:49 - ArkServerManager - INFO - DEBUG: Clave ServerSettings.ServerAdminPassword ya existe, no duplicada
+2025-08-09 18:05:00 - ArkServerManager - INFO - DEBUG: Actualizado preservando capitalización: DifficultyOffset = 2.5
+2025-08-09 18:05:00 - ArkServerManager - INFO - DEBUG: Actualizado preservando capitalización: ServerPassword = new_secure_password
+2025-08-09 18:05:00 - ArkServerManager - INFO - DEBUG: Eliminando duplicado: ServerPassword
+2025-08-09 18:05:00 - ArkServerManager - INFO - DEBUG: Eliminando duplicado: ServerPassword
+2025-08-09 18:05:00 - ArkServerManager - INFO - DEBUG: Actualizado preservando capitalización: ServerAdminPassword = new_admin_password
+2025-08-09 18:05:00 - ArkServerManager - INFO - DEBUG: Eliminando duplicado: ServerAdminPassword
+2025-08-09 18:05:00 - ArkServerManager - INFO - DEBUG: Actualizado preservando capitalización: SessionName = Servidor Actualizado Correctamente
+2025-08-09 18:05:00 - ArkServerManager - INFO - DEBUG: Nueva clave agregada: NewTestParameter = test_value
+2025-08-09 18:05:00 - ArkServerManager - INFO - DEBUG: Archivo actualizado preservando capitalización: test_gameusersettings_cap.ini

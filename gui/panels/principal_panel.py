@@ -293,94 +293,126 @@ class PrincipalPanel:
             print(f"Error al guardar en GameUserSettings.ini: {e}")
     
     def _update_ini_file_preserving_content(self, file_path, sections_to_update):
-        """Actualizar archivo INI preservando contenido existente y agregando secciones si no existen"""
-        lines = []
-        current_section = None
-        sections_found = set()
+        """Actualizar archivo INI preservando capitalización original y contenido existente"""
+        if not os.path.exists(file_path):
+            # Si el archivo no existe, crearlo con la capitalización proporcionada
+            try:
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    for section_name, section_data in sections_to_update.items():
+                        f.write(f"[{section_name}]\n")
+                        for key, value in section_data.items():
+                            if value is not None:
+                                f.write(f"{key}={value}\n")
+                        f.write("\n")
+                if self.logger and self.logger.should_log_debug():
+                    self.logger.info(f"DEBUG: Nuevo archivo creado: {file_path}")
+                return
+            except Exception as e:
+                if self.logger:
+                    self.logger.error(f"Error creando archivo {file_path}: {e}")
+                return
         
-        # Leer archivo existente línea por línea si existe
-        if os.path.exists(file_path):
+        try:
+            # Leer archivo línea por línea preservando la estructura
             with open(file_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
-        
-        # Procesar líneas existentes
-        updated_lines = []
-        i = 0
-        while i < len(lines):
-            line = lines[i].rstrip('\n\r')
-            original_line = line
             
-            # Detectar secciones
-            if line.strip().startswith('[') and line.strip().endswith(']'):
-                current_section = line.strip()[1:-1]
-                sections_found.add(current_section)
-                updated_lines.append(original_line + '\n')
-                i += 1
-                continue
+            updated_lines = []
+            current_section = None
+            processed_keys = {}  # Para evitar duplicados
             
-            # Si estamos en una sección que queremos actualizar
-            if current_section in sections_to_update:
-                section_data = sections_to_update[current_section]
+            for line in lines:
+                original_line = line.rstrip('\n\r')
                 
-                # Buscar si esta línea contiene una clave que queremos actualizar
-                if '=' in line:
-                    key = line.split('=', 1)[0].strip()
-                    if key in section_data:
-                        # Actualizar el valor si no es None, o eliminar si es None
-                        new_value = section_data[key]
-                        if new_value is not None:
-                            updated_lines.append(f"{key}={new_value}\n")
-                            if self.logger and self.logger.should_log_debug():
-                                self.logger.info(f"DEBUG: Actualizado {current_section}.{key} = {new_value}")
-                        else:
-                            # Valor None = eliminar línea
-                            if self.logger and self.logger.should_log_debug():
-                                self.logger.info(f"DEBUG: Eliminado {current_section}.{key}")
-                        # Marcar como procesado
-                        section_data[key] = 'PROCESSED'
-                        i += 1
-                        continue
-            
-            # Línea normal, mantener tal como está
-            updated_lines.append(original_line + '\n')
-            i += 1
-        
-        # Agregar secciones nuevas que no existían
-        for section_name, section_data in sections_to_update.items():
-            if section_name not in sections_found:
-                updated_lines.append(f"\n[{section_name}]\n")
-                if self.logger and self.logger.should_log_debug():
-                    self.logger.info(f"DEBUG: Agregada nueva sección [{section_name}]")
+                # Detectar secciones
+                if original_line.strip().startswith('[') and original_line.strip().endswith(']'):
+                    current_section = original_line.strip()[1:-1]
+                    processed_keys[current_section] = set()
+                    updated_lines.append(line)
+                    continue
                 
-                # Agregar todas las claves de esta sección
-                for key, value in section_data.items():
-                    if value is not None and value != 'PROCESSED':
-                        updated_lines.append(f"{key}={value}\n")
-                        if self.logger and self.logger.should_log_debug():
-                            self.logger.info(f"DEBUG: Agregado {section_name}.{key} = {value}")
-            else:
-                # Sección existía, agregar claves que no se encontraron
-                for key, value in section_data.items():
-                    if value is not None and value != 'PROCESSED':
-                        # Buscar dónde termina esta sección para insertar la clave
-                        section_end = len(updated_lines)
-                        for j, line in enumerate(updated_lines):
-                            if line.strip() == f"[{section_name}]":
-                                # Encontrar el final de esta sección
-                                for k in range(j + 1, len(updated_lines)):
-                                    if updated_lines[k].strip().startswith('['):
-                                        section_end = k
-                                        break
+                # Si estamos en una sección que queremos actualizar
+                if current_section and current_section in sections_to_update:
+                    section_data = sections_to_update[current_section]
+                    
+                    # Buscar si esta línea contiene una clave que queremos actualizar
+                    if '=' in original_line:
+                        existing_key = original_line.split('=', 1)[0].strip()
+                        existing_key_lower = existing_key.lower()
+                        
+                        # Buscar si tenemos una actualización para esta clave
+                        update_key = None
+                        for update_k, update_v in section_data.items():
+                            if update_k.lower() == existing_key_lower:
+                                update_key = update_k
                                 break
                         
-                        # Insertar la nueva clave antes del final de la sección
-                        updated_lines.insert(section_end, f"{key}={value}\n")
-                        if self.logger and self.logger.should_log_debug():
-                            self.logger.info(f"DEBUG: Agregado a sección existente {section_name}.{key} = {value}")
-        
-        # Escribir archivo actualizado
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.writelines(updated_lines)
+                        if update_key and existing_key_lower not in processed_keys[current_section]:
+                            # Actualizar usando la capitalización ORIGINAL del archivo
+                            new_value = section_data[update_key]
+                            if new_value is not None:
+                                updated_lines.append(f"{existing_key}={new_value}\n")
+                                if self.logger and self.logger.should_log_debug():
+                                    self.logger.info(f"DEBUG: Actualizado preservando capitalización: {existing_key} = {new_value}")
+                            # Marcar como procesado
+                            processed_keys[current_section].add(existing_key_lower)
+                            continue
+                        elif existing_key_lower in processed_keys[current_section]:
+                            # Esta clave ya fue procesada, eliminar duplicado
+                            if self.logger and self.logger.should_log_debug():
+                                self.logger.info(f"DEBUG: Eliminando duplicado: {existing_key}")
+                            continue
+                
+                # Línea normal, mantener tal como está
+                updated_lines.append(line)
+            
+            # Agregar claves nuevas que no existían
+            for section_name, section_data in sections_to_update.items():
+                if section_name not in processed_keys:
+                    # Sección nueva
+                    updated_lines.append(f"\n[{section_name}]\n")
+                    for key, value in section_data.items():
+                        if value is not None:
+                            updated_lines.append(f"{key}={value}\n")
+                            if self.logger and self.logger.should_log_debug():
+                                self.logger.info(f"DEBUG: Nueva sección creada: [{section_name}] {key} = {value}")
+                else:
+                    # Agregar claves que no se encontraron en sección existente
+                    section_end = len(updated_lines)
+                    section_start = -1
+                    
+                    # Encontrar dónde está la sección
+                    for i, line in enumerate(updated_lines):
+                        if line.strip() == f"[{section_name}]":
+                            section_start = i
+                            # Encontrar el final de esta sección
+                            for j in range(i + 1, len(updated_lines)):
+                                if updated_lines[j].strip().startswith('['):
+                                    section_end = j
+                                    break
+                            break
+                    
+                    # Insertar claves nuevas
+                    for key, value in section_data.items():
+                        key_lower = key.lower()
+                        if (key_lower not in processed_keys[section_name] and 
+                            value is not None):
+                            updated_lines.insert(section_end, f"{key}={value}\n")
+                            if self.logger and self.logger.should_log_debug():
+                                self.logger.info(f"DEBUG: Nueva clave agregada: {key} = {value}")
+                            section_end += 1
+            
+            # Escribir archivo actualizado
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.writelines(updated_lines)
+            
+            if self.logger and self.logger.should_log_debug():
+                self.logger.info(f"DEBUG: Archivo actualizado preservando capitalización: {file_path}")
+                
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error actualizando {file_path}: {e}")
     
     def load_from_gameusersettings(self):
         """Cargar ServerPassword, AdminPassword y SessionName desde GameUserSettings.ini"""

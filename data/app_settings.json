@@ -1,6 +1,6 @@
 {
   "startup_with_windows": true,
-  "auto_start_server": false,
+  "auto_start_server": true,
   "auto_start_server_with_windows": true,
   "minimize_to_tray": true,
   "always_on_top": false,
