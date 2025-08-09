@@ -24,7 +24,7 @@ class AppSettings:
         self.default_settings = {
             "startup_with_windows": False,
             "auto_start_server": False,
-            "minimize_to_tray": False,
+            "minimize_to_tray": True,  # Minimizar a bandeja en lugar de barra de tareas
             "always_on_top": False,
             "minimize_on_start": False,
             "close_to_tray": False,

@@ -1,4 +1,7 @@
 import customtkinter as ctk
+import os
+import platform
+from datetime import datetime
 from .panels.principal_panel import PrincipalPanel
 from .panels.server_panel import ServerPanel
 from .panels.config_panel import ConfigPanel
@@ -52,8 +55,12 @@ class MainWindow:
         # Crear barra de logs siempre visible
         self.create_logs_bar()
         
-        # Configurar callbacks de botones
+        # Configurar callbacks de botones y eventos de ventana
         self.setup_button_callbacks()
+        self.setup_window_events()
+        
+        # Inicializar bandeja del sistema
+        self.start_system_tray()
         
     def create_top_bar(self):
         """Crear la barra superior con menú, administración y estado del servidor"""
@@ -410,6 +417,7 @@ class MainWindow:
         ctk.CTkButton(main_frame, text="💾 Exportar Configuración", command=self.export_config).pack(pady=5, fill="x", padx=20)
         ctk.CTkButton(main_frame, text="📥 Importar Configuración", command=self.import_config).pack(pady=5, fill="x", padx=20)
         ctk.CTkButton(main_frame, text="🔄 Actualizar SteamCMD", command=self.update_steamcmd).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="🗑️ Limpiar Iconos Duplicados", command=self.cleanup_tray_icons).pack(pady=5, fill="x", padx=20)
         ctk.CTkButton(main_frame, text="📊 Información del Sistema", command=self.show_system_info).pack(pady=5, fill="x", padx=20)
         
         ctk.CTkButton(main_frame, text="❌ Cerrar", command=menu.destroy).pack(pady=20, fill="x", padx=20)
@@ -986,7 +994,8 @@ class MainWindow:
     
     def on_map_selected(self, map_name):
         """Maneja la selección de un mapa"""
-        self.logger.info(f"DEBUG: Mapa seleccionado en main_window: '{map_name}'")
+        if self.logger.should_log_debug():
+            self.logger.info(f"DEBUG: Mapa seleccionado en main_window: '{map_name}'")
         self.selected_map = map_name
         if hasattr(self, 'server_panel'):
             self.server_panel.on_map_selected(map_name)
@@ -1047,7 +1056,8 @@ class MainWindow:
                 # Asegurar que guardamos el nombre amigable, no el identificador técnico
                 map_to_save = self._get_friendly_map_name(self.selected_map)
                 self.config_manager.set("app", "last_map", map_to_save)
-                self.logger.info(f"DEBUG: Guardando mapa: '{self.selected_map}' como '{map_to_save}'")
+                if self.logger.should_log_debug():
+                    self.logger.info(f"DEBUG: Guardando mapa: '{self.selected_map}' como '{map_to_save}'")
             
             self.config_manager.save()
             
@@ -1081,7 +1091,8 @@ class MainWindow:
         # Si es un identificador técnico, convertir a nombre amigable
         if map_value in tech_to_friendly:
             friendly_name = tech_to_friendly[map_value]
-            self.logger.info(f"DEBUG: Convertido identificador '{map_value}' a nombre amigable '{friendly_name}'")
+            if self.logger.should_log_debug():
+                self.logger.info(f"DEBUG: Convertido identificador '{map_value}' a nombre amigable '{friendly_name}'")
             return friendly_name
         
         # Si ya es un nombre amigable, devolverlo tal como está
@@ -1094,7 +1105,8 @@ class MainWindow:
             if hasattr(self, 'map_dropdown'):
                 # Convertir a nombre amigable si es necesario
                 friendly_map = self._get_friendly_map_name(last_map)
-                self.logger.info(f"DEBUG: Restaurando mapa - original: '{last_map}', amigable: '{friendly_map}'")
+                if self.logger.should_log_debug():
+                    self.logger.info(f"DEBUG: Restaurando mapa - original: '{last_map}', amigable: '{friendly_map}'")
                 
                 # Intentar hasta 10 veces con un delay de 100ms cada una
                 max_attempts = 10
@@ -1294,3 +1306,606 @@ class MainWindow:
         """Actualiza un servidor"""
         if hasattr(self, 'server_panel'):
             self.server_panel.update_server()
+    
+    # ═══════════════════════════════════════════════════════════════
+    # MÉTODOS DE HERRAMIENTAS
+    # ═══════════════════════════════════════════════════════════════
+    
+    def verify_server_files(self):
+        """Verificar integridad de archivos del servidor"""
+        try:
+            if not self.selected_server:
+                show_warning("Sin servidor", "Por favor, selecciona un servidor primero.")
+                return
+            
+            # Obtener ruta del servidor
+            root_path = self.config_manager.get("server", "root_path", "")
+            if not root_path:
+                show_error("Error", "Ruta raíz no configurada.")
+                return
+            
+            server_path = os.path.join(root_path, self.selected_server)
+            if not os.path.exists(server_path):
+                show_error("Error", f"Servidor no encontrado: {self.selected_server}")
+                return
+            
+            # Iniciar verificación
+            self.add_log_message("🔍 Iniciando verificación de archivos del servidor...")
+            
+            # Verificar archivos críticos
+            critical_files = [
+                "ArkAscendedServer.exe",
+                "ShooterGame/Binaries/Win64/ArkAscendedServer.exe",
+                "ShooterGame/Content/Paks/"
+            ]
+            
+            missing_files = []
+            for file_path in critical_files:
+                full_path = os.path.join(server_path, file_path)
+                if not os.path.exists(full_path):
+                    missing_files.append(file_path)
+            
+            if missing_files:
+                self.add_log_message(f"❌ Archivos faltantes encontrados: {len(missing_files)}")
+                for missing in missing_files:
+                    self.add_log_message(f"   📄 {missing}")
+                show_warning("Archivos faltantes", f"Se encontraron {len(missing_files)} archivos faltantes. Considera actualizar el servidor.")
+            else:
+                self.add_log_message("✅ Verificación completada: Todos los archivos críticos están presentes")
+                show_info("Verificación completada", "Todos los archivos críticos del servidor están presentes.")
+                
+        except Exception as e:
+            self.logger.error(f"Error al verificar archivos: {e}")
+            show_error("Error", f"Error al verificar archivos del servidor:\n{e}")
+    
+    def clean_old_logs(self):
+        """Limpiar logs antiguos"""
+        try:
+            import datetime
+            import glob
+            
+            if not ask_yes_no("Limpiar logs antiguos", "¿Estás seguro de que quieres eliminar logs antiguos (más de 7 días)?"):
+                return
+            
+            self.add_log_message("🧹 Iniciando limpieza de logs antiguos...")
+            
+            # Obtener fecha límite (7 días)
+            cutoff_date = datetime.datetime.now() - datetime.timedelta(days=7)
+            
+            # Carpetas de logs a limpiar
+            log_paths = [
+                "logs/*.log",
+                "logs/server_events/*.log",
+                "exports/*.txt"
+            ]
+            
+            deleted_count = 0
+            total_size = 0
+            
+            for pattern in log_paths:
+                files = glob.glob(pattern)
+                for file_path in files:
+                    try:
+                        # Verificar fecha del archivo
+                        file_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
+                        if file_time < cutoff_date:
+                            file_size = os.path.getsize(file_path)
+                            os.remove(file_path)
+                            deleted_count += 1
+                            total_size += file_size
+                            self.add_log_message(f"🗑️ Eliminado: {file_path}")
+                    except Exception as e:
+                        self.logger.warning(f"Error al eliminar {file_path}: {e}")
+            
+            if deleted_count > 0:
+                size_mb = total_size / (1024 * 1024)
+                self.add_log_message(f"✅ Limpieza completada: {deleted_count} archivos eliminados ({size_mb:.2f} MB liberados)")
+                show_info("Limpieza completada", f"Se eliminaron {deleted_count} archivos antiguos\nEspacio liberado: {size_mb:.2f} MB")
+            else:
+                self.add_log_message("ℹ️ No se encontraron logs antiguos para eliminar")
+                show_info("Sin archivos", "No se encontraron logs antiguos para eliminar.")
+                
+        except Exception as e:
+            self.logger.error(f"Error al limpiar logs: {e}")
+            show_error("Error", f"Error al limpiar logs antiguos:\n{e}")
+    
+    def open_server_folder(self):
+        """Abrir carpeta del servidor actual"""
+        try:
+            if not self.selected_server:
+                show_warning("Sin servidor", "Por favor, selecciona un servidor primero.")
+                return
+            
+            # Obtener ruta del servidor
+            root_path = self.config_manager.get("server", "root_path", "")
+            if not root_path:
+                show_error("Error", "Ruta raíz no configurada.")
+                return
+            
+            server_path = os.path.join(root_path, self.selected_server)
+            if not os.path.exists(server_path):
+                show_error("Error", f"Servidor no encontrado: {self.selected_server}")
+                return
+            
+            # Abrir carpeta según el sistema operativo
+            import platform
+            import subprocess
+            
+            if platform.system() == "Windows":
+                os.startfile(server_path)
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.run(["open", server_path])
+            else:  # Linux y otros
+                subprocess.run(["xdg-open", server_path])
+            
+            self.add_log_message(f"📁 Carpeta del servidor abierta: {server_path}")
+            
+        except Exception as e:
+            self.logger.error(f"Error al abrir carpeta: {e}")
+            show_error("Error", f"Error al abrir carpeta del servidor:\n{e}")
+    
+    def export_config(self):
+        """Exportar configuración del servidor"""
+        try:
+            if not self.selected_server:
+                show_warning("Sin servidor", "Por favor, selecciona un servidor primero.")
+                return
+            
+            from tkinter import filedialog
+            import json
+            import shutil
+            from datetime import datetime
+            
+            # Seleccionar carpeta de destino
+            export_folder = filedialog.askdirectory(
+                title="Seleccionar carpeta para exportar configuración",
+                initialdir=os.path.expanduser("~/Desktop")
+            )
+            
+            if not export_folder:
+                return
+            
+            self.add_log_message("📦 Iniciando exportación de configuración...")
+            
+            # Crear carpeta de exportación con timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            config_export_folder = os.path.join(export_folder, f"ARK_Config_{self.selected_server}_{timestamp}")
+            os.makedirs(config_export_folder, exist_ok=True)
+            
+            # Obtener ruta del servidor
+            root_path = self.config_manager.get("server", "root_path", "")
+            server_path = os.path.join(root_path, self.selected_server)
+            
+            # Archivos y carpetas a exportar
+            items_to_export = [
+                ("ShooterGame/Saved/Config/WindowsServer/GameUserSettings.ini", "GameUserSettings.ini"),
+                ("ShooterGame/Saved/Config/WindowsServer/Game.ini", "Game.ini"),
+                ("ShooterGame/Saved/Config/WindowsServer/Engine.ini", "Engine.ini"),
+                ("ShooterGame/Saved/SavedArks/", "SavedArks/"),
+            ]
+            
+            exported_items = []
+            
+            for source_rel, dest_name in items_to_export:
+                source_path = os.path.join(server_path, source_rel)
+                dest_path = os.path.join(config_export_folder, dest_name)
+                
+                try:
+                    if os.path.isfile(source_path):
+                        shutil.copy2(source_path, dest_path)
+                        exported_items.append(dest_name)
+                        self.add_log_message(f"📄 Exportado: {dest_name}")
+                    elif os.path.isdir(source_path):
+                        shutil.copytree(source_path, dest_path, dirs_exist_ok=True)
+                        exported_items.append(dest_name)
+                        self.add_log_message(f"📁 Exportado: {dest_name}")
+                except Exception as e:
+                    self.add_log_message(f"⚠️ Error al exportar {dest_name}: {e}")
+            
+            # Crear archivo de información
+            info_data = {
+                "export_timestamp": timestamp,
+                "server_name": self.selected_server,
+                "exported_items": exported_items,
+                "app_version": self.APP_VERSION
+            }
+            
+            info_file = os.path.join(config_export_folder, "export_info.json")
+            with open(info_file, 'w', encoding='utf-8') as f:
+                json.dump(info_data, f, indent=2, ensure_ascii=False)
+            
+            self.add_log_message(f"✅ Exportación completada: {len(exported_items)} elementos exportados")
+            
+            if ask_yes_no("Exportación completada", f"Configuración exportada exitosamente a:\n{config_export_folder}\n\n¿Quieres abrir la carpeta?"):
+                if platform.system() == "Windows":
+                    os.startfile(config_export_folder)
+                    
+        except Exception as e:
+            self.logger.error(f"Error al exportar configuración: {e}")
+            show_error("Error", f"Error al exportar configuración:\n{e}")
+    
+    def import_config(self):
+        """Importar configuración del servidor"""
+        try:
+            if not self.selected_server:
+                show_warning("Sin servidor", "Por favor, selecciona un servidor primero.")
+                return
+            
+            from tkinter import filedialog
+            import json
+            import shutil
+            
+            # Advertencia
+            if not ask_yes_no("Importar configuración", "⚠️ ADVERTENCIA: Esta operación sobrescribirá la configuración actual del servidor.\n\n¿Estás seguro de que quieres continuar?"):
+                return
+            
+            # Seleccionar carpeta de configuración exportada
+            import_folder = filedialog.askdirectory(
+                title="Seleccionar carpeta de configuración a importar",
+                initialdir=os.path.expanduser("~/Desktop")
+            )
+            
+            if not import_folder:
+                return
+            
+            # Verificar que es una exportación válida
+            info_file = os.path.join(import_folder, "export_info.json")
+            if not os.path.exists(info_file):
+                show_error("Error", "La carpeta seleccionada no contiene una exportación válida.\nBusca una carpeta que contenga 'export_info.json'.")
+                return
+            
+            self.add_log_message("📥 Iniciando importación de configuración...")
+            
+            # Leer información de la exportación
+            with open(info_file, 'r', encoding='utf-8') as f:
+                import_info = json.load(f)
+            
+            self.add_log_message(f"📋 Importando desde: {import_info.get('server_name', 'Desconocido')} ({import_info.get('export_timestamp', 'Fecha desconocida')})")
+            
+            # Obtener ruta del servidor actual
+            root_path = self.config_manager.get("server", "root_path", "")
+            server_path = os.path.join(root_path, self.selected_server)
+            
+            # Crear backup de la configuración actual
+            backup_folder = os.path.join(server_path, "ConfigBackup_" + datetime.now().strftime("%Y%m%d_%H%M%S"))
+            os.makedirs(backup_folder, exist_ok=True)
+            
+            # Archivos a importar
+            files_to_import = [
+                ("GameUserSettings.ini", "ShooterGame/Saved/Config/WindowsServer/GameUserSettings.ini"),
+                ("Game.ini", "ShooterGame/Saved/Config/WindowsServer/Game.ini"),
+                ("Engine.ini", "ShooterGame/Saved/Config/WindowsServer/Engine.ini"),
+            ]
+            
+            imported_count = 0
+            
+            for source_name, dest_rel in files_to_import:
+                source_path = os.path.join(import_folder, source_name)
+                dest_path = os.path.join(server_path, dest_rel)
+                backup_path = os.path.join(backup_folder, source_name)
+                
+                try:
+                    if os.path.exists(source_path):
+                        # Hacer backup del archivo actual
+                        if os.path.exists(dest_path):
+                            shutil.copy2(dest_path, backup_path)
+                        
+                        # Crear directorio de destino si no existe
+                        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+                        
+                        # Copiar nuevo archivo
+                        shutil.copy2(source_path, dest_path)
+                        imported_count += 1
+                        self.add_log_message(f"📄 Importado: {source_name}")
+                        
+                except Exception as e:
+                    self.add_log_message(f"⚠️ Error al importar {source_name}: {e}")
+            
+            if imported_count > 0:
+                self.add_log_message(f"✅ Importación completada: {imported_count} archivos importados")
+                self.add_log_message(f"💾 Backup guardado en: {backup_folder}")
+                show_info("Importación completada", f"Se importaron {imported_count} archivos de configuración.\n\nBackup guardado en:\n{backup_folder}")
+            else:
+                show_warning("Sin archivos", "No se encontraron archivos válidos para importar.")
+                
+        except Exception as e:
+            self.logger.error(f"Error al importar configuración: {e}")
+            show_error("Error", f"Error al importar configuración:\n{e}")
+    
+    def update_steamcmd(self):
+        """Actualizar SteamCMD"""
+        try:
+            if ask_yes_no("Actualizar SteamCMD", "¿Quieres actualizar SteamCMD a la última versión?\n\nEsto puede tomar unos minutos."):
+                self.add_log_message("🔄 Iniciando actualización de SteamCMD...")
+                
+                # Usar el ServerManager para actualizar SteamCMD
+                if hasattr(self, 'server_panel') and hasattr(self.server_panel, 'server_manager'):
+                    # Crear un callback simple para mostrar progreso
+                    def update_callback(msg_type, message):
+                        if msg_type == "error":
+                            self.add_log_message(f"❌ {message}")
+                        elif msg_type == "success":
+                            self.add_log_message(f"✅ {message}")
+                        else:
+                            self.add_log_message(f"ℹ️ {message}")
+                    
+                    # Ejecutar actualización en un hilo separado
+                    import threading
+                    
+                    def run_update():
+                        try:
+                            # Simular descarga de SteamCMD (normalmente se haría con curl/wget)
+                            self.add_log_message("📥 Descargando SteamCMD...")
+                            import time
+                            import requests
+                            import zipfile
+                            import tempfile
+                            
+                            # URL de SteamCMD
+                            steamcmd_url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip"
+                            
+                            # Descargar a archivo temporal
+                            with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as temp_file:
+                                response = requests.get(steamcmd_url, stream=True)
+                                response.raise_for_status()
+                                
+                                for chunk in response.iter_content(chunk_size=8192):
+                                    temp_file.write(chunk)
+                                
+                                temp_path = temp_file.name
+                            
+                            self.add_log_message("📦 Extrayendo SteamCMD...")
+                            
+                            # Determinar carpeta de SteamCMD
+                            root_path = self.config_manager.get("server", "root_path", "")
+                            if root_path:
+                                steamcmd_folder = os.path.join(root_path, "steamcmd")
+                            else:
+                                steamcmd_folder = "steamcmd"
+                            
+                            os.makedirs(steamcmd_folder, exist_ok=True)
+                            
+                            # Extraer archivo
+                            with zipfile.ZipFile(temp_path, 'r') as zip_ref:
+                                zip_ref.extractall(steamcmd_folder)
+                            
+                            # Limpiar archivo temporal
+                            os.unlink(temp_path)
+                            
+                            self.root.after(0, lambda: self.add_log_message("✅ SteamCMD actualizado exitosamente"))
+                            self.root.after(0, lambda: show_info("Actualización completada", "SteamCMD se ha actualizado exitosamente."))
+                            
+                        except Exception as e:
+                            self.root.after(0, lambda: self.add_log_message(f"❌ Error al actualizar SteamCMD: {e}"))
+                            self.root.after(0, lambda: show_error("Error", f"Error al actualizar SteamCMD:\n{e}"))
+                    
+                    # Ejecutar en hilo separado
+                    update_thread = threading.Thread(target=run_update, daemon=True)
+                    update_thread.start()
+                    
+                else:
+                    show_error("Error", "No se pudo acceder al gestor de servidor.")
+                    
+        except Exception as e:
+            self.logger.error(f"Error al actualizar SteamCMD: {e}")
+            show_error("Error", f"Error al actualizar SteamCMD:\n{e}")
+    
+    def open_user_guide(self):
+        """Abrir guía de usuario"""
+        try:
+            # Buscar archivo de guía local o abrir URL
+            guide_files = ["README.md", "GUIA_USUARIO.md", "USER_GUIDE.md"]
+            guide_found = False
+            
+            for guide_file in guide_files:
+                if os.path.exists(guide_file):
+                    if platform.system() == "Windows":
+                        os.startfile(guide_file)
+                    else:
+                        import subprocess
+                        subprocess.run(["xdg-open", guide_file])
+                    guide_found = True
+                    break
+            
+            if not guide_found:
+                show_info("Guía de usuario", "La guía de usuario no está disponible localmente.\n\nConsulta el archivo README.md en el repositorio del proyecto.")
+                
+        except Exception as e:
+            self.logger.error(f"Error al abrir guía: {e}")
+            show_error("Error", f"Error al abrir guía de usuario:\n{e}")
+    
+    def report_bug(self):
+        """Reportar un bug"""
+        try:
+            import webbrowser
+            
+            # Información del sistema para el reporte
+            import platform
+            system_info = f"""
+Sistema: {platform.system()} {platform.release()}
+Python: {platform.python_version()}
+Versión de la app: {self.APP_VERSION}
+"""
+            
+            # Copiar información al portapapeles si es posible
+            try:
+                import pyperclip
+                pyperclip.copy(system_info.strip())
+                clipboard_msg = "\n\n(Información del sistema copiada al portapapeles)"
+            except:
+                clipboard_msg = f"\n\nInformación del sistema:\n{system_info}"
+            
+            show_info("Reportar Bug", f"Para reportar un bug, por favor incluye la siguiente información:{clipboard_msg}\n\nDescribe el problema detalladamente y los pasos para reproducirlo.")
+            
+        except Exception as e:
+            self.logger.error(f"Error al preparar reporte: {e}")
+            show_error("Error", f"Error al preparar reporte de bug:\n{e}")
+    
+    def cleanup_tray_icons(self):
+        """Limpiar iconos duplicados de la bandeja del sistema"""
+        try:
+            if hasattr(self, 'system_tray') and self.system_tray.is_available():
+                if ask_yes_no("Limpiar iconos duplicados", "¿Quieres limpiar los iconos duplicados de la bandeja del sistema?\n\nEsto reiniciará el sistema de bandeja."):
+                    self.add_log_message("🗑️ Limpiando iconos duplicados de la bandeja...")
+                    
+                    # Reiniciar el sistema de bandeja
+                    if self.system_tray.restart_tray():
+                        self.add_log_message("✅ Iconos de bandeja limpiados correctamente")
+                        show_info("Limpieza completada", "Los iconos duplicados han sido eliminados de la bandeja del sistema.")
+                    else:
+                        self.add_log_message("❌ Error al limpiar iconos de bandeja")
+                        show_error("Error", "No se pudieron limpiar los iconos duplicados.")
+            else:
+                show_warning("Sistema de bandeja no disponible", "El sistema de bandeja no está disponible o no está funcionando.")
+                
+        except Exception as e:
+            self.logger.error(f"Error al limpiar iconos de bandeja: {e}")
+            show_error("Error", f"Error al limpiar iconos duplicados:\n{e}")
+    
+    # ═══════════════════════════════════════════════════════════════
+    # CONFIGURACIÓN DE EVENTOS Y BANDEJA DEL SISTEMA
+    # ═══════════════════════════════════════════════════════════════
+    
+    def setup_button_callbacks(self):
+        """Configurar callbacks de botones"""
+        # Este método puede expandirse en el futuro para callbacks específicos
+        pass
+    
+    def setup_window_events(self):
+        """Configurar eventos de la ventana principal"""
+        try:
+            # Configurar el protocolo de cierre de ventana
+            self.root.protocol("WM_DELETE_WINDOW", self.on_window_close)
+            
+            # Configurar eventos de minimización/iconificación
+            self.root.bind('<Unmap>', self.on_window_unmap)
+            self.root.bind('<Map>', self.on_window_map)
+            
+            self.logger.info("Eventos de ventana configurados correctamente")
+            
+        except Exception as e:
+            self.logger.error(f"Error al configurar eventos de ventana: {e}")
+    
+    def start_system_tray(self):
+        """Inicializar el sistema de bandeja"""
+        try:
+            # Verificar si ya se inicializó
+            if hasattr(self, '_tray_initialized') and self._tray_initialized:
+                self.logger.info("Sistema de bandeja ya está inicializado")
+                return
+            
+            if hasattr(self, 'system_tray') and self.system_tray.is_available():
+                # Iniciar la bandeja del sistema
+                if self.system_tray.start_tray():
+                    self._tray_initialized = True
+                    self.logger.info("Sistema de bandeja iniciado correctamente")
+                    
+                    # Verificar si debe iniciar minimizado
+                    if self.app_settings.get_setting("start_minimized"):
+                        self.root.after(1000, self.minimize_to_tray)  # Esperar 1 segundo antes de minimizar
+                else:
+                    self.logger.warning("No se pudo iniciar el sistema de bandeja")
+            else:
+                self.logger.warning("Sistema de bandeja no disponible")
+                
+        except Exception as e:
+            self.logger.error(f"Error al inicializar sistema de bandeja: {e}")
+    
+    def on_window_close(self):
+        """Manejar el cierre de la ventana"""
+        try:
+            # Verificar configuración de minimizar a bandeja al cerrar
+            if (hasattr(self, 'app_settings') and 
+                self.app_settings.get_setting("close_to_tray") and 
+                hasattr(self, 'system_tray') and 
+                self.system_tray.is_available()):
+                
+                # Minimizar a bandeja en lugar de cerrar
+                self.minimize_to_tray()
+            else:
+                # Cerrar normalmente
+                self.salir_aplicacion()
+                
+        except Exception as e:
+            self.logger.error(f"Error al manejar cierre de ventana: {e}")
+            # En caso de error, cerrar normalmente
+            self.salir_aplicacion()
+    
+    def on_window_unmap(self, event):
+        """Manejar cuando la ventana se minimiza o oculta"""
+        try:
+            # Solo actuar si el evento es de la ventana principal
+            if event.widget == self.root:
+                # Verificar si debe minimizar a bandeja
+                if (hasattr(self, 'app_settings') and 
+                    self.app_settings.get_setting("minimize_to_tray") and 
+                    hasattr(self, 'system_tray') and 
+                    self.system_tray.is_available() and
+                    not self.system_tray.is_hidden):
+                    
+                    # Solo minimizar a bandeja si la ventana está minimizada, no oculta
+                    if self.root.state() == 'iconic':
+                        self.root.after(100, self.minimize_to_tray)
+                        
+        except Exception as e:
+            self.logger.error(f"Error en on_window_unmap: {e}")
+    
+    def on_window_map(self, event):
+        """Manejar cuando la ventana se restaura"""
+        try:
+            # Solo actuar si el evento es de la ventana principal
+            if event.widget == self.root:
+                if hasattr(self, 'system_tray'):
+                    self.system_tray.is_hidden = False
+                    
+        except Exception as e:
+            self.logger.error(f"Error en on_window_map: {e}")
+    
+    def minimize_to_tray(self):
+        """Minimizar la aplicación a la bandeja del sistema"""
+        try:
+            if (hasattr(self, 'system_tray') and 
+                self.system_tray.is_available() and 
+                self.system_tray.tray_icon):
+                
+                self.system_tray.hide_to_tray()
+                self.logger.info("Aplicación minimizada a la bandeja del sistema")
+            else:
+                self.logger.warning("Sistema de bandeja no disponible para minimizar")
+                
+        except Exception as e:
+            self.logger.error(f"Error al minimizar a bandeja: {e}")
+    
+    def restore_from_tray(self):
+        """Restaurar la aplicación desde la bandeja del sistema"""
+        try:
+            if hasattr(self, 'system_tray'):
+                self.system_tray.show_window()
+                self.logger.info("Aplicación restaurada desde la bandeja del sistema")
+                
+        except Exception as e:
+            self.logger.error(f"Error al restaurar desde bandeja: {e}")
+    
+    def salir_aplicacion(self):
+        """Salir completamente de la aplicación"""
+        try:
+            self.logger.info("Cerrando aplicación...")
+            
+            # Detener bandeja del sistema
+            if hasattr(self, 'system_tray'):
+                self.system_tray.stop_tray()
+                self.logger.info("Bandeja del sistema detenida")
+            
+            # Guardar configuraciones
+            if hasattr(self, 'config_manager'):
+                self.config_manager.save()
+                
+            # Cerrar ventana principal
+            self.root.quit()
+            self.root.destroy()
+            
+        except Exception as e:
+            self.logger.error(f"Error al cerrar aplicación: {e}")
+            # Forzar cierre
+            import sys
+            sys.exit(0)

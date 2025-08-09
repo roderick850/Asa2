@@ -1,6 +1,8 @@
 import customtkinter as ctk
 import configparser
 import os
+import subprocess
+import platform
 from pathlib import Path
 from tkinter import messagebox
 import re
@@ -118,6 +120,15 @@ class ServerConfigPanel(ctk.CTkFrame):
         )
         refresh_button.pack(side="left", padx=5, pady=5)
         
+        # Botón para abrir carpeta de configuraciones
+        self.open_folder_button = ctk.CTkButton(
+            buttons_frame,
+            text="📁 Abrir Carpeta",
+            command=self.open_config_folder,
+            width=120
+        )
+        self.open_folder_button.pack(side="left", padx=5, pady=5)
+        
         save_button = ctk.CTkButton(
             buttons_frame,
             text="💾 Guardar Todo",
@@ -177,6 +188,9 @@ class ServerConfigPanel(ctk.CTkFrame):
             else:
                 self.status_label.configure(text="⚠️ No hay servidor seleccionado")
                 self.server_info_label.configure(text="Servidor: No seleccionado")
+                self.current_server = None
+                self.current_server_path = None
+                self._update_open_folder_button()
                 return
             
             # Construir ruta del servidor
@@ -194,6 +208,9 @@ class ServerConfigPanel(ctk.CTkFrame):
             self.current_server_path = server_path
             self.server_info_label.configure(text=f"Servidor: {server_name}")
             self.status_label.configure(text="🔍 Buscando archivos INI...")
+            
+            # Actualizar el botón de abrir carpeta
+            self._update_open_folder_button()
             
             # Buscar archivos INI específicos del servidor
             config_path = os.path.join(server_path, "ShooterGame", "Saved", "Config", "WindowsServer")
@@ -801,6 +818,79 @@ class ServerConfigPanel(ctk.CTkFrame):
         # Restaurar placeholder original
         self.search_entry.configure(placeholder_text="Buscar: max, multiplier, enable, port, server...")
         self.show_all_widgets()
+    
+    def open_config_folder(self):
+        """Abrir la carpeta de configuraciones del servidor actual"""
+        if not self.current_server:
+            messagebox.showwarning(
+                "Sin servidor",
+                "No hay ningún servidor seleccionado.\nPor favor, selecciona un servidor primero."
+            )
+            return
+        
+        if not self.current_server_path:
+            messagebox.showerror(
+                "Error de ruta",
+                "No se pudo determinar la ruta del servidor.\nVerifica que el servidor esté correctamente configurado."
+            )
+            return
+        
+        config_folder = os.path.join(self.current_server_path, "ShooterGame", "Saved", "Config", "WindowsServer")
+        
+        # Verificar que la carpeta existe
+        if not os.path.exists(config_folder):
+            # Intentar crear la carpeta si no existe
+            try:
+                os.makedirs(config_folder, exist_ok=True)
+                self.logger.info(f"Carpeta de configuración creada: {config_folder}")
+                messagebox.showinfo(
+                    "Carpeta creada",
+                    f"La carpeta de configuración no existía y ha sido creada:\n{config_folder}"
+                )
+            except Exception as e:
+                messagebox.showerror(
+                    "Error al crear carpeta",
+                    f"No se pudo crear la carpeta de configuración:\n{config_folder}\n\nError: {e}"
+                )
+                return
+        
+        # Abrir la carpeta según el sistema operativo
+        try:
+            if platform.system() == "Windows":
+                os.startfile(config_folder)
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.run(["open", config_folder])
+            else:  # Linux y otros
+                subprocess.run(["xdg-open", config_folder])
+            
+            self.logger.info(f"Carpeta de configuración abierta: {config_folder}")
+            
+        except Exception as e:
+            self.logger.error(f"Error al abrir carpeta: {e}")
+            messagebox.showerror(
+                "Error",
+                f"No se pudo abrir la carpeta de configuración:\n{config_folder}\n\nError: {e}\n\nPuedes navegar manualmente a esta ubicación."
+            )
+    
+    def _update_open_folder_button(self):
+        """Actualizar el estado y texto del botón de abrir carpeta"""
+        if not hasattr(self, 'open_folder_button'):
+            return
+        
+        if self.current_server and self.current_server_path:
+            # Servidor seleccionado: habilitar botón y mostrar ruta
+            config_folder = os.path.join(self.current_server_path, "ShooterGame", "Saved", "Config", "WindowsServer")
+            self.open_folder_button.configure(
+                state="normal",
+                text="📁 Abrir Carpeta"
+            )
+            # Opcionalmente podríamos agregar un tooltip aquí con la ruta completa
+        else:
+            # Sin servidor: deshabilitar botón
+            self.open_folder_button.configure(
+                state="disabled",
+                text="📁 Sin Servidor"
+            )
     
     def show_config_help(self, config_path):
         """Mostrar ayuda cuando no se encuentra el directorio de configuración"""

@@ -387,7 +387,8 @@ class ServerPanel:
             # Buscar el dropdown en la ventana principal y cargar NOMBRES AMIGABLES
             if hasattr(self.main_window, 'map_dropdown'):
                 self.main_window.map_dropdown.configure(values=["Seleccionar mapa..."] + available_maps_friendly)
-                self.logger.info(f"DEBUG: Cargando mapas amigables en dropdown: {available_maps_friendly}")
+                if self.logger.should_log_debug():
+                    self.logger.info(f"DEBUG: Cargando mapas amigables en dropdown: {available_maps_friendly}")
             self.add_status_message(f"Cargados {len(available_maps_friendly)} mapa(s) para {server_name}", "info")
             
         except Exception as e:

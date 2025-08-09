@@ -174,11 +174,13 @@ class ServerManager:
                 
                 # Agregar argumentos personalizados si se proporcionan
                 if custom_args and isinstance(custom_args, list):
-                    self.logger.info(f"DEBUG: Usando argumentos personalizados: {custom_args}")
+                    if self.logger.should_log_debug():
+                        self.logger.info(f"DEBUG: Usando argumentos personalizados: {custom_args}")
                     cmd.extend(custom_args)
                 else:
                     # Si no hay argumentos personalizados, usar el método básico con mapeo correcto
-                    self.logger.info(f"DEBUG: Sin argumentos personalizados, usando método básico con mapa: {map_name}")
+                    if self.logger.should_log_debug():
+                        self.logger.info(f"DEBUG: Sin argumentos personalizados, usando método básico con mapa: {map_name}")
                     cmd.extend(["-server", "-log"])
                     if map_name:
                         # Mapear nombre amigable a identificador técnico
@@ -210,12 +212,14 @@ class ServerManager:
                         }
                         
                         map_identifier = map_identifiers.get(map_name, map_name)
-                        self.logger.info(f"DEBUG: Convertido '{map_name}' a '{map_identifier}'")
+                        if self.logger.should_log_debug():
+                            self.logger.info(f"DEBUG: Convertido '{map_name}' a '{map_identifier}'")
                         cmd.append(f"?Map={map_identifier}")
                 
-                # Log del comando
-                self.logger.info(f"DEBUG: Comando final del servidor: {' '.join(cmd)}")
-                self.logger.info(f"DEBUG: Parámetros recibidos - server_name: '{server_name}', map_name: '{map_name}', custom_args: {custom_args}")
+                # Log del comando (solo en desarrollo)
+                if self.logger.should_log_debug():
+                    self.logger.info(f"DEBUG: Comando final del servidor: {' '.join(cmd)}")
+                    self.logger.info(f"DEBUG: Parámetros recibidos - server_name: '{server_name}', map_name: '{map_name}', custom_args: {custom_args}")
                 if callback:
                     callback("info", f"Comando del servidor: {' '.join(cmd)}")
                 

@@ -42,8 +42,11 @@ class SystemTray:
             if icon_path and os.path.exists(icon_path):
                 # Cargar imagen del icono
                 image = Image.open(icon_path)
-                # Redimensionar a 16x16 para la bandeja
-                image = image.resize((16, 16), Image.Resampling.LANCZOS)
+                # Redimensionar a 32x32 para mejor visibilidad en la bandeja
+                image = image.resize((32, 32), Image.Resampling.LANCZOS)
+                # Convertir a RGBA para compatibilidad
+                if image.mode != 'RGBA':
+                    image = image.convert('RGBA')
             else:
                 # Crear un icono simple si no se encuentra el archivo
                 image = self.create_default_icon()
@@ -67,23 +70,64 @@ class SystemTray:
     
     def find_icon_file(self):
         """Buscar el archivo de icono"""
+        import sys
+        
+        # Determinar directorio base (para ejecutables empaquetados)
+        if getattr(sys, 'frozen', False):
+            # Si está ejecutándose como ejecutable empaquetado
+            base_dir = os.path.dirname(sys.executable)
+            if hasattr(sys, '_MEIPASS'):
+                # PyInstaller temp folder
+                temp_dir = sys._MEIPASS
+            else:
+                temp_dir = base_dir
+        else:
+            # Si está ejecutándose como script
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            temp_dir = base_dir
+        
+        # Posibles ubicaciones del icono
         possible_paths = [
+            # En el directorio del ejecutable
+            os.path.join(base_dir, "ico", "ArkManager.ico"),
+            os.path.join(base_dir, "ArkManager.ico"),
+            
+            # En el directorio temporal de PyInstaller
+            os.path.join(temp_dir, "ico", "ArkManager.ico"),
+            os.path.join(temp_dir, "ArkManager.ico"),
+            
+            # Rutas relativas (para desarrollo)
             "ico/ArkManager.ico",
-            "icons/ArkManager.ico",
+            "icons/ArkManager.ico", 
             "assets/ArkManager.ico",
             "ArkManager.ico"
         ]
         
         for path in possible_paths:
             if os.path.exists(path):
+                self.logger.info(f"Icono encontrado en: {path}")
                 return path
         
+        self.logger.warning("No se encontró archivo de icono, usando icono por defecto")
         return None
     
     def create_default_icon(self):
         """Crear un icono por defecto"""
-        # Crear una imagen simple 16x16
-        image = Image.new('RGBA', (16, 16), (0, 120, 215, 255))  # Azul
+        # Crear una imagen simple 32x32 con diseño más llamativo
+        image = Image.new('RGBA', (32, 32), (0, 120, 215, 255))  # Azul
+        
+        # Agregar un diseño simple (rectángulo blanco en el centro)
+        try:
+            from PIL import ImageDraw
+            draw = ImageDraw.Draw(image)
+            # Dibujar un rectángulo blanco en el centro
+            draw.rectangle([8, 8, 24, 24], fill=(255, 255, 255, 255))
+            # Dibujar un punto azul en el centro para representar ARK
+            draw.rectangle([14, 14, 18, 18], fill=(0, 120, 215, 255))
+        except:
+            # Si falla, usar solo el color sólido
+            pass
+            
         return image
     
     def create_tray_menu(self):
@@ -134,15 +178,40 @@ class SystemTray:
     
     def start_tray(self):
         """Iniciar la bandeja del sistema"""
-        if not self.tray_available or not self.create_tray_icon():
+        if not self.tray_available:
+            self.logger.warning("pystray no disponible, bandeja del sistema deshabilitada")
+            return False
+        
+        # Verificar si ya hay un icono activo
+        if self.tray_icon is not None:
+            self.logger.warning("Ya hay un icono de bandeja activo, no se creará otro")
+            return True
+            
+        if not self.create_tray_icon():
+            self.logger.error("No se pudo crear el icono de bandeja")
             return False
             
         try:
-            # Ejecutar en un hilo separado
-            tray_thread = threading.Thread(target=self.tray_icon.run, daemon=True)
+            # Verificar que el icono se creó correctamente
+            if not self.tray_icon:
+                self.logger.error("Icono de bandeja es None")
+                return False
+            
+            # Ejecutar en un hilo separado con manejo de errores mejorado
+            def run_tray():
+                try:
+                    self.logger.info("Iniciando hilo de bandeja del sistema...")
+                    self.tray_icon.run()
+                except Exception as e:
+                    self.logger.error(f"Error en hilo de bandeja: {e}")
+            
+            tray_thread = threading.Thread(target=run_tray, daemon=True)
             tray_thread.start()
             
-            self.logger.info("Bandeja del sistema iniciada")
+            # Esperar un momento para verificar que se inició correctamente
+            time.sleep(0.5)
+            
+            self.logger.info("Bandeja del sistema iniciada correctamente")
             return True
             
         except Exception as e:
@@ -265,11 +334,16 @@ class SystemTray:
         """Detener la bandeja del sistema"""
         if self.tray_icon:
             try:
+                self.logger.info("Deteniendo icono de bandeja...")
                 self.tray_icon.stop()
                 self.tray_icon = None
-                self.logger.info("Bandeja del sistema detenida")
+                self.is_hidden = False
+                self.logger.info("Bandeja del sistema detenida correctamente")
             except Exception as e:
                 self.logger.error(f"Error al detener bandeja: {e}")
+                # Forzar limpieza en caso de error
+                self.tray_icon = None
+                self.is_hidden = False
     
     def update_icon_status(self, server_running=False):
         """Actualizar el icono según el estado del servidor"""
@@ -288,3 +362,27 @@ class SystemTray:
     def is_available(self):
         """Verificar si la funcionalidad de bandeja está disponible"""
         return self.tray_available
+    
+    def cleanup_duplicate_icons(self):
+        """Limpiar iconos duplicados si existen"""
+        try:
+            if self.tray_icon:
+                self.logger.info("Limpiando posibles iconos duplicados...")
+                # Detener el icono actual si existe
+                self.stop_tray()
+                # Esperar un momento para que se limpie
+                import time
+                time.sleep(0.5)
+                self.logger.info("Limpieza de iconos completada")
+        except Exception as e:
+            self.logger.error(f"Error al limpiar iconos duplicados: {e}")
+    
+    def restart_tray(self):
+        """Reiniciar el sistema de bandeja (útil para resolver duplicados)"""
+        try:
+            self.logger.info("Reiniciando sistema de bandeja...")
+            self.cleanup_duplicate_icons()
+            return self.start_tray()
+        except Exception as e:
+            self.logger.error(f"Error al reiniciar bandeja: {e}")
+            return False

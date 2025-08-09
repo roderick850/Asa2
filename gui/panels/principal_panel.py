@@ -329,12 +329,12 @@ class PrincipalPanel:
                         # Actualizar el valor si no es None, o eliminar si es None
                         new_value = section_data[key]
                         if new_value is not None:
-                            updated_lines.append(f"{key} = {new_value}\n")
-                            if self.logger:
+                            updated_lines.append(f"{key}={new_value}\n")
+                            if self.logger and self.logger.should_log_debug():
                                 self.logger.info(f"DEBUG: Actualizado {current_section}.{key} = {new_value}")
                         else:
                             # Valor None = eliminar línea
-                            if self.logger:
+                            if self.logger and self.logger.should_log_debug():
                                 self.logger.info(f"DEBUG: Eliminado {current_section}.{key}")
                         # Marcar como procesado
                         section_data[key] = 'PROCESSED'
@@ -349,14 +349,14 @@ class PrincipalPanel:
         for section_name, section_data in sections_to_update.items():
             if section_name not in sections_found:
                 updated_lines.append(f"\n[{section_name}]\n")
-                if self.logger:
+                if self.logger and self.logger.should_log_debug():
                     self.logger.info(f"DEBUG: Agregada nueva sección [{section_name}]")
                 
                 # Agregar todas las claves de esta sección
                 for key, value in section_data.items():
                     if value is not None and value != 'PROCESSED':
-                        updated_lines.append(f"{key} = {value}\n")
-                        if self.logger:
+                        updated_lines.append(f"{key}={value}\n")
+                        if self.logger and self.logger.should_log_debug():
                             self.logger.info(f"DEBUG: Agregado {section_name}.{key} = {value}")
             else:
                 # Sección existía, agregar claves que no se encontraron
@@ -374,8 +374,8 @@ class PrincipalPanel:
                                 break
                         
                         # Insertar la nueva clave antes del final de la sección
-                        updated_lines.insert(section_end, f"{key} = {value}\n")
-                        if self.logger:
+                        updated_lines.insert(section_end, f"{key}={value}\n")
+                        if self.logger and self.logger.should_log_debug():
                             self.logger.info(f"DEBUG: Agregado a sección existente {section_name}.{key} = {value}")
         
         # Escribir archivo actualizado
@@ -628,27 +628,31 @@ class PrincipalPanel:
         }
         
         # Construir el argumento base del mapa siguiendo el formato correcto
-        self.logger.info(f"DEBUG: Mapa seleccionado: '{selected_map}' (tipo: {type(selected_map)}, len: {len(selected_map) if selected_map else 'N/A'})")
-        self.logger.info(f"DEBUG: Mapas disponibles: {list(map_identifiers.keys())}")
-        self.logger.info(f"DEBUG: ¿Mapa es None?: {selected_map is None}")
-        self.logger.info(f"DEBUG: ¿Mapa en diccionario?: {selected_map in map_identifiers if selected_map else 'N/A'}")
-        
-        # Debug más específico: comparar caractér por caractér
-        if selected_map:
-            for key in map_identifiers.keys():
-                if key == selected_map:
-                    self.logger.info(f"DEBUG: ✅ Coincidencia exacta encontrada con '{key}'")
-                elif key.strip() == selected_map.strip():
-                    self.logger.info(f"DEBUG: ⚠️ Coincidencia con espacios: '{key}' vs '{selected_map}'")
+        # Solo mostrar logs de debug en desarrollo
+        if self.logger.should_log_debug():
+            self.logger.info(f"DEBUG: Mapa seleccionado: '{selected_map}' (tipo: {type(selected_map)}, len: {len(selected_map) if selected_map else 'N/A'})")
+            self.logger.info(f"DEBUG: Mapas disponibles: {list(map_identifiers.keys())}")
+            self.logger.info(f"DEBUG: ¿Mapa es None?: {selected_map is None}")
+            self.logger.info(f"DEBUG: ¿Mapa en diccionario?: {selected_map in map_identifiers if selected_map else 'N/A'}")
+            
+            # Debug más específico: comparar caractér por caractér
+            if selected_map:
+                for key in map_identifiers.keys():
+                    if key == selected_map:
+                        self.logger.info(f"DEBUG: ✅ Coincidencia exacta encontrada con '{key}'")
+                    elif key.strip() == selected_map.strip():
+                        self.logger.info(f"DEBUG: ⚠️ Coincidencia con espacios: '{key}' vs '{selected_map}'")
                 
         if selected_map and selected_map in map_identifiers:
             map_identifier = map_identifiers[selected_map]
             map_arg = f"{map_identifier}?listen"
-            self.logger.info(f"DEBUG: ✅ Mapa encontrado. Usando identificador: {map_identifier}")
+            if self.logger.should_log_debug():
+                self.logger.info(f"DEBUG: ✅ Mapa encontrado. Usando identificador: {map_identifier}")
         else:
             # Mapa por defecto si no hay selección
             map_arg = "TheIsland_WP?listen"
-            self.logger.warning(f"DEBUG: ❌ Mapa no encontrado o vacío. Razón: selected_map='{selected_map}', en diccionario={selected_map in map_identifiers if selected_map else False}. Usando por defecto: TheIsland_WP")
+            if self.logger.should_log_debug():
+                self.logger.warning(f"DEBUG: ❌ Mapa no encontrado o vacío. Razón: selected_map='{selected_map}', en diccionario={selected_map in map_identifiers if selected_map else False}. Usando por defecto: TheIsland_WP")
         
         # 2. Agregar parámetros básicos en el orden correcto
         # Port
@@ -703,7 +707,8 @@ class PrincipalPanel:
         if mod_ids:
             args.append(f"-mods={mod_ids}")
         
-        self.logger.info(f"DEBUG: Argumentos finales generados: {args}")
+        if self.logger.should_log_debug():
+            self.logger.info(f"DEBUG: Argumentos finales generados: {args}")
         
         return args
     

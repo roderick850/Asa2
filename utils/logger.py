@@ -1,7 +1,12 @@
 import logging
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
+
+def is_compiled():
+    """Detectar si la aplicación está corriendo como ejecutable compilado"""
+    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
 
 class Logger:
     def __init__(self, log_file="logs/app.log"):
@@ -13,6 +18,16 @@ class Logger:
         # Asegurar que el log_file esté en un directorio seguro
         self.log_file = self._get_safe_log_path()
         
+        # Determinar nivel de logging según si es ejecutable o desarrollo
+        if is_compiled():
+            # En ejecutable: Solo ERROR y WARNING para inicio rápido
+            self.log_level = logging.WARNING
+            print("🚀 Modo ejecutable: Logs de debug deshabilitados para inicio rápido")
+        else:
+            # En desarrollo: Todos los logs incluido DEBUG
+            self.log_level = logging.INFO
+            print("🔧 Modo desarrollo: Logs de debug habilitados")
+        
         # Crear directorio de logs si no existe
         log_dir = os.path.dirname(self.log_file)
         if log_dir and not os.path.exists(log_dir):
@@ -22,7 +37,8 @@ class Logger:
                 # Fallback a directorio temporal si no hay permisos
                 import tempfile
                 self.log_file = os.path.join(tempfile.gettempdir(), "ark_server_manager.log")
-                print(f"Warning: Usando archivo de log temporal: {self.log_file}")
+                if not is_compiled():  # Solo mostrar warning en desarrollo
+                    print(f"Warning: Usando archivo de log temporal: {self.log_file}")
         
         # Configurar el logger real
         self._setup_logging()
@@ -53,9 +69,9 @@ class Logger:
             datefmt='%Y-%m-%d %H:%M:%S'
         )
         
-        # Configurar logger principal
+        # Configurar logger principal con nivel dinámico
         self.logger = logging.getLogger('ArkServerManager')
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(self.log_level)  # Usar nivel dinámico (WARNING en exe, INFO en dev)
         
         # Evitar duplicación de handlers
         if not self.logger.handlers:
@@ -94,3 +110,18 @@ class Logger:
     def critical(self, message):
         """Registrar mensaje crítico"""
         self.logger.critical(message)
+    
+    def debug(self, message):
+        """Registrar mensaje de debug (solo en desarrollo)"""
+        if hasattr(self, 'logger'):
+            self.logger.debug(message)
+        elif not is_compiled():  # Solo mostrar en consola si es desarrollo
+            print(f"DEBUG: {message}")
+    
+    def is_debug_enabled(self):
+        """Verificar si los logs de debug están habilitados"""
+        return not is_compiled()
+    
+    def should_log_debug(self):
+        """Alias para verificar si se deben mostrar logs de debug"""
+        return self.is_debug_enabled()
