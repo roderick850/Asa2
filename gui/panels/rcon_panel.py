@@ -386,9 +386,21 @@ class RconPanel(ctk.CTkFrame):
             )
             
             if result.returncode == 0:
+                # Registrar comando RCON exitoso
+                if hasattr(self, 'main_window') and hasattr(self.main_window, 'log_server_event'):
+                    self.main_window.log_server_event("rcon_command", 
+                        command=command,
+                        success=True,
+                        result=result.stdout.strip()[:100])  # Limitar resultado a 100 chars
                 return result.stdout.strip()
             else:
                 error_msg = result.stderr.strip() if result.stderr else f"Código de salida: {result.returncode}"
+                # Registrar comando RCON fallido
+                if hasattr(self, 'main_window') and hasattr(self.main_window, 'log_server_event'):
+                    self.main_window.log_server_event("rcon_command", 
+                        command=command,
+                        success=False,
+                        result=error_msg)
                 return f"❌ Error: {error_msg}"
                 
         except subprocess.TimeoutExpired:

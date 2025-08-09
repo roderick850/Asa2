@@ -1,32 +1,5 @@
 [
   {
-    "name": "Prueba_20250808_230749",
-    "server": "Prueba",
-    "path": "D:\\ASA\\Backup\\Prueba_20250808_230749.zip",
-    "date": "2025-08-08T23:07:49.933542",
-    "size": 17180,
-    "compressed": true,
-    "type": "manual"
-  },
-  {
-    "name": "Prueba_20250808_232112",
-    "server": "Prueba",
-    "path": "D:\\ASA\\Backup\\Prueba_20250808_232112.zip",
-    "date": "2025-08-08T23:21:12.726516",
-    "size": 17180,
-    "compressed": true,
-    "type": "manual"
-  },
-  {
-    "name": "Prueba_20250808_232934",
-    "server": "Prueba",
-    "path": "D:\\ASA\\Backup\\Prueba_20250808_232934.zip",
-    "date": "2025-08-08T23:29:34.438784",
-    "size": 17180,
-    "compressed": true,
-    "type": "autom\u00e1tico"
-  },
-  {
     "name": "Prueba_20250808_233138",
     "server": "Prueba",
     "path": "D:\\ASA\\Backup\\Prueba_20250808_233138.zip",
@@ -59,6 +32,60 @@
     "path": "D:\\ASA\\Backup\\Prueba_20250808_233929.zip",
     "date": "2025-08-08T23:39:29.967930",
     "size": 17180,
+    "compressed": true,
+    "type": "autom\u00e1tico"
+  },
+  {
+    "name": "Prueba_20250808_234745",
+    "server": "Prueba",
+    "path": "D:\\ASA\\Backup\\Prueba_20250808_234745.zip",
+    "date": "2025-08-08T23:47:45.541893",
+    "size": 17180,
+    "compressed": true,
+    "type": "manual"
+  },
+  {
+    "name": "Prueba_20250808_234822",
+    "server": "Prueba",
+    "path": "D:\\ASA\\Backup\\Prueba_20250808_234822.zip",
+    "date": "2025-08-08T23:48:22.287959",
+    "size": 17180,
+    "compressed": true,
+    "type": "manual"
+  },
+  {
+    "name": "Prueba_20250808_234825",
+    "server": "Prueba",
+    "path": "D:\\ASA\\Backup\\Prueba_20250808_234825.zip",
+    "date": "2025-08-08T23:48:25.485378",
+    "size": 17180,
+    "compressed": true,
+    "type": "manual"
+  },
+  {
+    "name": "Prueba_20250808_234828",
+    "server": "Prueba",
+    "path": "D:\\ASA\\Backup\\Prueba_20250808_234828.zip",
+    "date": "2025-08-08T23:48:28.360040",
+    "size": 17180,
+    "compressed": true,
+    "type": "manual"
+  },
+  {
+    "name": "Prueba_20250808_234843",
+    "server": "Prueba",
+    "path": "D:\\ASA\\Backup\\Prueba_20250808_234843.zip",
+    "date": "2025-08-08T23:48:43.647409",
+    "size": 17180,
+    "compressed": true,
+    "type": "manual"
+  },
+  {
+    "name": "Prueba2_20250808_235859",
+    "server": "Prueba2",
+    "path": "D:\\ASA\\Backup\\Prueba2_20250808_235859.zip",
+    "date": "2025-08-08T23:58:59.699046",
+    "size": 3993,
     "compressed": true,
     "type": "autom\u00e1tico"
   }

@@ -6,7 +6,7 @@ from .panels.monitoring_panel import MonitoringPanel
 from .panels.backup_panel import BackupPanel
 from .panels.players_panel import PlayersPanel
 from .panels.mods_panel import ModsPanel
-from .panels.logs_panel import LogsPanel
+from .panels.logs_panel_new import LogsPanelNew
 from .panels.rcon_panel import RconPanel
 
 class MainWindow:
@@ -14,6 +14,10 @@ class MainWindow:
         self.root = root
         self.config_manager = config_manager
         self.logger = logger
+        
+        # Importar ServerEventLogger aquí para evitar problemas de importación circular
+        from utils.server_logger import ServerEventLogger
+        self.server_event_logger = ServerEventLogger("default")
         
         # Variables para el servidor y mapa seleccionados
         self.selected_server = None
@@ -374,10 +378,10 @@ class MainWindow:
         self.server_panel = ServerPanel(None, self.config_manager, self.logger, self)
         self.config_panel = ConfigPanel(self.tab_configuraciones_content, self.config_manager, self.logger, self)
         self.mods_panel = ModsPanel(self.tab_mods_content, self.config_manager, self.logger, self)
-        self.monitoring_panel = MonitoringPanel(self.tab_reinicios_content, self.config_manager, self.logger)
+        self.monitoring_panel = MonitoringPanel(self.tab_reinicios_content, self.config_manager, self.logger, self)
         self.backup_panel = BackupPanel(self.tab_backup_content, self.config_manager, self.logger, self)
         self.rcon_panel = RconPanel(self.tab_rcon_content, self.config_manager, self.logger, self)
-        self.logs_panel = LogsPanel(self.tab_logs_content, self.config_manager, self.logger)
+        self.logs_panel = LogsPanelNew(self.tab_logs_content, self.config_manager, self.logger, self)
         
         # Configurar callbacks para los botones
         self.setup_button_callbacks()
@@ -387,6 +391,12 @@ class MainWindow:
         
         # Cargar la última selección de servidor/mapa
         self.load_last_server_map_selection()
+        
+        # Registrar evento de inicio de la aplicación
+        if hasattr(self, 'server_event_logger'):
+            self.log_server_event("custom_event", 
+                event_name="Aplicación iniciada", 
+                details="Ark Server Manager se ha iniciado correctamente")
         
         # Mostrar la pestaña inicial
         self.show_tab("Principal")
@@ -531,6 +541,11 @@ class MainWindow:
     def on_server_selected(self, server_name):
         """Maneja la selección de un servidor"""
         self.selected_server = server_name
+        
+        # Actualizar el logger del servidor
+        if hasattr(self, 'server_event_logger'):
+            self.server_event_logger.update_server_name(server_name)
+        
         if hasattr(self, 'server_panel'):
             self.server_panel.on_server_selected(server_name)
         if hasattr(self, 'principal_panel'):
@@ -544,6 +559,106 @@ class MainWindow:
         # Actualizar panel de backup
         if hasattr(self, 'backup_panel'):
             self.backup_panel.update_server_selection(server_name)
+        # Actualizar panel de reinicios
+        if hasattr(self, 'monitoring_panel'):
+            self.monitoring_panel.update_server_selection(server_name)
+        # Guardar última selección
+        self.save_last_server_map_selection()
+    
+    def log_server_event(self, event_type, **kwargs):
+        """Registrar eventos del servidor y mostrar en logs"""
+        try:
+            if not hasattr(self, 'server_event_logger'):
+                return
+            
+            # Registrar en el archivo de eventos
+            message = ""
+            if event_type == "server_start":
+                message = self.server_event_logger.log_server_start(
+                    kwargs.get('server_path', ''), 
+                    kwargs.get('map_name', ''),
+                    kwargs.get('additional_info', '')
+                )
+            elif event_type == "server_stop":
+                message = self.server_event_logger.log_server_stop(
+                    kwargs.get('reason', 'Manual'),
+                    kwargs.get('additional_info', '')
+                )
+            elif event_type == "server_restart":
+                message = self.server_event_logger.log_server_restart(
+                    kwargs.get('reason', 'Manual'),
+                    kwargs.get('additional_info', '')
+                )
+            elif event_type == "update_start":
+                message = self.server_event_logger.log_server_update_start(
+                    kwargs.get('method', 'SteamCMD')
+                )
+            elif event_type == "update_complete":
+                message = self.server_event_logger.log_server_update_complete(
+                    kwargs.get('success', True),
+                    kwargs.get('details', '')
+                )
+            elif event_type == "automatic_restart_start":
+                message = self.server_event_logger.log_automatic_restart_start(
+                    kwargs.get('restart_info', {})
+                )
+            elif event_type == "automatic_restart_complete":
+                message = self.server_event_logger.log_automatic_restart_complete(
+                    kwargs.get('restart_info', {})
+                )
+            elif event_type == "backup_event":
+                message = self.server_event_logger.log_backup_event(
+                    kwargs.get('event_type', 'manual'),
+                    kwargs.get('success', True),
+                    kwargs.get('details', '')
+                )
+            elif event_type == "rcon_command":
+                message = self.server_event_logger.log_rcon_command(
+                    kwargs.get('command', ''),
+                    kwargs.get('success', True),
+                    kwargs.get('result', '')
+                )
+            elif event_type == "mod_operation":
+                message = self.server_event_logger.log_mod_operation(
+                    kwargs.get('operation', ''),
+                    kwargs.get('mod_name', ''),
+                    kwargs.get('mod_id', ''),
+                    kwargs.get('success', True)
+                )
+            elif event_type == "config_change":
+                message = self.server_event_logger.log_config_change(
+                    kwargs.get('config_type', ''),
+                    kwargs.get('setting_name', ''),
+                    kwargs.get('old_value', ''),
+                    kwargs.get('new_value', '')
+                )
+            elif event_type == "server_crash":
+                message = self.server_event_logger.log_server_crash(
+                    kwargs.get('error_details', '')
+                )
+            elif event_type == "custom_event":
+                message = self.server_event_logger.log_custom_event(
+                    kwargs.get('event_name', ''),
+                    kwargs.get('details', ''),
+                    kwargs.get('level', 'info')
+                )
+            
+            # Mostrar también en el log de la aplicación y en la UI
+            if message:
+                self.add_log_message(message)
+                
+        except Exception as e:
+            self.logger.error(f"Error registrando evento del servidor: {e}")
+    
+    def get_server_events(self, hours=24):
+        """Obtener eventos recientes del servidor"""
+        try:
+            if hasattr(self, 'server_event_logger'):
+                return self.server_event_logger.get_recent_events(hours)
+            return []
+        except Exception as e:
+            self.logger.error(f"Error obteniendo eventos del servidor: {e}")
+            return []
     
     def on_map_selected(self, map_name):
         """Maneja la selección de un mapa"""

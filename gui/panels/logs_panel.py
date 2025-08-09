@@ -6,10 +6,11 @@ from datetime import datetime
 from tkinter import filedialog
 
 class LogsPanel(ctk.CTkFrame):
-    def __init__(self, parent, config_manager, logger):
+    def __init__(self, parent, config_manager, logger, main_window=None):
         super().__init__(parent)
         self.config_manager = config_manager
         self.logger = logger
+        self.main_window = main_window
         self.log_files = []
         self.current_log_file = None
         self.monitoring_active = False
@@ -19,67 +20,64 @@ class LogsPanel(ctk.CTkFrame):
         
     def create_widgets(self):
         """Crear todos los widgets del panel"""
-        # Configurar el grid
+        # Configurar el grid principal
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(3, weight=1)
+        self.grid_rowconfigure(1, weight=1)  # El área de texto debe expandirse
         
         # Título
         title_label = ctk.CTkLabel(
             self, 
-            text="Gestión de Logs", 
+            text="📋 Logs del Servidor", 
             font=ctk.CTkFont(size=18, weight="bold")
         )
-        title_label.grid(row=0, column=0, columnspan=2, pady=(10, 15))
+        title_label.grid(row=0, column=0, pady=(10, 5), sticky="w", padx=10)
         
-        # Frame para acceso rápido a logs del servidor
-        server_logs_frame = ctk.CTkFrame(self)
-        server_logs_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
+        # Frame para botones de acceso rápido
+        buttons_frame = ctk.CTkFrame(self)
+        buttons_frame.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
         
-        server_logs_label = ctk.CTkLabel(
-            server_logs_frame, 
-            text="Logs del Servidor ARK", 
-            font=ctk.CTkFont(size=14, weight="bold")
-        )
-        server_logs_label.pack(pady=5)
-        
-        # Frame para botones de logs rápidos
-        quick_logs_frame = ctk.CTkFrame(server_logs_frame, fg_color="transparent")
-        quick_logs_frame.pack(fill="x", padx=10, pady=5)
-        
-        # Botones para logs comunes
+        # Botones para logs comunes - en una sola fila compacta
         ctk.CTkButton(
-            quick_logs_frame,
-            text="Log de Chat",
-            command=self.view_chat_log,
+            buttons_frame,
+            text="🎮 Eventos Servidor",
+            command=self.view_server_events,
             width=120,
-            height=30
-        ).pack(side="left", padx=5)
+            height=35
+        ).pack(side="left", padx=3, pady=5)
         
         ctk.CTkButton(
-            quick_logs_frame,
-            text="Log de Errores",
-            command=self.view_error_log,
-            width=120,
-            height=30
-        ).pack(side="left", padx=5)
-        
-        ctk.CTkButton(
-            quick_logs_frame,
-            text="Log del Servidor",
-            command=self.view_server_log,
-            width=120,
-            height=30
-        ).pack(side="left", padx=5)
-        
-        ctk.CTkButton(
-            quick_logs_frame,
-            text="Actualizar",
-            command=self.refresh_server_logs,
+            buttons_frame,
+            text="📋 Log App",
+            command=self.view_app_log,
             width=100,
-            height=30,
+            height=35
+        ).pack(side="left", padx=3, pady=5)
+        
+        ctk.CTkButton(
+            buttons_frame,
+            text="💬 Chat",
+            command=self.view_chat_log,
+            width=80,
+            height=35
+        ).pack(side="left", padx=3, pady=5)
+        
+        ctk.CTkButton(
+            buttons_frame,
+            text="❌ Errores",
+            command=self.view_error_log,
+            width=80,
+            height=35
+        ).pack(side="left", padx=3, pady=5)
+        
+        ctk.CTkButton(
+            buttons_frame,
+            text="🔄 Actualizar",
+            command=self.view_app_log,  # Por ahora actualiza el log app
+            width=80,
+            height=35,
             fg_color="orange",
             hover_color="darkorange"
-        ).pack(side="left", padx=5)
+        ).pack(side="left", padx=3, pady=5)
         
         # Frame de configuración de logs
         config_frame = ctk.CTkFrame(self)
@@ -225,6 +223,9 @@ class LogsPanel(ctk.CTkFrame):
         stats_frame.grid_columnconfigure(1, weight=1)
         stats_frame.grid_columnconfigure(2, weight=1)
         stats_frame.grid_columnconfigure(3, weight=1)
+        
+        # Mostrar el log de la aplicación por defecto
+        self.after(100, self.view_app_log)
         
     def browse_logs_path(self):
         """Buscar directorio de logs"""
@@ -393,6 +394,77 @@ class LogsPanel(ctk.CTkFrame):
         except Exception as e:
             self.logger.error(f"Error al eliminar archivo de log: {e}")
     
+    def view_server_events(self):
+        """Ver eventos del servidor desde el sistema de logging"""
+        try:
+            self.log_viewer.delete("1.0", "end")
+            
+            if self.main_window and hasattr(self.main_window, 'get_server_events'):
+                events = self.main_window.get_server_events(24)  # Últimas 24 horas
+                
+                if events:
+                    header = "🎮 EVENTOS DEL SERVIDOR - ÚLTIMAS 24 HORAS\n"
+                    header += "="*60 + "\n\n"
+                    
+                    formatted_events = []
+                    for event in reversed(events[-50:]):  # Últimos 50 eventos, del más reciente al más antiguo
+                        formatted_events.append(event)
+                    
+                    content = header + '\n'.join(formatted_events)
+                    self.log_viewer.insert("1.0", content)
+                else:
+                    self.log_viewer.insert("1.0", "📋 No hay eventos del servidor registrados aún.\n\n🔍 Los eventos aparecerán aquí cuando:\n• Inicies el servidor\n• Detengas el servidor\n• Reinicies el servidor\n• Actualices el servidor\n• Ejecutes comandos RCON\n• Realices backups\n• Ocurran reinicios automáticos")
+            else:
+                # Mostrar mensaje para crear eventos de prueba
+                test_content = "📋 PANEL DE EVENTOS DEL SERVIDOR\n"
+                test_content += "="*60 + "\n\n"
+                test_content += "🔍 Sistema de logging inicializado.\n\n"
+                test_content += "Los eventos del servidor aparecerán aquí cuando:\n"
+                test_content += "• 🚀 Inicies el servidor\n"
+                test_content += "• ⏹️ Detengas el servidor\n"
+                test_content += "• 🔄 Reinicies el servidor\n"
+                test_content += "• 📥 Actualices el servidor\n"
+                test_content += "• 🎮 Ejecutes comandos RCON\n"
+                test_content += "• 💾 Realices backups\n"
+                test_content += "• 🕐 Ocurran reinicios automáticos\n\n"
+                test_content += "📁 Los eventos se guardan en: logs/server_events/\n"
+                test_content += "📅 Un archivo por día con formato: server_events_YYYY-MM-DD.log"
+                
+                self.log_viewer.insert("1.0", test_content)
+                
+        except Exception as e:
+            self.log_viewer.delete("1.0", "end")
+            self.log_viewer.insert("1.0", f"❌ Error al cargar eventos del servidor: {e}\n\nDetalles del error: {type(e).__name__}")
+
+    def view_app_log(self):
+        """Ver log de la aplicación"""
+        try:
+            self.log_viewer.delete("1.0", "end")
+            
+            # Leer el log de la aplicación
+            app_log_path = "logs/app.log"
+            if os.path.exists(app_log_path):
+                with open(app_log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    lines = f.readlines()
+                    
+                # Tomar las últimas 100 líneas
+                recent_lines = lines[-100:] if len(lines) > 100 else lines
+                
+                header = "📋 LOG DE LA APLICACIÓN - ÚLTIMAS 100 LÍNEAS\n"
+                header += "="*60 + "\n\n"
+                
+                content = header + ''.join(recent_lines)
+                self.log_viewer.insert("1.0", content)
+                
+                # Scrollear al final
+                self.log_viewer.see("end")
+            else:
+                self.log_viewer.insert("1.0", "❌ No se encontró el archivo de log de la aplicación: logs/app.log")
+                
+        except Exception as e:
+            self.log_viewer.delete("1.0", "end")
+            self.log_viewer.insert("1.0", f"❌ Error al cargar log de la aplicación: {e}")
+
     def view_chat_log(self):
         """Ver logs de chat del servidor"""
         try:

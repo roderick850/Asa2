@@ -777,6 +777,13 @@ class AdvancedBackupPanel(ctk.CTkFrame):
                 self.show_ctk_error("Configuración inválida", "Por favor revisa la configuración de backup")
             return
         
+        # Registrar inicio del backup
+        if hasattr(self.main_window, 'log_server_event'):
+            backup_type = "manual" if is_manual else "automático"
+            self.main_window.log_server_event("custom_event", 
+                event_name=f"Backup {backup_type} iniciado", 
+                details=f"Iniciando backup del servidor")
+        
         # Iniciar backup en hilo separado
         self.backup_thread = threading.Thread(target=lambda: self._backup_worker(is_manual), daemon=True)
         self.backup_thread.start()
@@ -1050,6 +1057,14 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         # Refrescar historial
         self.refresh_backup_history()
         
+        # Registrar finalización del backup
+        if hasattr(self.main_window, 'log_server_event'):
+            backup_type = "manual" if is_manual else "automático"
+            self.main_window.log_server_event("backup_event", 
+                event_type=backup_type,
+                success=True,
+                details=f"Backup '{backup_info['name']}' creado exitosamente")
+        
         # Notificación solo para backups manuales
         if is_manual:
             self.show_ctk_info("Backup completado", f"Backup '{backup_info['name']}' creado exitosamente")
@@ -1066,6 +1081,14 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         self.status_label.configure(text="❌ Error en backup")
         self.progress_bar.set(0)
         self.progress_label.configure(text=f"Error: {error_msg}")
+        
+        # Registrar error del backup
+        if hasattr(self.main_window, 'log_server_event'):
+            backup_type = "manual" if is_manual else "automático"
+            self.main_window.log_server_event("backup_event", 
+                event_type=backup_type,
+                success=False,
+                details=f"Error: {error_msg}")
         
         # Notificación de error solo para backups manuales
         if is_manual:

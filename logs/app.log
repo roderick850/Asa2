@@ -2087,3 +2087,579 @@
 2025-08-08 23:39:45 - ArkServerManager - INFO - Iniciando backup automático desde configuración guardada
 2025-08-08 23:39:46 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
 2025-08-08 23:39:48 - ArkServerManager - INFO - Backup automático programado cada 1 minutos
+2025-08-08 23:40:08 - ArkServerManager - INFO - Backup automático programado cada 1 minutos
+2025-08-08 23:40:09 - ArkServerManager - INFO - Backup automático programado cada 15 minutos
+2025-08-08 23:47:45 - ArkServerManager - DEBUG - No es necesario limpiar backups (8/10)
+2025-08-08 23:48:22 - ArkServerManager - DEBUG - No es necesario limpiar backups (9/10)
+2025-08-08 23:48:25 - ArkServerManager - DEBUG - No es necesario limpiar backups (10/10)
+2025-08-08 23:48:28 - ArkServerManager - INFO - Backup antiguo eliminado: Prueba_20250808_230749
+2025-08-08 23:48:28 - ArkServerManager - INFO - Limpieza automática: 1 backups antiguos eliminados (límite: 10)
+2025-08-08 23:48:43 - ArkServerManager - INFO - Backup antiguo eliminado: Prueba_20250808_232112
+2025-08-08 23:48:43 - ArkServerManager - INFO - Limpieza automática: 1 backups antiguos eliminados (límite: 10)
+2025-08-08 23:48:57 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 23:48:57 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 23:48:57 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 23:48:57 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-08 23:48:58 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-08 23:48:58 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Backup
+2025-08-08 23:48:58 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries\Win64
+2025-08-08 23:48:58 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries
+2025-08-08 23:48:58 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Engine\Binaries\Win64
+2025-08-08 23:48:58 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries\Win64
+2025-08-08 23:48:58 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries
+2025-08-08 23:48:58 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Backup
+2025-08-08 23:48:58 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Backup
+2025-08-08 23:48:58 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-08 23:48:58 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: D:/ASA\Backup
+2025-08-08 23:48:58 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-08 23:48:58 - ArkServerManager - INFO - Backup/
+2025-08-08 23:48:58 - ArkServerManager - INFO -   Prueba_20250808_232934.zip
+2025-08-08 23:48:58 - ArkServerManager - INFO -   Prueba_20250808_233138.zip
+2025-08-08 23:48:58 - ArkServerManager - INFO -   Prueba_20250808_233233.zip
+2025-08-08 23:48:58 - ArkServerManager - INFO -   Prueba_20250808_233829.zip
+2025-08-08 23:48:58 - ArkServerManager - INFO -   Prueba_20250808_233929.zip
+2025-08-08 23:48:58 - ArkServerManager - INFO -   Prueba_20250808_234745.zip
+2025-08-08 23:48:58 - ArkServerManager - INFO -   Prueba_20250808_234822.zip
+2025-08-08 23:48:58 - ArkServerManager - INFO -   Prueba_20250808_234825.zip
+2025-08-08 23:48:58 - ArkServerManager - INFO -   Prueba_20250808_234828.zip
+2025-08-08 23:48:58 - ArkServerManager - INFO -   Prueba_20250808_234843.zip
+2025-08-08 23:48:58 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 23:48:58 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 23:48:58 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 23:48:58 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 23:48:58 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 23:48:58 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 23:48:58 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 23:48:58 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba\ShooterGame\Saved\Config\WindowsServer
+2025-08-08 23:49:00 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 23:49:03 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 23:49:04 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba
+2025-08-08 23:49:06 - ArkServerManager - INFO - Cargado Game.ini para Prueba
+2025-08-08 23:49:06 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-08 23:49:06 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: 'True', Habilitado: True
+2025-08-08 23:49:06 - ArkServerManager - INFO - Iniciando backup automático desde configuración guardada
+2025-08-08 23:49:06 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 23:49:08 - ArkServerManager - INFO - Backup automático programado cada 15 minutos
+2025-08-08 23:49:18 - ArkServerManager - INFO - Programador de reinicios iniciado
+2025-08-08 23:49:20 - ArkServerManager - INFO - Programador de reinicios detenido
+2025-08-08 23:50:39 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba, mapa: TheIsland_WP
+2025-08-08 23:50:39 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 23:50:39 - ArkServerManager - INFO - Cargados 3 mods para Prueba_TheIsland_WP
+2025-08-08 23:50:39 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-08 23:50:39 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-08 23:50:40 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Backup
+2025-08-08 23:50:40 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries\Win64
+2025-08-08 23:50:40 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries
+2025-08-08 23:50:40 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Engine\Binaries\Win64
+2025-08-08 23:50:40 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries\Win64
+2025-08-08 23:50:40 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries
+2025-08-08 23:50:40 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Backup
+2025-08-08 23:50:40 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Backup
+2025-08-08 23:50:40 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-08 23:50:40 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: D:/ASA\Backup
+2025-08-08 23:50:40 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-08 23:50:40 - ArkServerManager - INFO - Backup/
+2025-08-08 23:50:40 - ArkServerManager - INFO -   Prueba_20250808_232934.zip
+2025-08-08 23:50:40 - ArkServerManager - INFO -   Prueba_20250808_233138.zip
+2025-08-08 23:50:40 - ArkServerManager - INFO -   Prueba_20250808_233233.zip
+2025-08-08 23:50:40 - ArkServerManager - INFO -   Prueba_20250808_233829.zip
+2025-08-08 23:50:40 - ArkServerManager - INFO -   Prueba_20250808_233929.zip
+2025-08-08 23:50:40 - ArkServerManager - INFO -   Prueba_20250808_234745.zip
+2025-08-08 23:50:40 - ArkServerManager - INFO -   Prueba_20250808_234822.zip
+2025-08-08 23:50:40 - ArkServerManager - INFO -   Prueba_20250808_234825.zip
+2025-08-08 23:50:40 - ArkServerManager - INFO -   Prueba_20250808_234828.zip
+2025-08-08 23:50:40 - ArkServerManager - INFO -   Prueba_20250808_234843.zip
+2025-08-08 23:50:40 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 23:50:40 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 23:50:40 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 23:50:40 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 23:50:40 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 23:50:40 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 23:50:40 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 23:50:40 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba\ShooterGame\Saved\Config\WindowsServer
+2025-08-08 23:50:42 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 23:50:45 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 23:50:46 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba
+2025-08-08 23:50:47 - ArkServerManager - INFO - Cargado Game.ini para Prueba
+2025-08-08 23:50:47 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-08 23:50:47 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: 'True', Habilitado: True
+2025-08-08 23:50:47 - ArkServerManager - INFO - Iniciando backup automático desde configuración guardada
+2025-08-08 23:50:48 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 23:50:49 - ArkServerManager - INFO - Backup automático programado cada 15 minutos
+2025-08-08 23:50:56 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 23:50:56 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 23:50:56 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 23:50:56 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 23:50:56 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 23:50:56 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 23:50:56 - ArkServerManager - INFO - Cargados 0 mods para default
+2025-08-08 23:50:56 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer
+2025-08-08 23:51:00 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba2
+2025-08-08 23:55:24 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-08 23:55:24 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-08 23:55:24 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-08 23:55:24 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-08 23:55:24 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-08 23:55:25 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Backup
+2025-08-08 23:55:25 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries\Win64
+2025-08-08 23:55:25 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries
+2025-08-08 23:55:25 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Engine\Binaries\Win64
+2025-08-08 23:55:25 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries\Win64
+2025-08-08 23:55:25 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries
+2025-08-08 23:55:25 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Backup
+2025-08-08 23:55:25 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Backup
+2025-08-08 23:55:25 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-08 23:55:25 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: D:/ASA\Backup
+2025-08-08 23:55:25 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-08 23:55:25 - ArkServerManager - INFO - Backup/
+2025-08-08 23:55:25 - ArkServerManager - INFO -   Prueba_20250808_232934.zip
+2025-08-08 23:55:25 - ArkServerManager - INFO -   Prueba_20250808_233138.zip
+2025-08-08 23:55:25 - ArkServerManager - INFO -   Prueba_20250808_233233.zip
+2025-08-08 23:55:25 - ArkServerManager - INFO -   Prueba_20250808_233829.zip
+2025-08-08 23:55:25 - ArkServerManager - INFO -   Prueba_20250808_233929.zip
+2025-08-08 23:55:25 - ArkServerManager - INFO -   Prueba_20250808_234745.zip
+2025-08-08 23:55:25 - ArkServerManager - INFO -   Prueba_20250808_234822.zip
+2025-08-08 23:55:25 - ArkServerManager - INFO -   Prueba_20250808_234825.zip
+2025-08-08 23:55:25 - ArkServerManager - INFO -   Prueba_20250808_234828.zip
+2025-08-08 23:55:25 - ArkServerManager - INFO -   Prueba_20250808_234843.zip
+2025-08-08 23:55:25 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-08 23:55:25 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-08 23:55:25 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 23:55:25 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-08 23:55:25 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-08 23:55:25 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-08 23:55:25 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-08 23:55:25 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer
+2025-08-08 23:55:27 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-08 23:55:28 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba2
+2025-08-08 23:55:28 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-08 23:55:28 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: 'True', Habilitado: True
+2025-08-08 23:55:28 - ArkServerManager - INFO - Iniciando backup automático desde configuración guardada
+2025-08-08 23:55:29 - ArkServerManager - INFO - Backup automático programado cada 15 minutos
+2025-08-08 23:58:52 - ArkServerManager - INFO - Backup completado antes del reinicio
+2025-08-08 23:58:52 - ArkServerManager - INFO - Ejecutando comando RCON: rcon\rcon.exe -a 127.0.0.12:27030 -p ert [comando oculto]
+2025-08-08 23:58:54 - ArkServerManager - INFO - Saveworld completado antes del reinicio
+2025-08-08 23:58:59 - ArkServerManager - INFO - Servidor detenido para reinicio
+2025-08-08 23:58:59 - ArkServerManager - INFO - Reinicio completado exitosamente
+2025-08-08 23:58:59 - ArkServerManager - INFO - Backup antiguo eliminado: Prueba_20250808_232934
+2025-08-08 23:58:59 - ArkServerManager - INFO - Limpieza automática: 1 backups antiguos eliminados (límite: 10)
+2025-08-08 23:58:59 - ArkServerManager - INFO - Backup automático completado exitosamente: Prueba2_20250808_235859
+2025-08-09 00:01:45 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-09 00:01:45 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-09 00:01:45 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-09 00:01:45 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:01:45 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:01:46 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Backup
+2025-08-09 00:01:46 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries\Win64
+2025-08-09 00:01:46 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries
+2025-08-09 00:01:46 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Engine\Binaries\Win64
+2025-08-09 00:01:46 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries\Win64
+2025-08-09 00:01:46 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries
+2025-08-09 00:01:46 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Backup
+2025-08-09 00:01:46 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Backup
+2025-08-09 00:01:46 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-09 00:01:46 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: D:/ASA\Backup
+2025-08-09 00:01:46 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-09 00:01:46 - ArkServerManager - INFO - Backup/
+2025-08-09 00:01:46 - ArkServerManager - INFO -   Prueba2_20250808_235859.zip
+2025-08-09 00:01:46 - ArkServerManager - INFO -   Prueba_20250808_233138.zip
+2025-08-09 00:01:46 - ArkServerManager - INFO -   Prueba_20250808_233233.zip
+2025-08-09 00:01:46 - ArkServerManager - INFO -   Prueba_20250808_233829.zip
+2025-08-09 00:01:46 - ArkServerManager - INFO -   Prueba_20250808_233929.zip
+2025-08-09 00:01:46 - ArkServerManager - INFO -   Prueba_20250808_234745.zip
+2025-08-09 00:01:46 - ArkServerManager - INFO -   Prueba_20250808_234822.zip
+2025-08-09 00:01:46 - ArkServerManager - INFO -   Prueba_20250808_234825.zip
+2025-08-09 00:01:46 - ArkServerManager - INFO -   Prueba_20250808_234828.zip
+2025-08-09 00:01:46 - ArkServerManager - INFO -   Prueba_20250808_234843.zip
+2025-08-09 00:01:46 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-09 00:01:46 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-09 00:01:46 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:01:46 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-09 00:01:46 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-09 00:01:46 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:01:46 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-09 00:01:46 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer
+2025-08-09 00:01:48 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-09 00:01:49 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba2
+2025-08-09 00:01:49 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-09 00:01:49 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: 'True', Habilitado: True
+2025-08-09 00:01:49 - ArkServerManager - INFO - Iniciando backup automático desde configuración guardada
+2025-08-09 00:01:50 - ArkServerManager - INFO - Backup automático programado cada 15 minutos
+2025-08-09 00:14:47 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-09 00:14:47 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-09 00:14:47 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-09 00:14:48 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:14:48 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:14:48 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Backup
+2025-08-09 00:14:48 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries\Win64
+2025-08-09 00:14:48 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries
+2025-08-09 00:14:48 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Engine\Binaries\Win64
+2025-08-09 00:14:48 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries\Win64
+2025-08-09 00:14:48 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries
+2025-08-09 00:14:48 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Backup
+2025-08-09 00:14:48 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Backup
+2025-08-09 00:14:48 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-09 00:14:48 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: D:/ASA\Backup
+2025-08-09 00:14:48 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-09 00:14:48 - ArkServerManager - INFO - Backup/
+2025-08-09 00:14:48 - ArkServerManager - INFO -   Prueba2_20250808_235859.zip
+2025-08-09 00:14:48 - ArkServerManager - INFO -   Prueba_20250808_233138.zip
+2025-08-09 00:14:48 - ArkServerManager - INFO -   Prueba_20250808_233233.zip
+2025-08-09 00:14:48 - ArkServerManager - INFO -   Prueba_20250808_233829.zip
+2025-08-09 00:14:48 - ArkServerManager - INFO -   Prueba_20250808_233929.zip
+2025-08-09 00:14:48 - ArkServerManager - INFO -   Prueba_20250808_234745.zip
+2025-08-09 00:14:48 - ArkServerManager - INFO -   Prueba_20250808_234822.zip
+2025-08-09 00:14:48 - ArkServerManager - INFO -   Prueba_20250808_234825.zip
+2025-08-09 00:14:48 - ArkServerManager - INFO -   Prueba_20250808_234828.zip
+2025-08-09 00:14:48 - ArkServerManager - INFO -   Prueba_20250808_234843.zip
+2025-08-09 00:14:48 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-09 00:14:48 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-09 00:14:48 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:14:48 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-09 00:14:48 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-09 00:14:48 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:14:48 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-09 00:14:48 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer
+2025-08-09 00:14:50 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-09 00:14:52 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba2
+2025-08-09 00:14:52 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-09 00:14:52 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: 'True', Habilitado: True
+2025-08-09 00:14:52 - ArkServerManager - INFO - Iniciando backup automático desde configuración guardada
+2025-08-09 00:14:53 - ArkServerManager - INFO - Backup automático programado cada 15 minutos
+2025-08-09 00:15:16 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Backup
+2025-08-09 00:15:16 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries\Win64
+2025-08-09 00:15:16 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries
+2025-08-09 00:15:16 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Engine\Binaries\Win64
+2025-08-09 00:15:16 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries\Win64
+2025-08-09 00:15:16 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries
+2025-08-09 00:15:16 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Backup
+2025-08-09 00:15:16 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Backup
+2025-08-09 00:15:16 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-09 00:15:16 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: D:/ASA\Backup
+2025-08-09 00:15:16 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-09 00:15:16 - ArkServerManager - INFO - Backup/
+2025-08-09 00:15:16 - ArkServerManager - INFO -   Prueba2_20250808_235859.zip
+2025-08-09 00:15:16 - ArkServerManager - INFO -   Prueba_20250808_233138.zip
+2025-08-09 00:15:16 - ArkServerManager - INFO -   Prueba_20250808_233233.zip
+2025-08-09 00:15:16 - ArkServerManager - INFO -   Prueba_20250808_233829.zip
+2025-08-09 00:15:16 - ArkServerManager - INFO -   Prueba_20250808_233929.zip
+2025-08-09 00:15:16 - ArkServerManager - INFO -   Prueba_20250808_234745.zip
+2025-08-09 00:15:16 - ArkServerManager - INFO -   Prueba_20250808_234822.zip
+2025-08-09 00:15:16 - ArkServerManager - INFO -   Prueba_20250808_234825.zip
+2025-08-09 00:15:16 - ArkServerManager - INFO -   Prueba_20250808_234828.zip
+2025-08-09 00:15:16 - ArkServerManager - INFO -   Prueba_20250808_234843.zip
+2025-08-09 00:15:16 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-09 00:15:16 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-09 00:15:16 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:15:16 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-09 00:15:16 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-09 00:15:16 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:21:15 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-09 00:21:15 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-09 00:21:15 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-09 00:21:15 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:21:15 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:21:29 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-09 00:21:29 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-09 00:21:29 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-09 00:21:30 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:21:30 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:21:40 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-09 00:21:40 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-09 00:21:40 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-09 00:21:40 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:21:40 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:22:00 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-09 00:22:00 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-09 00:22:00 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-09 00:22:00 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:22:01 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:27:48 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-09 00:27:48 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-09 00:27:48 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-09 00:27:49 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:27:49 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:27:49 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Backup
+2025-08-09 00:27:49 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries\Win64
+2025-08-09 00:27:49 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries
+2025-08-09 00:27:49 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Engine\Binaries\Win64
+2025-08-09 00:27:49 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries\Win64
+2025-08-09 00:27:49 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries
+2025-08-09 00:27:49 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Backup
+2025-08-09 00:27:49 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Backup
+2025-08-09 00:27:49 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-09 00:27:49 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: D:/ASA\Backup
+2025-08-09 00:27:49 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-09 00:27:49 - ArkServerManager - INFO - Backup/
+2025-08-09 00:27:49 - ArkServerManager - INFO -   Prueba2_20250808_235859.zip
+2025-08-09 00:27:49 - ArkServerManager - INFO -   Prueba_20250808_233138.zip
+2025-08-09 00:27:49 - ArkServerManager - INFO -   Prueba_20250808_233233.zip
+2025-08-09 00:27:49 - ArkServerManager - INFO -   Prueba_20250808_233829.zip
+2025-08-09 00:27:49 - ArkServerManager - INFO -   Prueba_20250808_233929.zip
+2025-08-09 00:27:49 - ArkServerManager - INFO -   Prueba_20250808_234745.zip
+2025-08-09 00:27:49 - ArkServerManager - INFO -   Prueba_20250808_234822.zip
+2025-08-09 00:27:49 - ArkServerManager - INFO -   Prueba_20250808_234825.zip
+2025-08-09 00:27:49 - ArkServerManager - INFO -   Prueba_20250808_234828.zip
+2025-08-09 00:27:49 - ArkServerManager - INFO -   Prueba_20250808_234843.zip
+2025-08-09 00:27:49 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-09 00:27:49 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-09 00:27:49 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:27:49 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-09 00:27:49 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-09 00:27:49 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:27:49 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-09 00:27:49 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer
+2025-08-09 00:27:51 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-09 00:27:53 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba2
+2025-08-09 00:27:53 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-09 00:27:53 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: 'True', Habilitado: True
+2025-08-09 00:27:53 - ArkServerManager - INFO - Iniciando backup automático desde configuración guardada
+2025-08-09 00:27:54 - ArkServerManager - INFO - Backup automático programado cada 15 minutos
+2025-08-09 00:29:15 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-09 00:29:15 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-09 00:29:15 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-09 00:29:16 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:29:16 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:29:17 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Backup
+2025-08-09 00:29:17 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries\Win64
+2025-08-09 00:29:17 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries
+2025-08-09 00:29:17 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Engine\Binaries\Win64
+2025-08-09 00:29:17 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries\Win64
+2025-08-09 00:29:17 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries
+2025-08-09 00:29:17 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Backup
+2025-08-09 00:29:17 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Backup
+2025-08-09 00:29:17 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-09 00:29:17 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: D:/ASA\Backup
+2025-08-09 00:29:17 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-09 00:29:17 - ArkServerManager - INFO - Backup/
+2025-08-09 00:29:17 - ArkServerManager - INFO -   Prueba2_20250808_235859.zip
+2025-08-09 00:29:17 - ArkServerManager - INFO -   Prueba_20250808_233138.zip
+2025-08-09 00:29:17 - ArkServerManager - INFO -   Prueba_20250808_233233.zip
+2025-08-09 00:29:17 - ArkServerManager - INFO -   Prueba_20250808_233829.zip
+2025-08-09 00:29:17 - ArkServerManager - INFO -   Prueba_20250808_233929.zip
+2025-08-09 00:29:17 - ArkServerManager - INFO -   Prueba_20250808_234745.zip
+2025-08-09 00:29:17 - ArkServerManager - INFO -   Prueba_20250808_234822.zip
+2025-08-09 00:29:17 - ArkServerManager - INFO -   Prueba_20250808_234825.zip
+2025-08-09 00:29:17 - ArkServerManager - INFO -   Prueba_20250808_234828.zip
+2025-08-09 00:29:17 - ArkServerManager - INFO -   Prueba_20250808_234843.zip
+2025-08-09 00:29:17 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-09 00:29:17 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-09 00:29:17 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:29:17 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-09 00:29:17 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-09 00:29:17 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:29:17 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-09 00:29:17 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer
+2025-08-09 00:29:18 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-09 00:29:20 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba2
+2025-08-09 00:29:20 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-09 00:29:20 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: 'True', Habilitado: True
+2025-08-09 00:29:20 - ArkServerManager - INFO - Iniciando backup automático desde configuración guardada
+2025-08-09 00:29:20 - ArkServerManager - INFO - Backup automático programado cada 15 minutos
+2025-08-09 00:32:53 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-09 00:32:53 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-09 00:32:53 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-09 00:32:53 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:32:53 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:32:53 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Backup
+2025-08-09 00:32:53 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries\Win64
+2025-08-09 00:32:53 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries
+2025-08-09 00:32:53 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Engine\Binaries\Win64
+2025-08-09 00:32:53 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries\Win64
+2025-08-09 00:32:53 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries
+2025-08-09 00:32:53 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Backup
+2025-08-09 00:32:53 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Backup
+2025-08-09 00:32:53 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-09 00:32:53 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: D:/ASA\Backup
+2025-08-09 00:32:53 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-09 00:32:53 - ArkServerManager - INFO - Backup/
+2025-08-09 00:32:53 - ArkServerManager - INFO -   Prueba2_20250808_235859.zip
+2025-08-09 00:32:53 - ArkServerManager - INFO -   Prueba_20250808_233138.zip
+2025-08-09 00:32:53 - ArkServerManager - INFO -   Prueba_20250808_233233.zip
+2025-08-09 00:32:53 - ArkServerManager - INFO -   Prueba_20250808_233829.zip
+2025-08-09 00:32:53 - ArkServerManager - INFO -   Prueba_20250808_233929.zip
+2025-08-09 00:32:53 - ArkServerManager - INFO -   Prueba_20250808_234745.zip
+2025-08-09 00:32:53 - ArkServerManager - INFO -   Prueba_20250808_234822.zip
+2025-08-09 00:32:53 - ArkServerManager - INFO -   Prueba_20250808_234825.zip
+2025-08-09 00:32:53 - ArkServerManager - INFO -   Prueba_20250808_234828.zip
+2025-08-09 00:32:53 - ArkServerManager - INFO -   Prueba_20250808_234843.zip
+2025-08-09 00:32:53 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-09 00:32:53 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-09 00:32:53 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:32:53 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-09 00:32:53 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-09 00:32:53 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:32:54 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-09 00:32:54 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer
+2025-08-09 00:32:55 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-09 00:32:57 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba2
+2025-08-09 00:32:57 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-09 00:32:57 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: 'True', Habilitado: True
+2025-08-09 00:32:57 - ArkServerManager - INFO - Iniciando backup automático desde configuración guardada
+2025-08-09 00:32:57 - ArkServerManager - INFO - Backup automático programado cada 15 minutos
+2025-08-09 00:37:00 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-09 00:37:00 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-09 00:37:00 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-09 00:37:01 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:37:01 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:37:01 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Backup
+2025-08-09 00:37:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries\Win64
+2025-08-09 00:37:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries
+2025-08-09 00:37:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Engine\Binaries\Win64
+2025-08-09 00:37:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries\Win64
+2025-08-09 00:37:01 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries
+2025-08-09 00:37:01 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Backup
+2025-08-09 00:37:01 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Backup
+2025-08-09 00:37:01 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-09 00:37:01 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: D:/ASA\Backup
+2025-08-09 00:37:01 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-09 00:37:01 - ArkServerManager - INFO - Backup/
+2025-08-09 00:37:01 - ArkServerManager - INFO -   Prueba2_20250808_235859.zip
+2025-08-09 00:37:01 - ArkServerManager - INFO -   Prueba_20250808_233138.zip
+2025-08-09 00:37:01 - ArkServerManager - INFO -   Prueba_20250808_233233.zip
+2025-08-09 00:37:01 - ArkServerManager - INFO -   Prueba_20250808_233829.zip
+2025-08-09 00:37:01 - ArkServerManager - INFO -   Prueba_20250808_233929.zip
+2025-08-09 00:37:01 - ArkServerManager - INFO -   Prueba_20250808_234745.zip
+2025-08-09 00:37:01 - ArkServerManager - INFO -   Prueba_20250808_234822.zip
+2025-08-09 00:37:01 - ArkServerManager - INFO -   Prueba_20250808_234825.zip
+2025-08-09 00:37:01 - ArkServerManager - INFO -   Prueba_20250808_234828.zip
+2025-08-09 00:37:01 - ArkServerManager - INFO -   Prueba_20250808_234843.zip
+2025-08-09 00:37:01 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-09 00:37:01 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-09 00:37:01 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:37:01 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-09 00:37:01 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-09 00:37:01 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:37:01 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-09 00:37:01 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer
+2025-08-09 00:37:03 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-09 00:37:05 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba2
+2025-08-09 00:37:05 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-09 00:37:05 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: 'True', Habilitado: True
+2025-08-09 00:37:05 - ArkServerManager - INFO - Iniciando backup automático desde configuración guardada
+2025-08-09 00:37:05 - ArkServerManager - INFO - Backup automático programado cada 15 minutos
+2025-08-09 00:40:07 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-09 00:40:07 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-09 00:40:07 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-09 00:40:07 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:40:08 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:40:08 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Backup
+2025-08-09 00:40:08 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries\Win64
+2025-08-09 00:40:08 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries
+2025-08-09 00:40:08 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Engine\Binaries\Win64
+2025-08-09 00:40:08 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries\Win64
+2025-08-09 00:40:08 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries
+2025-08-09 00:40:08 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Backup
+2025-08-09 00:40:08 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Backup
+2025-08-09 00:40:08 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-09 00:40:08 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: D:/ASA\Backup
+2025-08-09 00:40:08 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-09 00:40:08 - ArkServerManager - INFO - Backup/
+2025-08-09 00:40:08 - ArkServerManager - INFO -   Prueba2_20250808_235859.zip
+2025-08-09 00:40:08 - ArkServerManager - INFO -   Prueba_20250808_233138.zip
+2025-08-09 00:40:08 - ArkServerManager - INFO -   Prueba_20250808_233233.zip
+2025-08-09 00:40:08 - ArkServerManager - INFO -   Prueba_20250808_233829.zip
+2025-08-09 00:40:08 - ArkServerManager - INFO -   Prueba_20250808_233929.zip
+2025-08-09 00:40:08 - ArkServerManager - INFO -   Prueba_20250808_234745.zip
+2025-08-09 00:40:08 - ArkServerManager - INFO -   Prueba_20250808_234822.zip
+2025-08-09 00:40:08 - ArkServerManager - INFO -   Prueba_20250808_234825.zip
+2025-08-09 00:40:08 - ArkServerManager - INFO -   Prueba_20250808_234828.zip
+2025-08-09 00:40:08 - ArkServerManager - INFO -   Prueba_20250808_234843.zip
+2025-08-09 00:40:08 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-09 00:40:08 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-09 00:40:08 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:40:08 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-09 00:40:08 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-09 00:40:08 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:40:08 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-09 00:40:08 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer
+2025-08-09 00:40:10 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-09 00:40:12 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba2
+2025-08-09 00:40:12 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-09 00:40:12 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: 'True', Habilitado: True
+2025-08-09 00:40:12 - ArkServerManager - INFO - Iniciando backup automático desde configuración guardada
+2025-08-09 00:40:12 - ArkServerManager - INFO - Backup automático programado cada 15 minutos
+2025-08-09 00:44:24 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-09 00:44:24 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-09 00:44:24 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-09 00:44:24 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:44:25 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:44:25 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Backup
+2025-08-09 00:44:25 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries\Win64
+2025-08-09 00:44:25 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries
+2025-08-09 00:44:25 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Engine\Binaries\Win64
+2025-08-09 00:44:25 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries\Win64
+2025-08-09 00:44:25 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries
+2025-08-09 00:44:25 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Backup
+2025-08-09 00:44:25 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Backup
+2025-08-09 00:44:25 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-09 00:44:25 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: D:/ASA\Backup
+2025-08-09 00:44:25 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-09 00:44:25 - ArkServerManager - INFO - Backup/
+2025-08-09 00:44:25 - ArkServerManager - INFO -   Prueba2_20250808_235859.zip
+2025-08-09 00:44:25 - ArkServerManager - INFO -   Prueba_20250808_233138.zip
+2025-08-09 00:44:25 - ArkServerManager - INFO -   Prueba_20250808_233233.zip
+2025-08-09 00:44:25 - ArkServerManager - INFO -   Prueba_20250808_233829.zip
+2025-08-09 00:44:25 - ArkServerManager - INFO -   Prueba_20250808_233929.zip
+2025-08-09 00:44:25 - ArkServerManager - INFO -   Prueba_20250808_234745.zip
+2025-08-09 00:44:25 - ArkServerManager - INFO -   Prueba_20250808_234822.zip
+2025-08-09 00:44:25 - ArkServerManager - INFO -   Prueba_20250808_234825.zip
+2025-08-09 00:44:25 - ArkServerManager - INFO -   Prueba_20250808_234828.zip
+2025-08-09 00:44:25 - ArkServerManager - INFO -   Prueba_20250808_234843.zip
+2025-08-09 00:44:25 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-09 00:44:25 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-09 00:44:25 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:44:25 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-09 00:44:25 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-09 00:44:25 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:44:25 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-09 00:44:25 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer
+2025-08-09 00:44:27 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-09 00:44:29 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba2
+2025-08-09 00:44:29 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-09 00:44:29 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: 'True', Habilitado: True
+2025-08-09 00:44:29 - ArkServerManager - INFO - Iniciando backup automático desde configuración guardada
+2025-08-09 00:44:29 - ArkServerManager - INFO - Backup automático programado cada 15 minutos
+2025-08-09 00:44:41 - ArkServerManager - INFO - Carpeta de logs abierta: C:\Users\roder\OneDrive\Desktop\Nuevacarpeta\Asa2\logs
+2025-08-09 00:44:53 - ArkServerManager - INFO - Carpeta de eventos del servidor abierta: C:\Users\roder\OneDrive\Desktop\Nuevacarpeta\Asa2\logs\server_events
+2025-08-09 00:45:22 - ArkServerManager - INFO - Cargando configuración para servidor: Prueba2, mapa: TheIsland_WP
+2025-08-09 00:45:22 - ArkServerManager - ERROR - Error al cargar servidor/mapa actual: 'MainWindow' object has no attribute 'after'
+2025-08-09 00:45:22 - ArkServerManager - INFO - Cargados 0 mods para Prueba2_TheIsland_WP
+2025-08-09 00:45:23 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:45:23 - ArkServerManager - INFO - Ruta de backup configurada: D:\ASA\Backup
+2025-08-09 00:45:23 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Backup
+2025-08-09 00:45:23 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries\Win64
+2025-08-09 00:45:23 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\ShooterGame\Binaries
+2025-08-09 00:45:23 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Engine\Binaries\Win64
+2025-08-09 00:45:23 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries\Win64
+2025-08-09 00:45:23 - ArkServerManager - DEBUG - Ruta no existe: D:/ASA\Backup\Binaries
+2025-08-09 00:45:23 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Backup
+2025-08-09 00:45:23 - ArkServerManager - INFO - Buscando ejecutable recursivamente en: D:/ASA\Backup
+2025-08-09 00:45:23 - ArkServerManager - INFO - Buscando cualquier archivo .exe que pueda ser el servidor...
+2025-08-09 00:45:23 - ArkServerManager - WARNING - No se encontró ningún ejecutable en: D:/ASA\Backup
+2025-08-09 00:45:23 - ArkServerManager - INFO - Contenido del directorio de instalación:
+2025-08-09 00:45:23 - ArkServerManager - INFO - Backup/
+2025-08-09 00:45:23 - ArkServerManager - INFO -   Prueba2_20250808_235859.zip
+2025-08-09 00:45:23 - ArkServerManager - INFO -   Prueba_20250808_233138.zip
+2025-08-09 00:45:23 - ArkServerManager - INFO -   Prueba_20250808_233233.zip
+2025-08-09 00:45:23 - ArkServerManager - INFO -   Prueba_20250808_233829.zip
+2025-08-09 00:45:23 - ArkServerManager - INFO -   Prueba_20250808_233929.zip
+2025-08-09 00:45:23 - ArkServerManager - INFO -   Prueba_20250808_234745.zip
+2025-08-09 00:45:23 - ArkServerManager - INFO -   Prueba_20250808_234822.zip
+2025-08-09 00:45:23 - ArkServerManager - INFO -   Prueba_20250808_234825.zip
+2025-08-09 00:45:23 - ArkServerManager - INFO -   Prueba_20250808_234828.zip
+2025-08-09 00:45:23 - ArkServerManager - INFO -   Prueba_20250808_234843.zip
+2025-08-09 00:45:23 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba
+2025-08-09 00:45:23 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64
+2025-08-09 00:45:23 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:45:23 - ArkServerManager - INFO - Buscando ejecutable en: D:/ASA\Prueba2
+2025-08-09 00:45:23 - ArkServerManager - INFO - Verificando ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64
+2025-08-09 00:45:23 - ArkServerManager - INFO - Ejecutable encontrado en ruta común: D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+2025-08-09 00:45:23 - ArkServerManager - INFO - Iniciando Ark Server Manager...
+2025-08-09 00:45:23 - ArkServerManager - INFO - Buscando configuraciones en: D:/ASA\Prueba2\ShooterGame\Saved\Config\WindowsServer
+2025-08-09 00:45:25 - ArkServerManager - ERROR - Error al actualizar información del servidor: main thread is not in main loop
+2025-08-09 00:45:27 - ArkServerManager - INFO - Cargado GameUserSettings.ini para Prueba2
+2025-08-09 00:45:27 - ArkServerManager - INFO - Cargando configuración RCON - IP: 127.0.0.12, Puerto: 27030
+2025-08-09 00:45:27 - ArkServerManager - INFO - Cargando estado RCON switch - Valor en config: 'True', Habilitado: True
+2025-08-09 00:45:27 - ArkServerManager - INFO - Iniciando backup automático desde configuración guardada
+2025-08-09 00:45:27 - ArkServerManager - INFO - Backup automático programado cada 15 minutos

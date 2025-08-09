@@ -1,0 +1,16 @@
+{
+  "Desconocido": [
+    {
+      "type": "manual",
+      "datetime": "2025-08-08T23:58:52.532120",
+      "server": "Desconocido",
+      "backup_done": true,
+      "saveworld_done": true,
+      "update_done": false,
+      "success": true,
+      "reason": "Reinicio manual",
+      "update_requested": false,
+      "warnings_sent": false
+    }
+  ]
+}

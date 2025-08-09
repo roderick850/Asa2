@@ -516,6 +516,13 @@ class ServerPanel:
         
         self.add_status_message(f"Deteniendo servidor: {self.selected_server}", "info")
         self.update_server_status("Deteniendo...", "orange")
+        
+        # Registrar evento de detención
+        if hasattr(self.main_window, 'log_server_event'):
+            self.main_window.log_server_event("server_stop", 
+                reason="Manual - Botón Detener", 
+                additional_info=f"Usuario detuvo servidor desde interfaz")
+        
         self.server_manager.stop_server(self.add_status_message)
     
     def restart_server(self):
@@ -530,6 +537,13 @@ class ServerPanel:
         
         self.add_status_message(f"Reiniciando servidor: {self.selected_server} con mapa: {self.selected_map}", "info")
         self.update_server_status("Reiniciando...", "orange")
+        
+        # Registrar evento de reinicio
+        if hasattr(self.main_window, 'log_server_event'):
+            self.main_window.log_server_event("server_restart", 
+                reason="Manual - Botón Reiniciar", 
+                additional_info=f"Usuario reinició servidor desde interfaz | Mapa: {self.selected_map}")
+        
         self.server_manager.restart_server(self.add_status_message, self.selected_server, self.selected_map)
     
     def show_progress(self, message="", progress=0):
@@ -726,12 +740,33 @@ class ServerPanel:
                 self.add_status_message(f"Iniciando actualización del servidor: {server_name}", "info")
                 self.add_status_message(f"Ruta del servidor: {server_path}", "info")
                 
+                # Registrar inicio de actualización
+                if hasattr(self.main_window, 'log_server_event'):
+                    self.main_window.log_server_event("update_start", method="SteamCMD")
+                
                 # Llamar al método de actualización del server_manager
-                self.server_manager.update_server(self.install_callback, server_name)
+                result = self.server_manager.update_server(self.install_callback, server_name)
+                
+                # Registrar resultado de actualización
+                if hasattr(self.main_window, 'log_server_event'):
+                    if result and "success" in str(result).lower():
+                        self.main_window.log_server_event("update_complete", 
+                            success=True, 
+                            details="Actualización completada vía botón Actualizar")
+                    else:
+                        self.main_window.log_server_event("update_complete", 
+                            success=False, 
+                            details=f"Error en actualización: {result}")
                 
             except Exception as e:
                 self.add_status_message(f"❌ Error en la actualización: {str(e)}", "error")
                 self.logger.error(f"Error en la actualización: {e}")
+                
+                # Registrar error de actualización
+                if hasattr(self.main_window, 'log_server_event'):
+                    self.main_window.log_server_event("update_complete", 
+                        success=False, 
+                        details=f"Excepción: {str(e)}")
             finally:
                 # Rehabilitar el botón
                 if hasattr(self.main_window, 'update_button'):
