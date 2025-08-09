@@ -514,14 +514,14 @@ class RconPanel(ctk.CTkFrame):
         # Crear ventana de confirmación personalizada
         dialog = ctk.CTkToplevel(self)
         dialog.title("Confirmar Apagado")
-        dialog.geometry("350x200")
+        dialog.geometry("400x280")
         dialog.transient(self)
         dialog.grab_set()
         
         # Centrar ventana
         dialog.update_idletasks()
-        x = (dialog.winfo_screenwidth() // 2) - (350 // 2)
-        y = (dialog.winfo_screenheight() // 2) - (200 // 2)
+        x = (dialog.winfo_screenwidth() // 2) - (400 // 2)
+        y = (dialog.winfo_screenheight() // 2) - (280 // 2)
         dialog.geometry(f"+{x}+{y}")
         
         # Contenido

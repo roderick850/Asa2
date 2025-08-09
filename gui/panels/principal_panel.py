@@ -715,7 +715,7 @@ class PrincipalPanel:
         # 4. Agregar argumentos RCON si está habilitado
         if hasattr(self.main_window, 'rcon_panel') and self.main_window.rcon_panel.get_rcon_enabled():
             rcon_port = self.main_window.rcon_panel.get_rcon_port()
-            map_arg += f"?RCONEnable=True?RCONPort={rcon_port}"
+            map_arg += f"?EnableRCON=True?RCONPort={rcon_port}"
         
         # 5. Obtener mods configurados (buscar por servidor/mapa específico primero)
         # Obtener servidor seleccionado

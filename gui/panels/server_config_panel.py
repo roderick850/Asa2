@@ -1321,6 +1321,8 @@ class ServerConfigPanel(ctk.CTkFrame):
                     'servercrosshair': 'ServerCrosshair',
                     'rconport': 'RCONPort',
                     'rconpassword': 'RCONPassword',
+                    'rconenable': 'EnableRCON',
+                    'rconenabled': 'EnableRCON',
                     'servername': 'ServerName',
                     'allowflyercarrypve': 'AllowFlyerCarryPVE',
                     'preventdownloadsurvivors': 'PreventDownloadSurvivors',

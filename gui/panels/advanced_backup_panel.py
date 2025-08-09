@@ -133,7 +133,7 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         
         dialog = ctk.CTkToplevel(self)
         dialog.title(title)
-        dialog.geometry("400x200")
+        dialog.geometry("450x250")
         dialog.resizable(False, False)
         dialog.transient(self)
         dialog.grab_set()
