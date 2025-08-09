@@ -352,19 +352,38 @@ class RconPanel(ctk.CTkFrame):
     
     def execute_rcon_command(self, command):
         """Ejecutar comando RCON usando el ejecutable en la carpeta rcon"""
+        # Log del intento de ejecución
+        if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
+            self.main_window.add_log_message(f"🎮 RCON: Ejecutando '{command}'...")
+        
         try:
-            # Buscar el ejecutable RCON
-            rcon_dir = Path("rcon")
+            # Buscar el ejecutable RCON en múltiples ubicaciones
             rcon_exe = None
+            search_paths = [
+                Path("rcon"),  # Carpeta rcon relativa
+                Path(__file__).parent.parent.parent / "rcon",  # Carpeta rcon desde el script
+                Path.cwd() / "rcon",  # Carpeta rcon desde directorio de trabajo
+                Path(__file__).parent.parent.parent,  # Directorio raíz del proyecto
+                Path.cwd(),  # Directorio actual
+            ]
             
-            if rcon_dir.exists():
-                # Buscar archivos .exe en la carpeta rcon
-                for file in rcon_dir.glob("*.exe"):
-                    rcon_exe = file
-                    break
+            for search_path in search_paths:
+                if search_path.exists():
+                    # Buscar archivos .exe en la carpeta
+                    for file in search_path.glob("*.exe"):
+                        if "rcon" in file.name.lower():
+                            rcon_exe = file
+                            break
+                    if rcon_exe:
+                        break
             
             if not rcon_exe:
-                return "❌ No se encontró ejecutable RCON en la carpeta 'rcon'"
+                error_msg = "❌ No se encontró ejecutable RCON"
+                search_info = "Buscado en: " + ", ".join([str(p) for p in search_paths])
+                self.logger.error(f"RCON executable not found. {search_info}")
+                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
+                    self.main_window.add_log_message(f"🔌 RCON Error: No se encontró ejecutable RCON")
+                return error_msg
             
             # Construir comando
             cmd = [
@@ -376,37 +395,64 @@ class RconPanel(ctk.CTkFrame):
             
             self.logger.info(f"Ejecutando comando RCON: {' '.join(cmd[:-1])} [comando oculto]")
             
-            # Ejecutar comando
+            # Ejecutar comando sin mostrar ventana de consola
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
                 timeout=30,
-                cwd=str(rcon_dir)
+                cwd=str(rcon_exe.parent),  # Usar el directorio del ejecutable encontrado
+                creationflags=subprocess.CREATE_NO_WINDOW  # Ocultar ventana DOS
             )
             
             if result.returncode == 0:
                 # Registrar comando RCON exitoso
+                success_msg = f"✅ RCON: '{command}' ejecutado correctamente"
+                response = result.stdout.strip()
+                if response:
+                    success_msg += f" - Respuesta: {response[:50]}{'...' if len(response) > 50 else ''}"
+                
+                # Log en área principal
+                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
+                    self.main_window.add_log_message(success_msg)
+                
+                # Log en archivo
                 if hasattr(self, 'main_window') and hasattr(self.main_window, 'log_server_event'):
                     self.main_window.log_server_event("rcon_command", 
                         command=command,
                         success=True,
                         result=result.stdout.strip()[:100])  # Limitar resultado a 100 chars
+                
                 return result.stdout.strip()
             else:
                 error_msg = result.stderr.strip() if result.stderr else f"Código de salida: {result.returncode}"
+                
                 # Registrar comando RCON fallido
+                fail_msg = f"❌ RCON: '{command}' falló - {error_msg}"
+                
+                # Log en área principal
+                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
+                    self.main_window.add_log_message(fail_msg)
+                
+                # Log en archivo
                 if hasattr(self, 'main_window') and hasattr(self.main_window, 'log_server_event'):
                     self.main_window.log_server_event("rcon_command", 
                         command=command,
                         success=False,
                         result=error_msg)
+                
                 return f"❌ Error: {error_msg}"
                 
         except subprocess.TimeoutExpired:
+            timeout_msg = f"⏱️ RCON Timeout: '{command}' tardó demasiado en ejecutarse"
+            if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
+                self.main_window.add_log_message(timeout_msg)
             return "❌ Timeout: El comando tardó demasiado en ejecutarse"
         except Exception as e:
             self.logger.error(f"Error al ejecutar comando RCON: {e}")
+            error_msg = f"🔌 RCON Error: '{command}' - Error de conexión: {str(e)}"
+            if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
+                self.main_window.add_log_message(error_msg)
             return f"❌ Error al ejecutar comando: {e}"
     
     def execute_command(self, command):

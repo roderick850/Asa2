@@ -499,23 +499,42 @@ class AdvancedSettingsDialog:
             # Aplicar el tema con manejo de errores específicos
             self.logger.info(f"Aplicando tema: {theme_value}")
             
-            # Intentar cambio de tema con múltiples intentos para compatibilidad
+            # Intentar cambio de tema con threading para evitar congelamiento
             success = False
-            for attempt in range(3):
+            
+            # Usar threading para prevenir congelamiento en equipos problemáticos
+            import threading
+            import time
+            
+            def change_theme_thread():
+                nonlocal success
                 try:
                     ctk.set_appearance_mode(theme_value)
                     success = True
-                    break
                 except Exception as e:
-                    self.logger.warning(f"Intento {attempt + 1} de cambio de tema falló: {e}")
-                    if attempt < 2:  # No es el último intento
-                        # Esperar un poco más antes del siguiente intento
-                        import time
-                        time.sleep(0.2)
-                    continue
+                    self.logger.warning(f"Error en hilo de cambio de tema: {e}")
+                    success = False
+            
+            # Ejecutar cambio en hilo separado con timeout
+            theme_thread = threading.Thread(target=change_theme_thread, daemon=True)
+            theme_thread.start()
+            theme_thread.join(timeout=3.0)  # Timeout de 3 segundos
+            
+            # Si el hilo aún está vivo, significa que se colgó
+            if theme_thread.is_alive():
+                self.logger.warning("Cambio de tema se colgó, intentando método alternativo...")
+                success = False
+                
+                # Intentar método directo como fallback
+                try:
+                    ctk.set_appearance_mode(theme_value)
+                    success = True
+                    self.logger.info("Método alternativo exitoso")
+                except Exception as e:
+                    self.logger.error(f"Método alternativo también falló: {e}")
             
             if not success:
-                raise Exception("No se pudo cambiar el tema después de 3 intentos")
+                raise Exception("No se pudo cambiar el tema - posible incompatibilidad de sistema")
             
             # Forzar actualización de la interfaz
             try:
@@ -539,19 +558,50 @@ class AdvancedSettingsDialog:
     def _finish_theme_change(self):
         """Finalizar el proceso de cambio de tema"""
         try:
-            self.dialog.configure(cursor="")
-            self.theme_combo.configure(state="normal")
-            self.theme_status_label.configure(text="✅ Tema aplicado")
+            # Restaurar cursor de forma defensiva
+            try:
+                self.dialog.configure(cursor="")
+            except:
+                pass
+            
+            # Habilitar combo de forma defensiva
+            try:
+                self.theme_combo.configure(state="normal")
+            except:
+                pass
+            
+            # Actualizar label de forma defensiva
+            try:
+                self.theme_status_label.configure(text="✅ Tema aplicado")
+            except:
+                pass
+            
+            # Siempre resetear el flag de progreso
             self._theme_change_in_progress = False
             
             # Limpiar mensaje después de unos segundos
-            self.dialog.after(3000, lambda: self.theme_status_label.configure(text=""))
+            try:
+                self.dialog.after(3000, lambda: self._clear_theme_status())
+            except:
+                pass
             
         except Exception as e:
             self.logger.error(f"Error al finalizar cambio de tema: {e}")
-            self.theme_status_label.configure(text="❌ Error en cambio")
-            self.theme_combo.configure(state="normal")
+            # Asegurar que siempre se resetee el estado
             self._theme_change_in_progress = False
+            try:
+                self.theme_status_label.configure(text="❌ Error en cambio")
+                self.theme_combo.configure(state="normal")
+            except:
+                pass
+    
+    def _clear_theme_status(self):
+        """Limpiar el estado del tema de forma segura"""
+        try:
+            if hasattr(self, 'theme_status_label'):
+                self.theme_status_label.configure(text="")
+        except:
+            pass
     
     def save_settings(self):
         """Guardar todas las configuraciones"""

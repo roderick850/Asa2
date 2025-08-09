@@ -1,13 +1,42 @@
 import configparser
 import os
+import sys
 import json
 from pathlib import Path
 
 class ConfigManager:
     def __init__(self, config_file="config.ini"):
-        self.config_file = config_file
+        # Asegurar que el config esté en el directorio del ejecutable
+        if not os.path.isabs(config_file):
+            # Si es un path relativo, ponerlo relativo al directorio del script/ejecutable
+            if hasattr(sys, '_MEIPASS'):
+                # Si estamos en un ejecutable de PyInstaller
+                base_dir = os.path.dirname(sys.executable)
+            else:
+                # Si estamos en desarrollo
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            self.config_file = os.path.join(base_dir, config_file)
+        else:
+            self.config_file = config_file
+            
         self.config = configparser.ConfigParser()
+        self.base_dir = self._get_base_dir()
         self.load_config()
+    
+    def _get_base_dir(self):
+        """Obtener directorio base de la aplicación"""
+        if hasattr(sys, '_MEIPASS'):
+            # Si estamos en un ejecutable de PyInstaller
+            return os.path.dirname(sys.executable)
+        else:
+            # Si estamos en desarrollo
+            return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    def get_data_file_path(self, filename):
+        """Obtener ruta completa para archivos en la carpeta data"""
+        data_dir = os.path.join(self.base_dir, "data")
+        os.makedirs(data_dir, exist_ok=True)
+        return os.path.join(data_dir, filename)
         
     def load_config(self):
         """Cargar configuración desde archivo"""

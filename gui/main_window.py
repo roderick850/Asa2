@@ -986,6 +986,7 @@ class MainWindow:
     
     def on_map_selected(self, map_name):
         """Maneja la selección de un mapa"""
+        self.logger.info(f"DEBUG: Mapa seleccionado en main_window: '{map_name}'")
         self.selected_map = map_name
         if hasattr(self, 'server_panel'):
             self.server_panel.on_map_selected(map_name)
@@ -1043,18 +1044,58 @@ class MainWindow:
                 self.config_manager.set("app", "last_server", self.selected_server)
             
             if hasattr(self, 'selected_map') and self.selected_map:
-                self.config_manager.set("app", "last_map", self.selected_map)
+                # Asegurar que guardamos el nombre amigable, no el identificador técnico
+                map_to_save = self._get_friendly_map_name(self.selected_map)
+                self.config_manager.set("app", "last_map", map_to_save)
+                self.logger.info(f"DEBUG: Guardando mapa: '{self.selected_map}' como '{map_to_save}'")
             
             self.config_manager.save()
             
         except Exception as e:
             self.logger.error(f"Error al guardar última selección: {e}")
     
+    def _get_friendly_map_name(self, map_value):
+        """Convierte identificador técnico a nombre amigable si es necesario"""
+        # Mapeo inverso: identificador técnico -> nombre amigable
+        # NOTA: También incluimos variantes sin espacios que pueden aparecer
+        tech_to_friendly = {
+            "TheIsland_WP": "The Island",
+            "TheIsland": "The Island",
+            "TheCenter_WP": "The Center",        # ✅ ASA usa _WP
+            "TheCenter": "The Center",
+            "ScorchedEarth_WP": "Scorched Earth",
+            "ScorchedEarth": "Scorched Earth",
+            "Ragnarok_WP": "Ragnarok",           # ✅ ASA usa _WP
+            "Ragnarok": "Ragnarok",
+            "Aberration_P": "Aberration",
+            "Extinction": "Extinction",
+            "Valguero_P": "Valguero",
+            "Genesis": "Genesis: Part 1",
+            "Genesis1": "Genesis: Part 1",
+            "CrystalIsles": "Crystal Isles",
+            "Genesis2": "Genesis: Part 2",
+            "LostIsland": "Lost Island",
+            "Fjordur": "Fjordur"
+        }
+        
+        # Si es un identificador técnico, convertir a nombre amigable
+        if map_value in tech_to_friendly:
+            friendly_name = tech_to_friendly[map_value]
+            self.logger.info(f"DEBUG: Convertido identificador '{map_value}' a nombre amigable '{friendly_name}'")
+            return friendly_name
+        
+        # Si ya es un nombre amigable, devolverlo tal como está
+        return map_value
+    
     def restore_map_selection(self, last_map):
         """Restaurar la selección del mapa después de que se hayan cargado los mapas"""
         try:
             self.logger.info(f"Iniciando restauración del mapa: {last_map}")
             if hasattr(self, 'map_dropdown'):
+                # Convertir a nombre amigable si es necesario
+                friendly_map = self._get_friendly_map_name(last_map)
+                self.logger.info(f"DEBUG: Restaurando mapa - original: '{last_map}', amigable: '{friendly_map}'")
+                
                 # Intentar hasta 10 veces con un delay de 100ms cada una
                 max_attempts = 10
                 attempt = 0
@@ -1065,11 +1106,11 @@ class MainWindow:
                     
                     current_values = self.map_dropdown.cget("values")
                     self.logger.info(f"Intento {attempt}: Valores actuales del dropdown de mapas: {current_values}")
-                    if current_values and last_map in current_values:
-                        self.map_dropdown.set(last_map)
+                    if current_values and friendly_map in current_values:
+                        self.map_dropdown.set(friendly_map)
                         # Importante: Llamar manualmente a on_map_selected para disparar todas las callbacks
-                        self.on_map_selected(last_map)
-                        self.add_log_message(f"🗺️ Mapa restaurado: {last_map}")
+                        self.on_map_selected(friendly_map)
+                        self.add_log_message(f"🗺️ Mapa restaurado: {friendly_map}")
                         return True
                     elif attempt < max_attempts:
                         # Intentar de nuevo después de 100ms
@@ -1090,14 +1131,159 @@ class MainWindow:
             self.server_panel.start_server()
     
     def stop_server(self):
-        """Detiene el servidor"""
-        if hasattr(self, 'server_panel'):
-            self.server_panel.stop_server()
+        """Detener servidor con confirmación y saveworld"""
+        try:
+            # Confirmar acción
+            if not ask_yes_no(self.root, "🛑 Confirmar Detención", 
+                             "¿Estás seguro de que quieres DETENER el servidor?\n\n"
+                             "• Se guardará el mundo automáticamente\n"
+                             "• Los jugadores serán desconectados\n"
+                             "• El servidor se detendrá completamente"):
+                self.add_log_message("❌ Detención cancelada por el usuario")
+                return
+            
+            self.add_log_message("🛑 Iniciando detención del servidor...")
+            
+            # Ejecutar saveworld antes de detener
+            self.add_log_message("💾 Guardando mundo antes de detener...")
+            if hasattr(self, 'server_panel'):
+                # Programar detención después del saveworld
+                self.root.after(100, self._execute_stop_with_saveworld)
+                
+        except Exception as e:
+            self.logger.error(f"Error al detener servidor: {e}")
+            show_error(self.root, "Error", f"Error al detener servidor: {str(e)}")
+    
+    def _execute_stop_with_saveworld(self):
+        """Ejecutar saveworld y luego detener servidor"""
+        try:
+            self.add_log_message("💾 Ejecutando comando saveworld...")
+            
+            # Ejecutar saveworld via RCON
+            saveworld_success = False
+            if hasattr(self, 'rcon_panel') and self.rcon_panel:
+                try:
+                    result = self.rcon_panel.execute_rcon_command("saveworld")
+                    if result and not result.startswith("❌"):
+                        saveworld_success = True
+                        self.add_log_message("✅ Mundo guardado correctamente")
+                    else:
+                        self.add_log_message("⚠️ Error al ejecutar saveworld, continuando con detención...")
+                except Exception as e:
+                    self.add_log_message(f"⚠️ Error RCON saveworld: {e}")
+            else:
+                self.add_log_message("⚠️ RCON no disponible, continuando con detención...")
+            
+            # Esperar un momento y luego detener servidor
+            self.root.after(2000, lambda: self._complete_server_stop())
+            
+        except Exception as e:
+            self.logger.error(f"Error en saveworld: {e}")
+            self.add_log_message(f"⚠️ Error en saveworld: {e}")
+            # Continuar con detención aunque falle saveworld
+            self._complete_server_stop()
+    
+    def _complete_server_stop(self):
+        """Completar la detención del servidor"""
+        try:
+            if hasattr(self, 'server_panel'):
+                self.server_panel.stop_server()
+        except Exception as e:
+            self.logger.error(f"Error al completar detención: {e}")
+            self.add_log_message(f"❌ Error al detener servidor: {e}")
     
     def restart_server(self):
-        """Reinicia el servidor"""
-        if hasattr(self, 'server_panel'):
-            self.server_panel.restart_server()
+        """Reiniciar servidor con confirmación, saveworld y opción de actualizar"""
+        try:
+            # Confirmar acción
+            if not ask_yes_no(self.root, "🔄 Confirmar Reinicio", 
+                             "¿Estás seguro de que quieres REINICIAR el servidor?\n\n"
+                             "• Se guardará el mundo automáticamente\n"
+                             "• Los jugadores serán desconectados temporalmente\n"
+                             "• El servidor se reiniciará completamente"):
+                self.add_log_message("❌ Reinicio cancelado por el usuario")
+                return
+            
+            # Preguntar si quiere actualizar
+            update_server = ask_yes_no(self.root, "🔄 Actualizar Servidor", 
+                                     "¿Quieres ACTUALIZAR el servidor antes de reiniciar?\n\n"
+                                     "• ✅ SÍ: Descargará las últimas actualizaciones (recomendado)\n"
+                                     "• ❌ NO: Solo reiniciará sin actualizar\n\n"
+                                     "⚠️ La actualización puede tomar varios minutos")
+            
+            self.add_log_message("🔄 Iniciando reinicio del servidor...")
+            if update_server:
+                self.add_log_message("🔄 Reinicio CON actualización seleccionado")
+            else:
+                self.add_log_message("🔄 Reinicio SIN actualización seleccionado")
+            
+            # Ejecutar saveworld antes de reiniciar
+            self.add_log_message("💾 Guardando mundo antes de reiniciar...")
+            if hasattr(self, 'server_panel'):
+                # Programar reinicio después del saveworld
+                self.root.after(100, lambda: self._execute_restart_with_saveworld(update_server))
+                
+        except Exception as e:
+            self.logger.error(f"Error al reiniciar servidor: {e}")
+            show_error(self.root, "Error", f"Error al reiniciar servidor: {str(e)}")
+    
+    def _execute_restart_with_saveworld(self, update_server):
+        """Ejecutar saveworld y luego reiniciar servidor"""
+        try:
+            self.add_log_message("💾 Ejecutando comando saveworld...")
+            
+            # Ejecutar saveworld via RCON
+            saveworld_success = False
+            if hasattr(self, 'rcon_panel') and self.rcon_panel:
+                try:
+                    result = self.rcon_panel.execute_rcon_command("saveworld")
+                    if result and not result.startswith("❌"):
+                        saveworld_success = True
+                        self.add_log_message("✅ Mundo guardado correctamente")
+                    else:
+                        self.add_log_message("⚠️ Error al ejecutar saveworld, continuando con reinicio...")
+                except Exception as e:
+                    self.add_log_message(f"⚠️ Error RCON saveworld: {e}")
+            else:
+                self.add_log_message("⚠️ RCON no disponible, continuando con reinicio...")
+            
+            # Esperar un momento y luego reiniciar servidor
+            self.root.after(2000, lambda: self._complete_server_restart(update_server))
+            
+        except Exception as e:
+            self.logger.error(f"Error en saveworld: {e}")
+            self.add_log_message(f"⚠️ Error en saveworld: {e}")
+            # Continuar con reinicio aunque falle saveworld
+            self._complete_server_restart(update_server)
+    
+    def _complete_server_restart(self, update_server):
+        """Completar el reinicio del servidor"""
+        try:
+            if update_server:
+                self.add_log_message("🔄 Iniciando reinicio con actualización...")
+                self.add_log_message("📥 Descargando actualizaciones del servidor...")
+                # Ejecutar actualización real
+                if hasattr(self, 'server_panel'):
+                    self.server_panel.update_server()
+                self.root.after(3000, lambda: self._finalize_restart_with_update())
+            else:
+                self.add_log_message("🔄 Iniciando reinicio sin actualización...")
+                if hasattr(self, 'server_panel'):
+                    self.server_panel.restart_server()
+                
+        except Exception as e:
+            self.logger.error(f"Error al completar reinicio: {e}")
+            self.add_log_message(f"❌ Error al reiniciar servidor: {e}")
+    
+    def _finalize_restart_with_update(self):
+        """Finalizar reinicio después de actualización"""
+        try:
+            self.add_log_message("✅ Actualización completada")
+            if hasattr(self, 'server_panel'):
+                self.server_panel.restart_server()
+        except Exception as e:
+            self.logger.error(f"Error al finalizar reinicio: {e}")
+            self.add_log_message(f"❌ Error al reiniciar después de actualización: {e}")
     
     def install_server(self):
         """Instala un servidor"""

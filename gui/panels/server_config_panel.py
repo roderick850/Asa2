@@ -24,6 +24,7 @@ class ServerConfigPanel(ctk.CTkFrame):
         # Filtro de búsqueda
         self.search_filter = ""
         self.current_tab_type = None  # Para rastrear la pestaña actual
+        self.search_timeout_id = None  # Para debounce de búsqueda
         
         # Tipos de archivos INI de ARK
         self.ini_types = {
@@ -424,17 +425,48 @@ class ServerConfigPanel(ctk.CTkFrame):
         return str
     
     def on_search_change(self, event=None):
-        """Manejar cambios en el filtro de búsqueda"""
-        search_text = self.search_entry.get().lower().strip()
-        self.search_filter = search_text
+        """Manejar cambios en el filtro de búsqueda con debounce"""
+        # Cancelar búsqueda anterior si existe
+        if self.search_timeout_id:
+            self.after_cancel(self.search_timeout_id)
+            self.search_timeout_id = None
         
-        # Si no hay filtro, restaurar orden original
-        if not search_text:
-            self.restore_original_order()
-            return
+        # Mostrar indicador de búsqueda pendiente
+        current_text = self.search_entry.get().strip()
+        if current_text:
+            # Cambiar placeholder para indicar que está esperando
+            if len(current_text) >= 2:  # Solo mostrar "buscando" si hay al menos 2 caracteres
+                self.search_entry.configure(placeholder_text="🔍 Buscando...")
+            else:
+                self.search_entry.configure(placeholder_text="Buscar: max, multiplier, enable, port, server...")
         
-        # Aplicar filtro y reordenar
-        self.apply_search_filter(search_text)
+        # Programar nueva búsqueda después de 300ms de inactividad (reducido para mejor UX)
+        self.search_timeout_id = self.after(300, self._execute_search)
+    
+    def _execute_search(self):
+        """Ejecutar la búsqueda real después del debounce"""
+        try:
+            search_text = self.search_entry.get().lower().strip()
+            self.search_filter = search_text
+            
+            # Restaurar placeholder original
+            self.search_entry.configure(placeholder_text="Buscar: max, multiplier, enable, port, server...")
+            
+            # Si no hay filtro, restaurar orden original
+            if not search_text:
+                self.restore_original_order()
+                return
+            
+            # Aplicar filtro y reordenar
+            self.apply_search_filter(search_text)
+            
+        except Exception as e:
+            self.logger.error(f"Error durante la búsqueda: {e}")
+            # Restaurar placeholder incluso en caso de error
+            self.search_entry.configure(placeholder_text="Buscar: max, multiplier, enable, port, server...")
+        finally:
+            # Limpiar el timeout ID
+            self.search_timeout_id = None
     
     def apply_search_filter(self, search_text):
         """Aplicar filtro de búsqueda y reordenar resultados"""
@@ -760,7 +792,14 @@ class ServerConfigPanel(ctk.CTkFrame):
     
     def clear_search(self):
         """Limpiar filtro de búsqueda"""
+        # Cancelar búsqueda pendiente si existe
+        if self.search_timeout_id:
+            self.after_cancel(self.search_timeout_id)
+            self.search_timeout_id = None
+        
         self.search_entry.delete(0, "end")
+        # Restaurar placeholder original
+        self.search_entry.configure(placeholder_text="Buscar: max, multiplier, enable, port, server...")
         self.show_all_widgets()
     
     def show_config_help(self, config_path):

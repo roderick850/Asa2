@@ -16,13 +16,39 @@ class ServerEventLogger:
     
     def setup_logger(self):
         """Configurar el logger para eventos del servidor"""
-        # Crear directorio de logs si no existe
-        logs_dir = Path("logs/server_events")
-        logs_dir.mkdir(parents=True, exist_ok=True)
+        # Obtener directorio seguro para logs
+        logs_dir = self._get_safe_logs_dir()
         
         # Nombre del archivo con fecha
         today = datetime.now().strftime("%Y-%m-%d")
         log_file = logs_dir / f"server_events_{today}.log"
+    
+    def _get_safe_logs_dir(self):
+        """Obtener directorio seguro para logs de servidor"""
+        try:
+            # Intentar crear en directorio local
+            logs_dir = Path("logs/server_events")
+            logs_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Probar escritura
+            test_file = logs_dir / "test_write.tmp"
+            test_file.write_text("test")
+            test_file.unlink()
+            
+            return logs_dir
+            
+        except (PermissionError, OSError) as e:
+            # Si falla, usar directorio temporal del usuario
+            import tempfile
+            user_temp = Path(tempfile.gettempdir()) / "ArkServerManager" / "logs" / "server_events"
+            try:
+                user_temp.mkdir(parents=True, exist_ok=True)
+                return user_temp
+            except Exception:
+                # Último recurso: directorio temporal del sistema
+                sys_temp = Path(tempfile.gettempdir()) / "arkserver_logs"
+                sys_temp.mkdir(parents=True, exist_ok=True)
+                return sys_temp
         
         # Configurar logger
         self.logger = logging.getLogger(f"ServerEvents_{self.server_name}")

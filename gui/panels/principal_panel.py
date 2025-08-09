@@ -233,7 +233,7 @@ class PrincipalPanel:
             self.show_message(f"❌ Error al guardar: {str(e)}", "error")
     
     def save_to_gameusersettings(self):
-        """Guardar ServerPassword, AdminPassword y SessionName en GameUserSettings.ini"""
+        """Guardar ServerPassword, AdminPassword y SessionName en GameUserSettings.ini PRESERVANDO CONTENIDO EXISTENTE"""
         try:
             # Obtener servidor actual desde main_window si está disponible
             if not self.main_window or not hasattr(self.main_window, 'selected_server'):
@@ -261,66 +261,126 @@ class PrincipalPanel:
             # Crear directorio si no existe
             os.makedirs(os.path.dirname(gameusersettings_path), exist_ok=True)
             
-            # Leer archivo existente o crear uno nuevo
-            config = configparser.ConfigParser()
-            config.optionxform = str  # Preservar mayúsculas/minúsculas
-            if os.path.exists(gameusersettings_path):
-                try:
-                    config.read(gameusersettings_path, encoding='utf-8')
-                except configparser.DuplicateOptionError as e:
-                    if self.logger:
-                        self.logger.warning(f"Archivo GameUserSettings.ini tiene opciones duplicadas: {e}")
-                    # Crear un nuevo config si hay problemas de duplicación
-                    config = configparser.ConfigParser()
-                    config.optionxform = str
-            
-            # Crear secciones si no existen
-            if 'ServerSettings' not in config:
-                config.add_section('ServerSettings')
-            if 'SessionSettings' not in config:
-                config.add_section('SessionSettings')
-            if '/Script/Engine.GameSession' not in config:
-                config.add_section('/Script/Engine.GameSession')
-            
-            # Guardar ServerPassword y AdminPassword en [ServerSettings]
+            # Obtener valores a guardar
             server_password = self.server_password_entry.get()
             admin_password = self.admin_password_entry.get()
-            
-            if server_password:
-                config.set('ServerSettings', 'ServerPassword', server_password)
-            elif config.has_option('ServerSettings', 'ServerPassword'):
-                config.remove_option('ServerSettings', 'ServerPassword')
-                
-            if admin_password:
-                config.set('ServerSettings', 'ServerAdminPassword', admin_password)
-            elif config.has_option('ServerSettings', 'ServerAdminPassword'):
-                config.remove_option('ServerSettings', 'ServerAdminPassword')
-            
-            # Guardar SessionName en [SessionSettings]
             session_name = self.session_name_entry.get()
-            if session_name:
-                config.set('SessionSettings', 'SessionName', session_name)
-            elif config.has_option('SessionSettings', 'SessionName'):
-                config.remove_option('SessionSettings', 'SessionName')
-            
-            # Guardar MaxPlayers en [/Script/Engine.GameSession]
             max_players = self.max_players_entry.get()
-            if max_players:
-                config.set('/Script/Engine.GameSession', 'MaxPlayers', max_players)
-            elif config.has_option('/Script/Engine.GameSession', 'MaxPlayers'):
-                config.remove_option('/Script/Engine.GameSession', 'MaxPlayers')
             
-            # Escribir archivo
-            with open(gameusersettings_path, 'w', encoding='utf-8') as configfile:
-                config.write(configfile)
+            # Usar método personalizado para preservar el archivo existente
+            self._update_ini_file_preserving_content(
+                gameusersettings_path,
+                {
+                    'ServerSettings': {
+                        'ServerPassword': server_password if server_password else None,
+                        'ServerAdminPassword': admin_password if admin_password else None
+                    },
+                    'SessionSettings': {
+                        'SessionName': session_name if session_name else None
+                    },
+                    '/Script/Engine.GameSession': {
+                        'MaxPlayers': max_players if max_players else None
+                    }
+                }
+            )
             
             if self.logger:
-                self.logger.info(f"Configuración guardada en GameUserSettings.ini: {gameusersettings_path}")
+                self.logger.info(f"✅ Configuración guardada preservando contenido en GameUserSettings.ini: {gameusersettings_path}")
                 
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Error al guardar en GameUserSettings.ini: {e}")
             print(f"Error al guardar en GameUserSettings.ini: {e}")
+    
+    def _update_ini_file_preserving_content(self, file_path, sections_to_update):
+        """Actualizar archivo INI preservando contenido existente y agregando secciones si no existen"""
+        lines = []
+        current_section = None
+        sections_found = set()
+        
+        # Leer archivo existente línea por línea si existe
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+        
+        # Procesar líneas existentes
+        updated_lines = []
+        i = 0
+        while i < len(lines):
+            line = lines[i].rstrip('\n\r')
+            original_line = line
+            
+            # Detectar secciones
+            if line.strip().startswith('[') and line.strip().endswith(']'):
+                current_section = line.strip()[1:-1]
+                sections_found.add(current_section)
+                updated_lines.append(original_line + '\n')
+                i += 1
+                continue
+            
+            # Si estamos en una sección que queremos actualizar
+            if current_section in sections_to_update:
+                section_data = sections_to_update[current_section]
+                
+                # Buscar si esta línea contiene una clave que queremos actualizar
+                if '=' in line:
+                    key = line.split('=', 1)[0].strip()
+                    if key in section_data:
+                        # Actualizar el valor si no es None, o eliminar si es None
+                        new_value = section_data[key]
+                        if new_value is not None:
+                            updated_lines.append(f"{key} = {new_value}\n")
+                            if self.logger:
+                                self.logger.info(f"DEBUG: Actualizado {current_section}.{key} = {new_value}")
+                        else:
+                            # Valor None = eliminar línea
+                            if self.logger:
+                                self.logger.info(f"DEBUG: Eliminado {current_section}.{key}")
+                        # Marcar como procesado
+                        section_data[key] = 'PROCESSED'
+                        i += 1
+                        continue
+            
+            # Línea normal, mantener tal como está
+            updated_lines.append(original_line + '\n')
+            i += 1
+        
+        # Agregar secciones nuevas que no existían
+        for section_name, section_data in sections_to_update.items():
+            if section_name not in sections_found:
+                updated_lines.append(f"\n[{section_name}]\n")
+                if self.logger:
+                    self.logger.info(f"DEBUG: Agregada nueva sección [{section_name}]")
+                
+                # Agregar todas las claves de esta sección
+                for key, value in section_data.items():
+                    if value is not None and value != 'PROCESSED':
+                        updated_lines.append(f"{key} = {value}\n")
+                        if self.logger:
+                            self.logger.info(f"DEBUG: Agregado {section_name}.{key} = {value}")
+            else:
+                # Sección existía, agregar claves que no se encontraron
+                for key, value in section_data.items():
+                    if value is not None and value != 'PROCESSED':
+                        # Buscar dónde termina esta sección para insertar la clave
+                        section_end = len(updated_lines)
+                        for j, line in enumerate(updated_lines):
+                            if line.strip() == f"[{section_name}]":
+                                # Encontrar el final de esta sección
+                                for k in range(j + 1, len(updated_lines)):
+                                    if updated_lines[k].strip().startswith('['):
+                                        section_end = k
+                                        break
+                                break
+                        
+                        # Insertar la nueva clave antes del final de la sección
+                        updated_lines.insert(section_end, f"{key} = {value}\n")
+                        if self.logger:
+                            self.logger.info(f"DEBUG: Agregado a sección existente {section_name}.{key} = {value}")
+        
+        # Escribir archivo actualizado
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.writelines(updated_lines)
     
     def load_from_gameusersettings(self):
         """Cargar ServerPassword, AdminPassword y SessionName desde GameUserSettings.ini"""
@@ -470,6 +530,59 @@ class PrincipalPanel:
             self.logger.error(f"Error al iniciar servidor: {e}")
             self.show_message(f"❌ Error al iniciar servidor: {str(e)}", "error")
     
+    def restart_server_with_config(self):
+        """Reiniciar servidor con la configuración actual"""
+        # Obtener servidor y mapa desde main_window
+        selected_server = None
+        selected_map = None
+        
+        if self.main_window and hasattr(self.main_window, 'selected_server'):
+            selected_server = self.main_window.selected_server
+            selected_map = self.main_window.selected_map
+        
+        # Fallback a las variables locales si no están disponibles en main_window
+        if not selected_server:
+            selected_server = self.selected_server
+        if not selected_map:
+            selected_map = self.selected_map
+        
+        # Verificar si hay un servidor seleccionado
+        if not selected_server:
+            self.show_message("❌ Debe seleccionar un servidor primero", "error")
+            return
+        
+        # Verificar si hay un mapa seleccionado
+        if not selected_map:
+            self.show_message("❌ Debe seleccionar un mapa primero", "error")
+            return
+        
+        # Guardar configuración antes de reiniciar
+        self.save_configuration()
+        
+        # Construir argumentos del servidor
+        server_args = self.build_server_arguments()
+        
+        # Reiniciar servidor con argumentos personalizados
+        try:
+            self.show_message(f"🔄 Reiniciando servidor {selected_server} con mapa {selected_map}", "info")
+            
+            # Llamar al método de reinicio del servidor con argumentos personalizados
+            if self.server_manager:
+                self.server_manager.restart_server(
+                    self.add_status_message, 
+                    selected_server, 
+                    selected_map, 
+                    server_args
+                )
+                
+                # También notificar al main window si hay uno
+                if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'server_panel'):
+                    self.main_window.server_panel.update_server_status("Reiniciando...", "orange")
+            
+        except Exception as e:
+            self.logger.error(f"Error al reiniciar servidor: {e}")
+            self.show_message(f"❌ Error al reiniciar servidor: {str(e)}", "error")
+    
     def build_server_arguments(self):
         """Construir argumentos del servidor basados en la configuración"""
         # 1. Obtener el mapa seleccionado (desde el dropdown de la ventana principal)
@@ -480,27 +593,62 @@ class PrincipalPanel:
             selected_map = self.selected_map
         
         # Mapear nombres de mapas a sus identificadores técnicos
+        # NOTA: Incluimos todas las variantes posibles para máxima compatibilidad
         map_identifiers = {
-            "The Island": "TheIsland_WP",
-            "The Center": "TheCenter",
-            "Scorched Earth": "ScorchedEarth_WP", 
-            "Ragnarok": "Ragnarok",
-            "Aberration": "Aberration_P",
-            "Extinction": "Extinction",
-            "Valguero": "Valguero_P",
-            "Genesis: Part 1": "Genesis",
-            "Crystal Isles": "CrystalIsles",
-            "Genesis: Part 2": "Genesis2",
-            "Lost Island": "LostIsland",
-            "Fjordur": "Fjordur"
+            # IDENTIFICADORES CORRECTOS PARA ARK SURVIVAL ASCENDED:
+            "The Island": "TheIsland_WP",        # ✅ SÍ necesita _WP
+            "TheIsland": "TheIsland_WP",
+            "TheIsland_WP": "TheIsland_WP",
+            "The Center": "TheCenter_WP",        # ✅ SÍ necesita _WP (ASA)
+            "TheCenter": "TheCenter_WP",
+            "TheCenter_WP": "TheCenter_WP",
+            "Scorched Earth": "ScorchedEarth_WP", # ✅ SÍ necesita _WP
+            "ScorchedEarth": "ScorchedEarth_WP",
+            "ScorchedEarth_WP": "ScorchedEarth_WP",
+            "Ragnarok": "Ragnarok_WP",           # ✅ SÍ necesita _WP (ASA)
+            "Ragnarok_WP": "Ragnarok_WP",
+            "Aberration": "Aberration_P",        # ✅ Usa _P
+            "Aberration_P": "Aberration_P",
+            "Extinction": "Extinction",          # ✅ NO necesita _WP
+            "Valguero": "Valguero_P",           # ✅ Usa _P
+            "Valguero_P": "Valguero_P",
+            "Genesis: Part 1": "Genesis",        # ✅ NO necesita _WP
+            "Genesis1": "Genesis",
+            "Genesis": "Genesis",
+            "Crystal Isles": "CrystalIsles",     # ✅ NO necesita _WP
+            "CrystalIsles": "CrystalIsles",
+            "Genesis: Part 2": "Gen2",          # ✅ Abreviado a Gen2
+            "Genesis2": "Gen2",
+            "Gen2": "Gen2",
+            "Lost Island": "LostIsland",         # ✅ NO necesita _WP
+            "LostIsland": "LostIsland",
+            "Fjordur": "Fjordur",               # ✅ NO necesita _WP
+            "Modded Map": "ModdedMap",
+            "ModdedMap": "ModdedMap"
         }
         
         # Construir el argumento base del mapa siguiendo el formato correcto
+        self.logger.info(f"DEBUG: Mapa seleccionado: '{selected_map}' (tipo: {type(selected_map)}, len: {len(selected_map) if selected_map else 'N/A'})")
+        self.logger.info(f"DEBUG: Mapas disponibles: {list(map_identifiers.keys())}")
+        self.logger.info(f"DEBUG: ¿Mapa es None?: {selected_map is None}")
+        self.logger.info(f"DEBUG: ¿Mapa en diccionario?: {selected_map in map_identifiers if selected_map else 'N/A'}")
+        
+        # Debug más específico: comparar caractér por caractér
+        if selected_map:
+            for key in map_identifiers.keys():
+                if key == selected_map:
+                    self.logger.info(f"DEBUG: ✅ Coincidencia exacta encontrada con '{key}'")
+                elif key.strip() == selected_map.strip():
+                    self.logger.info(f"DEBUG: ⚠️ Coincidencia con espacios: '{key}' vs '{selected_map}'")
+                
         if selected_map and selected_map in map_identifiers:
-            map_arg = f"{map_identifiers[selected_map]}?listen"
+            map_identifier = map_identifiers[selected_map]
+            map_arg = f"{map_identifier}?listen"
+            self.logger.info(f"DEBUG: ✅ Mapa encontrado. Usando identificador: {map_identifier}")
         else:
             # Mapa por defecto si no hay selección
             map_arg = "TheIsland_WP?listen"
+            self.logger.warning(f"DEBUG: ❌ Mapa no encontrado o vacío. Razón: selected_map='{selected_map}', en diccionario={selected_map in map_identifiers if selected_map else False}. Usando por defecto: TheIsland_WP")
         
         # 2. Agregar parámetros básicos en el orden correcto
         # Port
@@ -528,10 +676,7 @@ class PrincipalPanel:
                         # Si no, agregamos el ? al principio
                         map_arg += f"?{line}"
         
-        # 4. Agregar ServerPVE por defecto (como en tu script)
-        map_arg += "?ServerPVE=true"
-        
-        # 4.5. Agregar argumentos RCON si está habilitado
+        # 4. Agregar argumentos RCON si está habilitado
         if hasattr(self.main_window, 'rcon_panel') and self.main_window.rcon_panel.get_rcon_enabled():
             rcon_port = self.main_window.rcon_panel.get_rcon_port()
             map_arg += f"?RCONEnable=True?RCONPort={rcon_port}"
@@ -557,6 +702,8 @@ class PrincipalPanel:
         # 7. Agregar mods si existen
         if mod_ids:
             args.append(f"-mods={mod_ids}")
+        
+        self.logger.info(f"DEBUG: Argumentos finales generados: {args}")
         
         return args
     

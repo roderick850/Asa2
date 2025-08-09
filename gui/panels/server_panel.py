@@ -324,25 +324,43 @@ class ServerPanel:
                     self.main_window.map_dropdown.configure(values=["Seleccionar mapa..."])
                 return
             
-            # Mapas disponibles para Ark Survival Ascended
-            available_maps = [
-                "TheIsland_WP",           # The Island
-                "ScorchedEarth_WP",       # Scorched Earth
-                "Aberration_P",           # Aberration
-                "Extinction",             # Extinction
-                "Genesis",                # Genesis
-                "Genesis2",               # Genesis Part 2
-                "TheCenter",              # The Center
-                "Ragnarok",               # Ragnarok
-                "Valguero_P",             # Valguero
-                "CrystalIsles",           # Crystal Isles
-                "LostIsland",             # Lost Island
-                "Fjordur",                # Fjordur
+            # Mapas disponibles para Ark Survival Ascended - USAR NOMBRES AMIGABLES
+            # NOTA: El dropdown del main_window debe tener nombres amigables, no identificadores técnicos
+            available_maps_technical = [
+                "TheIsland_WP",           # The Island ✅ _WP
+                "TheCenter_WP",              # The Center ✅ Sin _WP
+                "ScorchedEarth_WP",       # Scorched Earth ✅ _WP
+                "Ragnarok_WP",               # Ragnarok ✅ Sin _WP
+                "Aberration_P",           # Aberration ✅ _P
+                "Extinction",             # Extinction ✅ Sin _WP
+                "Valguero_P",             # Valguero ✅ _P
+                "Genesis",                # Genesis Part 1 ✅ Sin _WP
+                "CrystalIsles",           # Crystal Isles ✅ Sin _WP
+                "Gen2",                   # Genesis Part 2 ✅ Gen2 (corregido)
+                "LostIsland",             # Lost Island ✅ Sin _WP
+                "Fjordur",                # Fjordur ✅ Sin _WP
                 "ModdedMap"               # Mapa Modded
             ]
             
+            # Mapeo de identificadores técnicos a nombres amigables - CORREGIDO
+            tech_to_friendly_maps = {
+                "TheIsland_WP": "The Island",        # ✅ _WP
+                "TheCenter_WP": "The Center",           # ✅ Sin _WP
+                "ScorchedEarth_WP": "Scorched Earth", # ✅ _WP
+                "Ragnarok_WP": "Ragnarok",              # ✅ Sin _WP
+                "Aberration_P": "Aberration",        # ✅ _P
+                "Extinction": "Extinction",          # ✅ Sin _WP
+                "Valguero_P": "Valguero",           # ✅ _P
+                "Genesis": "Genesis: Part 1",        # ✅ Sin _WP
+                "CrystalIsles": "Crystal Isles",     # ✅ Sin _WP
+                "Gen2": "Genesis: Part 2",          # ✅ Gen2 (corregido)
+                "LostIsland": "Lost Island",         # ✅ Sin _WP
+                "Fjordur": "Fjordur",               # ✅ Sin _WP
+                "ModdedMap": "Modded Map"
+            }
+            
             # Verificar qué mapas están disponibles en el servidor
-            available_maps_found = []
+            available_maps_found_technical = []
             
             # Buscar archivos de mapa en el servidor
             for root, dirs, files in os.walk(server_path):
@@ -350,20 +368,27 @@ class ServerPanel:
                     if file.lower().endswith('.umap'):
                         # Extraer el nombre del mapa del archivo
                         map_name = os.path.splitext(file)[0]
-                        if map_name not in available_maps_found:
-                            available_maps_found.append(map_name)
+                        if map_name not in available_maps_found_technical:
+                            available_maps_found_technical.append(map_name)
             
-            # Si no se encontraron mapas específicos, usar la lista completa
-            if not available_maps_found:
-                available_maps_found = available_maps
+            # Si no se encontraron mapas específicos, usar la lista completa (identificadores técnicos)
+            if not available_maps_found_technical:
+                available_maps_found_technical = available_maps_technical
             
-            # Ordenar los mapas encontrados
-            available_maps_found.sort()
+            # Convertir identificadores técnicos a nombres amigables para el dropdown
+            available_maps_friendly = []
+            for tech_map in available_maps_found_technical:
+                friendly_name = tech_to_friendly_maps.get(tech_map, tech_map)
+                available_maps_friendly.append(friendly_name)
             
-            # Buscar el dropdown en la ventana principal
+            # Ordenar los mapas encontrados (nombres amigables)
+            available_maps_friendly.sort()
+            
+            # Buscar el dropdown en la ventana principal y cargar NOMBRES AMIGABLES
             if hasattr(self.main_window, 'map_dropdown'):
-                self.main_window.map_dropdown.configure(values=["Seleccionar mapa..."] + available_maps_found)
-            self.add_status_message(f"Cargados {len(available_maps_found)} mapa(s) para {server_name}", "info")
+                self.main_window.map_dropdown.configure(values=["Seleccionar mapa..."] + available_maps_friendly)
+                self.logger.info(f"DEBUG: Cargando mapas amigables en dropdown: {available_maps_friendly}")
+            self.add_status_message(f"Cargados {len(available_maps_friendly)} mapa(s) para {server_name}", "info")
             
         except Exception as e:
             self.logger.error(f"Error al cargar mapas: {e}")
@@ -584,14 +609,79 @@ class ServerPanel:
         self.update_server_status("Deteniendo...", "orange")
         
         # Simular pasos de detención con logs en ambos lugares
-        if hasattr(self, 'main_window') and self.main_window:
-            self.main_window.after(500, lambda: self._log_stop_step("🔄 Enviando señal de detención al servidor"))
-            self.main_window.after(1000, lambda: self._log_stop_step("⏳ Esperando que el servidor termine procesos"))
-            self.main_window.after(1500, lambda: self._log_stop_step("✅ Servidor detenido correctamente"))
+        if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'root'):
+            self.main_window.root.after(500, lambda: self._log_stop_step("🔄 Enviando señal de detención al servidor"))
+            self.main_window.root.after(1000, lambda: self._log_stop_step("⏳ Esperando que el servidor termine procesos"))
+            self.main_window.root.after(1500, lambda: self._log_stop_step("✅ Servidor detenido correctamente"))
     
     def _log_stop_step(self, message):
         """Helper para registrar pasos de detención en ambos logs"""
         self.add_status_message(message, "info")
+        if hasattr(self.main_window, 'add_log_message'):
+            self.main_window.add_log_message(message)
+        
+        # Si es el último paso, llamar realmente al método de detención
+        if "✅ Servidor detenido correctamente" in message:
+            self._actually_stop_server()
+    
+    def _actually_stop_server(self):
+        """Realmente detener el servidor usando ServerManager"""
+        try:
+            if hasattr(self, 'server_manager') and self.server_manager:
+                self.add_log_message("🔍 Verificando procesos del servidor...")
+                
+                # Obtener estado antes de detener
+                status_before = self.server_manager.get_server_status()
+                self.add_log_message(f"📊 Estado del servidor antes de detener: {status_before}")
+                
+                if status_before == "Ejecutándose":
+                    self.add_log_message("🛑 Enviando señal de detención al proceso del servidor...")
+                    
+                    # Definir callback para mostrar resultado
+                    def stop_callback(status, message):
+                        if status == "stopped":
+                            self.add_log_message(f"✅ {message}")
+                            self.add_log_message("🔍 Verificando que el proceso se cerró completamente...")
+                            
+                            # Verificar después de 2 segundos
+                            if hasattr(self.main_window, 'root'):
+                                self.main_window.root.after(2000, self._verify_server_stopped)
+                        else:
+                            self.add_log_message(f"❌ Error en detención: {message}")
+                    
+                    # Detener servidor con callback
+                    self.server_manager.stop_server(stop_callback)
+                else:
+                    self.add_log_message("ℹ️ El servidor ya estaba detenido")
+                    self.update_server_status("Detenido", "red")
+            else:
+                self.add_log_message("❌ Error: ServerManager no disponible")
+                
+        except Exception as e:
+            self.logger.error(f"Error al detener servidor realmente: {e}")
+            self.add_log_message(f"❌ Error crítico al detener servidor: {e}")
+    
+    def _verify_server_stopped(self):
+        """Verificar que el servidor realmente se detuvo"""
+        try:
+            if hasattr(self, 'server_manager') and self.server_manager:
+                status_after = self.server_manager.get_server_status()
+                self.add_log_message(f"📊 Estado final del servidor: {status_after}")
+                
+                if status_after == "Detenido":
+                    self.add_log_message("✅ ¡Servidor completamente detenido!")
+                    self.update_server_status("Detenido", "red")
+                else:
+                    self.add_log_message("⚠️ El servidor aún parece estar ejecutándose")
+                    self.add_log_message("🔧 Intentando detención forzada...")
+                    # Aquí se podría agregar lógica para forzar el cierre
+                    
+        except Exception as e:
+            self.logger.error(f"Error al verificar estado del servidor: {e}")
+            self.add_log_message(f"❌ Error al verificar estado: {e}")
+    
+    def add_log_message(self, message):
+        """Helper para agregar mensaje a logs principales"""
         if hasattr(self.main_window, 'add_log_message'):
             self.main_window.add_log_message(message)
         
@@ -604,7 +694,7 @@ class ServerPanel:
         self.server_manager.stop_server(self.add_status_message)
     
     def restart_server(self):
-        """Reinicia el servidor"""
+        """Reinicia el servidor usando la configuración del panel principal"""
         if not hasattr(self, 'selected_server') or not self.selected_server:
             self.add_status_message("Error: Debe seleccionar un servidor primero", "error")
             return
@@ -613,7 +703,11 @@ class ServerPanel:
             self.add_status_message("Error: Debe seleccionar un mapa primero", "error")
             return
         
-        self.add_status_message(f"Reiniciando servidor: {self.selected_server} con mapa: {self.selected_map}", "info")
+        restart_message = f"🔄 Reiniciando servidor: {self.selected_server} con mapa: {self.selected_map}"
+        self.add_status_message(restart_message, "info")
+        if hasattr(self.main_window, 'add_log_message'):
+            self.main_window.add_log_message(restart_message)
+        
         self.update_server_status("Reiniciando...", "orange")
         
         # Registrar evento de reinicio
@@ -622,7 +716,17 @@ class ServerPanel:
                 reason="Manual - Botón Reiniciar", 
                 additional_info=f"Usuario reinició servidor desde interfaz | Mapa: {self.selected_map}")
         
-        self.server_manager.restart_server(self.add_status_message, self.selected_server, self.selected_map)
+        # Usar el mismo método que start_server para conservar argumentos
+        if hasattr(self.main_window, 'principal_panel'):
+            # Actualizar información del servidor seleccionado en el panel principal
+            self.main_window.principal_panel.selected_server = self.selected_server
+            self.main_window.principal_panel.selected_map = self.selected_map
+            
+            # Reiniciar servidor con configuración del panel principal
+            self.main_window.principal_panel.restart_server_with_config()
+        else:
+            # Fallback al método antiguo si no hay panel principal
+            self.server_manager.restart_server(self.add_status_message, self.selected_server, self.selected_map)
     
     def show_progress(self, message="", progress=0):
         """Muestra la barra de progreso con un mensaje y porcentaje"""
@@ -650,7 +754,14 @@ class ServerPanel:
             self.progress_bar.set(progress / 100)
         
         # Siempre mostrar mensaje en logs
-        self.add_status_message(f"🔄 {message} ({progress}%)", "info")
+        self.add_status_message(f"🔄 {message} ({progress:.1f}%)", "info")
+        
+        # Forzar actualización inmediata del GUI
+        if hasattr(self, 'main_window') and hasattr(self.main_window, 'root'):
+            self.main_window.root.update_idletasks()
+            
+        # También imprimir en consola para debug
+        print(f"[PROGRESS] {message} ({progress:.1f}%)", flush=True)
         
     def install_server(self):
         """Instala un nuevo servidor"""
@@ -855,6 +966,9 @@ class ServerPanel:
     def install_callback(self, message_type, message):
         """Callback mejorado para la instalación con barra de progreso"""
         try:
+            # Forzar actualización inmediata del GUI
+            if hasattr(self, 'main_window') and hasattr(self.main_window, 'root'):
+                self.main_window.root.update_idletasks()
             if message_type == "progress":
                 # Extraer porcentaje del mensaje
                 if "Progress:" in message:
@@ -866,13 +980,27 @@ class ServerPanel:
                         self.update_progress(f"Progreso: {progress:.1f}%", progress)
                     else:
                         self.update_progress(message, 50)  # Valor por defecto
+                elif "Progreso de descarga:" in message:
+                    # Extraer el porcentaje del mensaje de progreso mejorado
+                    import re
+                    progress_match = re.search(r'Progreso de descarga: (\d+(?:\.\d+)?)%', message)
+                    if progress_match:
+                        progress = float(progress_match.group(1))
+                        # Mostrar progreso con timestamp para indicar que está actualizado
+                        import datetime
+                        timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+                        self.update_progress(f"[{timestamp}] Descargando ARK: {progress:.1f}%", progress)
+                    else:
+                        self.update_progress(message, 50)
                 elif "Downloading" in message:
                     # Extraer porcentaje de descarga si está disponible
                     import re
                     download_match = re.search(r'(\d+(?:\.\d+)?)%', message)
                     if download_match:
                         progress = float(download_match.group(1))
-                        self.update_progress(f"Descargando... {progress:.1f}%", progress)
+                        import datetime
+                        timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+                        self.update_progress(f"[{timestamp}] {message} {progress:.1f}%", progress)
                     else:
                         # Si no hay porcentaje, incrementar gradualmente
                         if hasattr(self, 'progress_bar') and self.progress_bar:
@@ -909,11 +1037,11 @@ class ServerPanel:
                         self.update_progress(message, 50)  # Valor por defecto
             elif message_type == "error":
                 # Mostrar error y ocultar barra de progreso
-                self.add_status_message(f"❌ {message}", "error")
+                self.add_status_message(f"{message}", "error")  # Ya tiene ❌ en add_status_message
                 self.hide_progress()
             elif message_type == "success":
                 # Mostrar éxito
-                self.add_status_message(f"✅ {message}", "success")
+                self.add_status_message(f"{message}", "success")  # Ya tiene ✅ en add_status_message
                 # Si es un mensaje de éxito final, ocultar la barra de progreso y refrescar lista
                 if "completada exitosamente" in message.lower():
                     self.hide_progress()
@@ -921,10 +1049,14 @@ class ServerPanel:
                     self.refresh_servers_list()
             elif message_type == "warning":
                 # Mostrar advertencia
-                self.add_status_message(f"⚠️ {message}", "warning")
+                self.add_status_message(f"{message}", "warning")  # Ya tiene ⚠️ en add_status_message
             elif message_type == "info":
-                # Mostrar información
-                self.add_status_message(f"ℹ️ {message}", "info")
+                # Mostrar información - filtrar algunos mensajes de SteamCMD para evitar spam
+                if not any(skip in message for skip in [
+                    "Steam Console Client", "-- type 'quit' to exit --", 
+                    "Logging directory:", "Loading Steam API", "Waiting for client config"
+                ]):
+                    self.add_status_message(f"{message}", "info")  # Ya tiene ℹ️ en add_status_message
             else:
                 # Usar el método original para otros tipos de mensajes
                 self.add_status_message(message, message_type)
@@ -1058,13 +1190,13 @@ class ServerPanel:
         # Programar mensajes de prueba con delays
         for i, message in enumerate(test_messages):
             delay = (i + 1) * 400  # 400ms entre cada mensaje
-            if hasattr(self, 'main_window') and self.main_window:
-                self.main_window.after(delay, lambda m=message: self._test_log_step(m))
+            if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'root'):
+                self.main_window.root.after(delay, lambda m=message: self._test_log_step(m))
         
         # Mensaje final
         final_delay = len(test_messages) * 400 + 500
-        if hasattr(self, 'main_window') and self.main_window:
-            self.main_window.after(final_delay, lambda: self._test_log_step("✅ Prueba de logs finalizada - Sistema funcionando correctamente"))
+        if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'root'):
+            self.main_window.root.after(final_delay, lambda: self._test_log_step("✅ Prueba de logs finalizada - Sistema funcionando correctamente"))
     
     def _test_log_step(self, message):
         """Helper para mostrar paso de prueba en ambos logs"""
