@@ -97,27 +97,100 @@ class AppSettings:
     def set_startup_with_windows(self, enabled):
         """Configurar inicio automático con Windows"""
         try:
+            # Primero intentar el método estándar (registro)
+            success = self._set_registry_startup(enabled)
+            if success:
+                self.set_setting("startup_with_windows", enabled)
+                return True
+            
+            # Si falla, intentar método alternativo (archivo de inicio)
+            self.logger.warning("Método de registro falló, intentando método de archivo...")
+            success = self._set_startup_folder_method(enabled)
+            if success:
+                self.set_setting("startup_with_windows", enabled)
+                return True
+            
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"Error crítico al configurar inicio automático: {e}")
+            return False
+    
+    def _set_registry_startup(self, enabled):
+        """Método principal: usar registro de Windows"""
+        try:
+            import winreg
             reg_key = winreg.HKEY_CURRENT_USER
             reg_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
             
             with winreg.OpenKey(reg_key, reg_path, 0, winreg.KEY_ALL_ACCESS) as key:
                 if enabled:
                     # Agregar entrada de registro
-                    winreg.SetValueEx(key, self.app_name, 0, winreg.REG_SZ, f'"{self.app_path}" --minimized')
-                    self.logger.info("Inicio automático con Windows habilitado")
+                    app_path = self.app_path.replace('/', '\\')  # Normalizar path
+                    winreg.SetValueEx(key, self.app_name, 0, winreg.REG_SZ, f'"{app_path}"')
+                    self.logger.info("Inicio automático habilitado via registro")
                 else:
                     # Eliminar entrada de registro
                     try:
                         winreg.DeleteValue(key, self.app_name)
-                        self.logger.info("Inicio automático con Windows deshabilitado")
+                        self.logger.info("Inicio automático deshabilitado via registro")
                     except FileNotFoundError:
                         pass  # Ya no existe
             
-            self.set_setting("startup_with_windows", enabled)
             return True
             
+        except PermissionError as e:
+            self.logger.warning(f"Sin permisos para modificar registro: {e}")
+            return False
         except Exception as e:
-            self.logger.error(f"Error al configurar inicio automático: {e}")
+            self.logger.error(f"Error en método de registro: {e}")
+            return False
+    
+    def _set_startup_folder_method(self, enabled):
+        """Método alternativo: usar carpeta de inicio de Windows"""
+        try:
+            import os
+            
+            # Obtener carpeta de inicio del usuario
+            startup_folder = os.path.join(
+                os.path.expanduser("~"),
+                "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs", "Startup"
+            )
+            
+            if not os.path.exists(startup_folder):
+                self.logger.error(f"Carpeta de inicio no encontrada: {startup_folder}")
+                return False
+            
+            link_path = os.path.join(startup_folder, f"{self.app_name}.bat")
+            
+            if enabled:
+                # Crear archivo .bat en la carpeta de inicio
+                app_path = self.app_path.replace('/', '\\')
+                bat_content = f'''@echo off
+cd /d "{os.path.dirname(app_path)}"
+start "" "{app_path}"
+'''
+                try:
+                    with open(link_path, 'w', encoding='utf-8') as f:
+                        f.write(bat_content)
+                    self.logger.info(f"Archivo de inicio creado: {link_path}")
+                    return True
+                except Exception as e:
+                    self.logger.error(f"Error al crear archivo de inicio: {e}")
+                    return False
+            else:
+                # Eliminar archivo de la carpeta de inicio
+                try:
+                    if os.path.exists(link_path):
+                        os.remove(link_path)
+                        self.logger.info(f"Archivo de inicio eliminado: {link_path}")
+                    return True
+                except Exception as e:
+                    self.logger.error(f"Error al eliminar archivo de inicio: {e}")
+                    return False
+                    
+        except Exception as e:
+            self.logger.error(f"Error en método de carpeta de inicio: {e}")
             return False
     
     def is_startup_enabled(self):

@@ -6,7 +6,7 @@ from .panels.monitoring_panel import MonitoringPanel
 from .panels.backup_panel import BackupPanel
 from .panels.players_panel import PlayersPanel
 from .panels.mods_panel import ModsPanel
-from .panels.logs_panel import LogsPanel
+from .panels.working_logs_panel import WorkingLogsPanel
 from .panels.rcon_panel import RconPanel
 from .dialogs.advanced_settings_dialog import AdvancedSettingsDialog
 from .dialogs.custom_dialogs import show_info, show_warning, show_error, ask_yes_no, ask_string
@@ -14,6 +14,9 @@ from utils.app_settings import AppSettings
 from utils.system_tray import SystemTray
 
 class MainWindow:
+
+    APP_VERSION = "0.1"
+    
     def __init__(self, root, config_manager, logger):
         self.root = root
         self.config_manager = config_manager
@@ -303,7 +306,7 @@ class MainWindow:
         self.monitoring_panel = MonitoringPanel(self.tab_reinicios_content, self.config_manager, self.logger, self)
         self.backup_panel = BackupPanel(self.tab_backup_content, self.config_manager, self.logger, self)
         self.rcon_panel = RconPanel(self.tab_rcon_content, self.config_manager, self.logger, self)
-        self.logs_panel = LogsPanel(self.tab_logs_content, self.config_manager, self.logger, self)
+        self.logs_panel = WorkingLogsPanel(self.tab_logs_content, self.config_manager, self.logger, self)
         
         # Configurar callbacks para los botones
         self.setup_button_callbacks()
@@ -427,8 +430,8 @@ class MainWindow:
         ctk.CTkLabel(main_frame, text="❓ Ayuda y Soporte", font=("Arial", 16, "bold")).pack(pady=10)
         
         # Info de la aplicación
-        info_text = """
-🎮 Ark Server Manager v2.0
+        info_text = f"""
+🎮 Ark Server Manager {self.APP_VERSION}
 📅 Desarrollado en 2025
 🔧 Para Ark Survival Ascended
 
@@ -495,23 +498,57 @@ class MainWindow:
             self.root.quit()
     
     def add_log_message(self, message):
-        """Agregar mensaje al log del sistema"""
-        # Ahora usamos el logger principal en lugar del widget de logs
-        self.logger.info(message)
-        
-        # También actualizar el panel de logs si existe
-        if hasattr(self, 'logs_panel') and hasattr(self.logs_panel, 'load_content'):
-            # Programar la actualización para el siguiente ciclo de la GUI
-            self.root.after(100, self.logs_panel.load_content)
+        """Agregar mensaje al log del sistema (área inferior)"""
+        try:
+            # Registrar en el logger principal
+            self.logger.info(message)
+            
+            # Agregar timestamp y formatear el mensaje
+            from datetime import datetime
+            timestamp = datetime.now().strftime("[%H:%M:%S]")
+            formatted_message = f"{timestamp} ℹ️ {message}"
+            
+            # Escribir en el área de logs inferior si existe
+            if hasattr(self, 'logs_text') and self.logs_text:
+                # Habilitar escritura temporalmente
+                self.logs_text.configure(state="normal")
+                
+                # Insertar mensaje al final
+                self.logs_text.insert("end", formatted_message + "\n")
+                
+                # Hacer scroll al final para ver el mensaje más reciente
+                self.logs_text.see("end")
+                
+                # Deshabilitar escritura
+                self.logs_text.configure(state="disabled")
+                
+                # Limitar número de líneas para evitar crecimiento excesivo
+                content = self.logs_text.get("1.0", "end")
+                lines = content.split('\n')
+                if len(lines) > 200:  # Mantener solo las últimas 200 líneas
+                    self.logs_text.configure(state="normal")
+                    # Eliminar las primeras 100 líneas
+                    lines_to_keep = lines[-100:]
+                    self.logs_text.delete("1.0", "end")
+                    self.logs_text.insert("1.0", '\n'.join(lines_to_keep))
+                    self.logs_text.configure(state="disabled")
+            
+            # También agregar al panel superior si está disponible
+            if hasattr(self, 'logs_panel') and hasattr(self.logs_panel, 'add_message'):
+                self.logs_panel.add_message(message, "info")
+                
+        except Exception as e:
+            # Fallback silencioso para evitar errores en cascada
+            self.logger.error(f"Error agregando mensaje a logs GUI: {e}")
     
     # ==================== MÉTODOS DE CONFIGURACIÓN AVANZADA ====================
     
     def apply_app_settings(self):
         """Aplicar configuraciones de la aplicación"""
         try:
-            # Aplicar tema
+            # Aplicar tema de forma segura
             theme = self.app_settings.get_setting("theme_mode", "system")
-            ctk.set_appearance_mode(theme)
+            self.root.after(50, lambda: self._apply_theme_safely(theme))
             
             # Configurar ventana siempre visible
             if self.app_settings.get_setting("always_on_top"):
@@ -542,6 +579,46 @@ class MainWindow:
             
         except Exception as e:
             self.logger.error(f"Error al aplicar configuraciones: {e}")
+    
+    def _apply_theme_safely(self, theme):
+        """Aplicar tema de forma segura sin bloquear la interfaz"""
+        try:
+            self.logger.info(f"Aplicando tema: {theme}")
+            
+            # Verificar que el tema sea válido
+            valid_themes = ["light", "dark", "system"]
+            if theme not in valid_themes:
+                self.logger.warning(f"Tema no válido '{theme}', usando 'system'")
+                theme = "system"
+            
+            # Aplicar tema con múltiples intentos para compatibilidad
+            for attempt in range(3):
+                try:
+                    ctk.set_appearance_mode(theme)
+                    self.logger.info(f"Tema '{theme}' aplicado exitosamente en intento {attempt + 1}")
+                    
+                    # Forzar actualización de la interfaz principal
+                    try:
+                        self.root.update_idletasks()
+                        # También actualizar widgets principales si existen
+                        if hasattr(self, 'tabview'):
+                            self.tabview.update()
+                    except Exception as update_e:
+                        self.logger.warning(f"Error al actualizar interfaz tras cambio de tema: {update_e}")
+                    
+                    return  # Éxito, salir de la función
+                    
+                except Exception as e:
+                    self.logger.warning(f"Intento {attempt + 1} de aplicar tema falló: {e}")
+                    if attempt < 2:  # No es el último intento
+                        import time
+                        time.sleep(0.3)  # Esperar un poco más en la ventana principal
+                    
+            # Si llegamos aquí, todos los intentos fallaron
+            self.logger.error(f"No se pudo aplicar el tema '{theme}' después de 3 intentos")
+            
+        except Exception as e:
+            self.logger.error(f"Error crítico al aplicar tema: {e}")
     
     def save_window_position(self):
         """Guardar posición actual de la ventana"""

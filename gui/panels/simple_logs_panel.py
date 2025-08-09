@@ -9,10 +9,32 @@ class SimpleLogsPanel(ctk.CTkFrame):
         self.logger = logger
         self.main_window = main_window
         
+        # Configurar el frame principal para expandirse
+        self.pack(fill="both", expand=True)
+        
         self.create_widgets()
         
-        # Mostrar contenido por defecto después de crear widgets
-        self.after(100, self.show_default_content)
+        # Mostrar contenido por defecto inmediatamente y después con delay
+        try:
+            # Intentar inmediatamente
+            self.show_default_content()
+            # Reintentar después de que se construya la GUI
+            self.after(100, self.show_default_content)
+            self.after(1000, self.show_default_content)  # Otro intento por si falla
+            
+            # Agregar mensaje de prueba inmediato
+            if self.logger:
+                self.logger.info("SimpleLogsPanel inicializado correctamente")
+                
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al mostrar contenido por defecto: {e}")
+            # Intentar agregar mensaje mínimo
+            try:
+                if hasattr(self, 'log_display'):
+                    self.add_message("Panel de logs inicializado", "info")
+            except:
+                pass
         
     def create_widgets(self):
         """Crear widgets simples y funcionales"""
@@ -78,45 +100,44 @@ class SimpleLogsPanel(ctk.CTkFrame):
     
     def show_default_content(self):
         """Mostrar contenido por defecto"""
-        content = """🎮 PANEL DE LOGS - ARK SERVER MANAGER
+        try:
+            content = """🎮 PANEL DE LOGS - ARK SERVER MANAGER
 ==============================================
 
-📋 ESTADO ACTUAL:
-✅ Sistema de logging operativo
 ✅ Panel de logs cargado correctamente
-✅ Conexión con aplicación establecida
+✅ Sistema operativo
 
-🔍 TIPOS DE LOGS DISPONIBLES:
+📋 ESTADO: Sistema funcionando normalmente
 
-🎮 EVENTOS SERVIDOR:
-   • Inicio y parada del servidor
-   • Actualizaciones de servidor
-   • Reinicios automáticos y manuales
-   • Comandos RCON ejecutados
-   • Operaciones de backup
-   • Gestión de mods
+🔍 OPCIONES DISPONIBLES:
+• 🎮 Eventos Servidor - Ver actividad del servidor
+• 📋 Log Aplicación - Ver registro general
+• 🔄 Actualizar - Refrescar contenido
+• 🗑️ Limpiar - Limpiar pantalla
 
-📋 LOG APLICACIÓN:
-   • Mensajes del sistema
-   • Errores y warnings
-   • Estado de conexiones
-   • Información de configuración
-
-📂 UBICACIÓN DE ARCHIVOS:
-   • Eventos servidor: logs/server_events/server_events_YYYY-MM-DD.log
-   • Log aplicación: logs/app.log
-
-🚀 INSTRUCCIONES:
-1. Haz clic en "🎮 Eventos Servidor" para ver eventos específicos del servidor
-2. Haz clic en "📋 Log Aplicación" para ver el log general de la app
-3. Usa "🔄 Actualizar" para refrescar el contenido
-4. Usa "🗑️ Limpiar" para limpiar la pantalla
-
-💡 TIP: Los eventos se registran automáticamente cuando realizas acciones en la aplicación.
+💡 Haz clic en los botones superiores para ver información específica.
+💡 Los errores y mensajes aparecerán aquí automáticamente.
 """
-        self.log_display.delete("1.0", "end")
-        self.log_display.insert("1.0", content)
-        self.current_view = "default"
+            
+            if hasattr(self, 'log_display') and self.log_display:
+                self.log_display.delete("1.0", "end")
+                self.log_display.insert("1.0", content)
+                self.current_view = "default"
+                if self.logger:
+                    self.logger.info("Contenido por defecto mostrado en panel de logs")
+            else:
+                if self.logger:
+                    self.logger.error("log_display no está disponible")
+                    
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error en show_default_content: {e}")
+            # Intentar crear contenido mínimo
+            try:
+                if hasattr(self, 'log_display') and self.log_display:
+                    self.log_display.insert("1.0", "📋 Panel de logs cargado\n✅ Sistema funcionando")
+            except:
+                pass
     
     def show_server_events(self):
         """Mostrar eventos del servidor"""
@@ -206,3 +227,41 @@ Los eventos aparecerán aquí cuando:
         self.log_display.delete("1.0", "end")
         self.log_display.insert("1.0", "🗑️ Pantalla limpiada.\n\nHaz clic en un botón para mostrar contenido.")
         self.current_view = "cleared"
+    
+    def add_message(self, message, message_type="info"):
+        """Agregar un mensaje al panel de logs desde otros componentes"""
+        try:
+            timestamp = datetime.now().strftime("[%H:%M:%S]")
+            
+            # Determinar el icono según el tipo de mensaje
+            if message_type == "error":
+                icon = "❌"
+            elif message_type == "success":
+                icon = "✅"
+            elif message_type == "warning":
+                icon = "⚠️"
+            elif message_type == "info":
+                icon = "ℹ️"
+            else:
+                icon = "📝"
+            
+            # Crear el mensaje completo
+            full_message = f"{timestamp} {icon} {message}\n"
+            
+            # Insertar el mensaje
+            current_content = self.log_display.get("1.0", "end")
+            if current_content.strip():
+                self.log_display.insert("end", full_message)
+            else:
+                # Si está vacío, empezar con header
+                header = "🔄 MENSAJES EN TIEMPO REAL\n" + "=" * 50 + "\n\n"
+                self.log_display.insert("1.0", header + full_message)
+            
+            # Hacer scroll al final
+            self.log_display.see("end")
+            
+            self.current_view = "realtime"
+            
+        except Exception as e:
+            # Fallback silencioso para evitar errores en cascada
+            pass

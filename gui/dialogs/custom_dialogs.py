@@ -3,6 +3,17 @@ Diálogos personalizados con CustomTkinter para reemplazar tkinter.messagebox
 """
 
 import customtkinter as ctk
+from pathlib import Path
+
+
+def _set_dialog_icon(dialog):
+    """Función auxiliar para configurar icono en diálogos"""
+    try:
+        icon_path = Path(__file__).parent.parent.parent / "ico" / "ArkManager.ico"
+        if icon_path.exists():
+            dialog.wm_iconbitmap(str(icon_path))
+    except Exception:
+        pass  # Ignorar errores de icono
 
 
 class CustomMessageBox:
@@ -49,6 +60,7 @@ class CustomMessageBox:
         self.dialog.geometry("400x200")
         self.dialog.transient(self.parent)
         self.dialog.grab_set()
+        _set_dialog_icon(self.dialog)
         
         # Centrar en pantalla
         self.dialog.geometry("+400+300")
@@ -170,6 +182,7 @@ class CustomInputDialog:
         self.dialog.geometry("400x180")
         self.dialog.transient(self.parent)
         self.dialog.grab_set()
+        _set_dialog_icon(self.dialog)
         
         # Centrar en pantalla
         self.dialog.geometry("+400+300")
@@ -285,6 +298,7 @@ class CustomProgressDialog:
         self.dialog.geometry("400x150")
         self.dialog.transient(self.parent)
         self.dialog.grab_set()
+        _set_dialog_icon(self.dialog)
         
         # Centrar en pantalla
         self.dialog.geometry("+400+350")

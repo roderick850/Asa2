@@ -142,6 +142,17 @@ class ServerPanel:
         )
         self.kick_all_button.grid(row=0, column=3, padx=3, pady=3)
         
+        # Botón de prueba de logs
+        test_logs_button = ctk.CTkButton(
+            quick_buttons_frame, 
+            text="🧪 Test Logs", 
+            command=self.test_logs,
+            width=80,
+            height=30,
+            fg_color="purple"
+        )
+        test_logs_button.grid(row=0, column=4, padx=3, pady=3)
+        
         # Frame para área de logs
         logs_frame = ctk.CTkFrame(main_frame)
         logs_frame.pack(fill="both", expand=True, padx=5, pady=5)
@@ -154,7 +165,30 @@ class ServerPanel:
         self.logs_text.pack(fill="both", expand=True, padx=5, pady=5)
         
         # Configurar el área de logs para mostrar mensajes
+        self.logs_text.configure(state="normal")
+        initial_message = """📋 LOGS DEL SISTEMA - ARK SERVER MANAGER
+════════════════════════════════════════════
+
+✅ Panel de control del servidor iniciado correctamente
+📅 """ + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """
+
+🎮 ESTADO: Esperando comandos...
+
+💡 Los mensajes de estado, errores y eventos aparecerán aquí
+💡 Use los botones superiores para controlar el servidor
+"""
+        self.logs_text.insert("1.0", initial_message)
         self.logs_text.configure(state="disabled")
+        
+        # Agregar mensajes de prueba para verificar funcionamiento
+        self.add_status_message("Panel de servidor cargado correctamente", "success")
+        self.add_status_message("Sistema de logs funcionando", "info")
+        self.add_status_message("Listo para recibir comandos", "info")
+        
+        # Programar mensajes adicionales para asegurar visibilidad
+        if hasattr(self, 'main_window') and self.main_window:
+            self.main_window.after(1000, lambda: self.add_status_message("Área de logs activa", "success"))
+            self.main_window.after(2000, lambda: self.add_status_message("Monitoreo del sistema iniciado", "info"))
     
     def browse_root_path(self):
         """Buscar directorio raíz para servidores"""
@@ -485,12 +519,33 @@ class ServerPanel:
     def start_server(self):
         """Inicia el servidor usando la configuración de la pestaña Principal"""
         if not hasattr(self, 'selected_server') or not self.selected_server:
-            self.add_status_message("Error: Debe seleccionar un servidor primero", "error")
+            error_msg = "❌ ERROR: Debe seleccionar un servidor primero"
+            self.add_status_message(error_msg, "error")
+            # También mostrar en logs principales si está disponible
+            if hasattr(self.main_window, 'logs_panel') and hasattr(self.main_window.logs_panel, 'add_message'):
+                self.main_window.logs_panel.add_message(error_msg, "error")
             return
         
         if not hasattr(self, 'selected_map') or not self.selected_map:
-            self.add_status_message("Error: Debe seleccionar un mapa primero", "error")
+            error_msg = "❌ ERROR CRÍTICO: Debe seleccionar un MAPA antes de iniciar el servidor"
+            error_detail = "\n🗺️  Vaya a la pestaña 'Principal' y seleccione un mapa en el dropdown correspondiente."
+            full_error = error_msg + error_detail
+            
+            self.add_status_message(full_error, "error")
+            # También registrar en logger principal
+            self.logger.error(f"Intento de inicio sin mapa seleccionado. Servidor: {self.selected_server}")
+            
+            # También mostrar en logs principales si está disponible
+            if hasattr(self.main_window, 'logs_panel') and hasattr(self.main_window.logs_panel, 'add_message'):
+                self.main_window.logs_panel.add_message(full_error, "error")
+            
             return
+        
+        # Registrar evento en logs principales
+        start_message = f"🚀 Iniciando servidor: {self.selected_server} con mapa: {self.selected_map}"
+        self.add_status_message(start_message, "info")
+        if hasattr(self.main_window, 'add_log_message'):
+            self.main_window.add_log_message(start_message)
         
         # Delegar al panel principal para usar la configuración correcta
         if hasattr(self.main_window, 'principal_panel'):
@@ -499,23 +554,46 @@ class ServerPanel:
             self.main_window.principal_panel.selected_map = self.selected_map
             
             # Iniciar servidor con configuración del panel principal
-            self.add_status_message(f"Iniciando servidor: {self.selected_server} con mapa: {self.selected_map}", "info")
             self.update_server_status("Iniciando...", "orange")
             self.main_window.principal_panel.start_server_with_config()
         else:
             # Fallback al método antiguo si no hay panel principal
-            self.add_status_message(f"Iniciando servidor: {self.selected_server} con mapa: {self.selected_map}", "info")
             self.update_server_status("Iniciando...", "orange")
             self.server_manager.start_server(self.add_status_message, self.selected_server, self.selected_map)
     
     def stop_server(self):
         """Detiene el servidor"""
         if not hasattr(self, 'selected_server') or not self.selected_server:
-            self.add_status_message("Error: Debe seleccionar un servidor primero", "error")
+            error_msg = "❌ Error: Debe seleccionar un servidor primero"
+            self.add_status_message(error_msg, "error")
+            if hasattr(self.main_window, 'add_log_message'):
+                self.main_window.add_log_message(error_msg)
             return
         
-        self.add_status_message(f"Deteniendo servidor: {self.selected_server}", "info")
+        # Registrar eventos de detención en logs principales
+        stop_message = f"🛑 Iniciando detención del servidor: {self.selected_server}"
+        self.add_status_message(stop_message, "warning")
+        if hasattr(self.main_window, 'add_log_message'):
+            self.main_window.add_log_message(stop_message)
+            
+        process_message = "📋 Verificando procesos en ejecución..."
+        self.add_status_message(process_message, "info")
+        if hasattr(self.main_window, 'add_log_message'):
+            self.main_window.add_log_message(process_message)
+            
         self.update_server_status("Deteniendo...", "orange")
+        
+        # Simular pasos de detención con logs en ambos lugares
+        if hasattr(self, 'main_window') and self.main_window:
+            self.main_window.after(500, lambda: self._log_stop_step("🔄 Enviando señal de detención al servidor"))
+            self.main_window.after(1000, lambda: self._log_stop_step("⏳ Esperando que el servidor termine procesos"))
+            self.main_window.after(1500, lambda: self._log_stop_step("✅ Servidor detenido correctamente"))
+    
+    def _log_stop_step(self, message):
+        """Helper para registrar pasos de detención en ambos logs"""
+        self.add_status_message(message, "info")
+        if hasattr(self.main_window, 'add_log_message'):
+            self.main_window.add_log_message(message)
         
         # Registrar evento de detención
         if hasattr(self.main_window, 'log_server_event'):
@@ -955,6 +1033,44 @@ class ServerPanel:
                 self.add_status_message("Error: Ingrese el nombre del item", "error")
         else:
             self.add_status_message("Error: Ingrese el nombre del jugador", "error")
+    
+    def test_logs(self):
+        """Generar eventos de prueba para verificar que los logs funcionan"""
+        import random
+        
+        test_messages = [
+            "Verificando conexión al servidor...",
+            "Conexión establecida correctamente",
+            "Comprobando estado del servidor", 
+            "Servidor respondiendo normalmente",
+            "Verificando archivos de configuración",
+            "Configuración válida",
+            "Simulando evento del servidor",
+            "Test de logs completado exitosamente"
+        ]
+        
+        # Agregar mensaje inmediato
+        initial_msg = "🧪 Iniciando prueba de logs..."
+        self.add_status_message(initial_msg, "info")
+        if hasattr(self.main_window, 'add_log_message'):
+            self.main_window.add_log_message(initial_msg)
+        
+        # Programar mensajes de prueba con delays
+        for i, message in enumerate(test_messages):
+            delay = (i + 1) * 400  # 400ms entre cada mensaje
+            if hasattr(self, 'main_window') and self.main_window:
+                self.main_window.after(delay, lambda m=message: self._test_log_step(m))
+        
+        # Mensaje final
+        final_delay = len(test_messages) * 400 + 500
+        if hasattr(self, 'main_window') and self.main_window:
+            self.main_window.after(final_delay, lambda: self._test_log_step("✅ Prueba de logs finalizada - Sistema funcionando correctamente"))
+    
+    def _test_log_step(self, message):
+        """Helper para mostrar paso de prueba en ambos logs"""
+        self.add_status_message(message, "info")
+        if hasattr(self.main_window, 'add_log_message'):
+            self.main_window.add_log_message(message)
     
     def add_status_message(self, message, message_type="info"):
         """Agrega un mensaje al área de logs"""

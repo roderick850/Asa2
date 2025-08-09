@@ -5,6 +5,7 @@ Diálogo de configuraciones avanzadas de la aplicación
 import customtkinter as ctk
 import tkinter.filedialog as fd
 from tkinter import ttk
+from pathlib import Path
 from .custom_dialogs import show_info, show_warning, show_error, ask_yes_no
 
 
@@ -17,6 +18,7 @@ class AdvancedSettingsDialog:
         self.logger = logger
         self.dialog = None
         self.changes_made = False
+        self._theme_change_in_progress = False
         
     def show(self):
         """Mostrar el diálogo de configuraciones"""
@@ -29,6 +31,14 @@ class AdvancedSettingsDialog:
         self.dialog.geometry("800x600")
         self.dialog.transient(self.parent)
         self.dialog.grab_set()
+        
+        # Configurar icono
+        try:
+            icon_path = Path(__file__).parent.parent.parent / "ico" / "ArkManager.ico"
+            if icon_path.exists():
+                self.dialog.wm_iconbitmap(str(icon_path))
+        except Exception:
+            pass  # Ignorar errores de icono en diálogos
         
         # Centrar en pantalla
         self.dialog.geometry("+300+150")
@@ -331,13 +341,21 @@ class AdvancedSettingsDialog:
         ctk.CTkLabel(theme_frame, text="🎨 Tema de la aplicación:").pack(side="left", padx=10, pady=10)
         
         self.theme_var = ctk.StringVar(value=self.app_settings.get_setting("theme_mode"))
-        theme_combo = ctk.CTkComboBox(
+        self.theme_combo = ctk.CTkComboBox(
             theme_frame,
             values=["light", "dark", "system"],
             variable=self.theme_var,
             command=self.on_theme_change
         )
-        theme_combo.pack(side="left", padx=10, pady=10)
+        self.theme_combo.pack(side="left", padx=10, pady=10)
+        
+        # Label de estado del tema
+        self.theme_status_label = ctk.CTkLabel(
+            theme_frame,
+            text="",
+            text_color="gray"
+        )
+        self.theme_status_label.pack(side="left", padx=(10, 0), pady=10)
         
         # Sonidos de notificación
         sound_frame = ctk.CTkFrame(main_frame)
@@ -430,9 +448,13 @@ class AdvancedSettingsDialog:
             self.startup_var.set(not enabled)
             show_error(
                 self.dialog,
-                "Error",
-                "No se pudo configurar el inicio automático con Windows.\n"
-                "Asegúrate de tener permisos de administrador."
+                "Error de Permisos",
+                "No se pudo configurar el inicio automático con Windows.\n\n"
+                "Posibles soluciones:\n"
+                "1. Ejecuta la aplicación como administrador\n"
+                "2. Verifica que no hay software de seguridad bloqueando\n"
+                "3. El sistema intentó usar un método alternativo (carpeta de inicio)\n\n"
+                "Si el problema persiste, configura manualmente el inicio automático."
             )
     
     def on_always_on_top_toggle(self):
@@ -442,8 +464,94 @@ class AdvancedSettingsDialog:
     
     def on_theme_change(self, value):
         """Manejar cambio de tema"""
-        ctk.set_appearance_mode(value)
-        self.changes_made = True
+        try:
+            # Evitar cambios múltiples simultáneos
+            if self._theme_change_in_progress:
+                self.logger.warning("Cambio de tema ya en progreso, ignorando...")
+                self.theme_status_label.configure(text="⚠️ Cambio en progreso...")
+                return
+            
+            # Mostrar mensaje de confirmación
+            self.logger.info(f"Cambiando tema a: {value}")
+            
+            # Actualizar estado visual
+            self.theme_status_label.configure(text="🔄 Cambiando tema...")
+            self.theme_combo.configure(state="disabled")
+            
+            # Marcar cambio en progreso
+            self._theme_change_in_progress = True
+            
+            # Cambiar tema de forma asíncrona para evitar bloqueos
+            self.dialog.after(100, lambda: self._apply_theme_change(value))
+            self.changes_made = True
+            
+        except Exception as e:
+            self.logger.error(f"Error al preparar cambio de tema: {e}")
+            self.theme_status_label.configure(text="❌ Error en cambio")
+            self._theme_change_in_progress = False
+    
+    def _apply_theme_change(self, theme_value):
+        """Aplicar cambio de tema de forma segura"""
+        try:
+            # Deshabilitar temporalmente la interfaz
+            self.dialog.configure(cursor="wait")
+            
+            # Aplicar el tema con manejo de errores específicos
+            self.logger.info(f"Aplicando tema: {theme_value}")
+            
+            # Intentar cambio de tema con múltiples intentos para compatibilidad
+            success = False
+            for attempt in range(3):
+                try:
+                    ctk.set_appearance_mode(theme_value)
+                    success = True
+                    break
+                except Exception as e:
+                    self.logger.warning(f"Intento {attempt + 1} de cambio de tema falló: {e}")
+                    if attempt < 2:  # No es el último intento
+                        # Esperar un poco más antes del siguiente intento
+                        import time
+                        time.sleep(0.2)
+                    continue
+            
+            if not success:
+                raise Exception("No se pudo cambiar el tema después de 3 intentos")
+            
+            # Forzar actualización de la interfaz
+            try:
+                self.dialog.update_idletasks()
+                if hasattr(self.parent, 'update_idletasks'):
+                    self.parent.update_idletasks()
+            except Exception as e:
+                self.logger.warning(f"Error al actualizar interfaz: {e}")
+            
+            # Restaurar cursor normal y habilitar cambios futuros
+            self.dialog.after(800, lambda: self._finish_theme_change())
+            
+            self.logger.info(f"Tema cambiado exitosamente a: {theme_value}")
+            
+        except Exception as e:
+            self.logger.error(f"Error crítico al cambiar tema: {e}")
+            self.theme_status_label.configure(text=f"❌ Error: {str(e)[:30]}...")
+            # Restaurar estado en caso de error
+            self._finish_theme_change()
+    
+    def _finish_theme_change(self):
+        """Finalizar el proceso de cambio de tema"""
+        try:
+            self.dialog.configure(cursor="")
+            self.theme_combo.configure(state="normal")
+            self.theme_status_label.configure(text="✅ Tema aplicado")
+            self._theme_change_in_progress = False
+            
+            # Limpiar mensaje después de unos segundos
+            self.dialog.after(3000, lambda: self.theme_status_label.configure(text=""))
+            
+        except Exception as e:
+            self.logger.error(f"Error al finalizar cambio de tema: {e}")
+            self.theme_status_label.configure(text="❌ Error en cambio")
+            self.theme_combo.configure(state="normal")
+            self._theme_change_in_progress = False
     
     def save_settings(self):
         """Guardar todas las configuraciones"""

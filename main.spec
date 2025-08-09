@@ -1,95 +1,98 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-import sys
+import os
 from pathlib import Path
 
-# Definir el directorio base
+# Configuración básica
+block_cipher = None
 base_dir = Path.cwd()
 
-# Recopilar archivos de datos necesarios
-datas = [
+# Archivos de datos necesarios
+datas = []
+
+# Agregar archivos esenciales si existen
+essential_files = [
     ('config.ini', '.'),
-    ('data', 'data'),
-    ('examples', 'examples'),
-    ('rcon', 'rcon'),
-    ('ico', 'ico'),
     ('README.md', '.'),
     ('LICENSE', '.'),
 ]
 
-# Solo incluir las dependencias esenciales
+for src, dst in essential_files:
+    if os.path.exists(src):
+        datas.append((src, dst))
+
+# Agregar directorios esenciales si existen
+essential_dirs = [
+    ('data', 'data'),
+    ('examples', 'examples'),
+    ('rcon', 'rcon'),
+    ('ico', 'ico'),
+]
+
+for src, dst in essential_dirs:
+    if os.path.exists(src):
+        datas.append((src, dst))
+
+# Imports ocultos esenciales
 hiddenimports = [
+    # GUI
     'customtkinter',
-    'PIL',
-    'PIL._tkinter_finder',
     'tkinter',
     'tkinter.ttk',
     'tkinter.filedialog',
     'tkinter.messagebox',
-    'tkinter.simpledialog',
-    'tkinter.font',
-    'tkinter.colorchooser',
+    
+    # Imágenes
+    'PIL',
+    'PIL.Image',
+    'PIL.ImageTk',
+    
+    # Sistema
     'psutil',
     'requests',
+    'urllib3',
+    'certifi',
+    
+    # Otros
     'pystray',
-    'win10toast',
-    'six',
-    'configparser',
     'schedule',
+    'configparser',
+    'pathlib',
+    'json',
+    'logging',
     'threading',
     'subprocess',
-    'pathlib',
     'os',
     'sys',
-    'json',
-    'datetime',
-    'logging',
-    'logging.handlers',
-    'collections',
-    're',
-    'platform',
-    'shutil',
-    'urllib.parse',
-    'urllib.request',
-    'time',
-    'webbrowser',
     
-    # Módulos específicos de la aplicación
+    # Módulos de la aplicación
     'gui.main_window',
     'gui.dialogs.initial_setup',
     'gui.dialogs.advanced_settings_dialog',
     'gui.dialogs.custom_dialogs',
-    'gui.panels.server_panel',
     'gui.panels.principal_panel',
+    'gui.panels.server_panel',
     'gui.panels.config_panel',
-    'gui.panels.logs_panel',
-    'gui.panels.mods_panel',
-    'gui.panels.backup_panel',
-    'gui.panels.advanced_backup_panel',
     'gui.panels.monitoring_panel',
+    'gui.panels.backup_panel',
     'gui.panels.players_panel',
+    'gui.panels.mods_panel',
+    'gui.panels.logs_panel',
     'gui.panels.rcon_panel',
-    'gui.panels.advanced_restart_panel',
-    'gui.panels.dynamic_config_panel',
     'utils.config_manager',
     'utils.logger',
     'utils.server_manager',
-    'utils.server_logger',
-    'utils.ini_cleaner',
     'utils.app_settings',
     'utils.system_tray',
 ]
 
-# Excluir solo módulos realmente problemáticos
+# Exclusiones
 excludes = [
     'matplotlib',
     'numpy',
     'scipy',
     'pandas',
     'jupyter',
-    'IPython',
-    'tornado',
-    'zmq',
     'test',
     'tests',
     'unittest',
@@ -105,23 +108,31 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=excludes,
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
     noarchive=False,
-    optimize=0,  # Sin optimización para evitar problemas
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=None)
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+# Determinar icono
+icon_path = None
+if os.path.exists('ico/ArkManager.ico'):
+    icon_path = 'ico/ArkManager.ico'
 
 exe = EXE(
     pyz,
     a.scripts,
     a.binaries,
+    a.zipfiles,
     a.datas,
     [],
     name='ArkServerManager',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=False,  # Sin UPX para evitar alertas de antivirus
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
@@ -130,6 +141,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='ico/ArkManager.ico',
-    version_file=None,
+    icon=icon_path,
 )

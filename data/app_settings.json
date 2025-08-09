@@ -11,7 +11,7 @@
   "auto_backup_on_start": true,
   "confirm_exit": true,
   "hide_console": false,
-  "theme_mode": "system",
+  "theme_mode": "dark",
   "auto_save_config": true,
   "notification_sound": true,
   "window_x": 78,

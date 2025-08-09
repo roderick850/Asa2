@@ -13,25 +13,125 @@ class InitialSetupDialog:
         self.config_manager = config_manager
         self.logger = logger
         self.result = False
+        self.dialog = None
         
+        try:
+            self.create_dialog()
+        except Exception as e:
+            self.logger.error(f"Error crítico al crear diálogo inicial: {e}")
+            # Si no se puede crear el diálogo, forzar a mostrar la ventana principal
+            # pero NO marcar como exitoso
+            self.result = False
+            self._try_simple_dialog()
+    
+    def create_dialog(self):
+        """Crear la ventana de diálogo de forma segura"""
         # Crear ventana modal
-        self.dialog = ctk.CTkToplevel(parent)
-        self.dialog.title("Configuración Inicial")
-        self.dialog.geometry("600x400")
+        self.dialog = ctk.CTkToplevel(self.parent)
+        self.dialog.title("🚀 Configuración Inicial - Ark Server Manager")
+        self.dialog.geometry("650x450")
         self.dialog.resizable(False, False)
-        self.dialog.transient(parent)
-        self.dialog.grab_set()
+        
+        # Configurar comportamiento de ventana
+        self.dialog.protocol("WM_DELETE_WINDOW", self.cancel_setup)
+        
+        # Configurar icono de forma segura
+        self._set_icon()
         
         # Centrar la ventana
-        self.dialog.update_idletasks()
-        x = (self.dialog.winfo_screenwidth() // 2) - (600 // 2)
-        y = (self.dialog.winfo_screenheight() // 2) - (400 // 2)
-        self.dialog.geometry(f"600x400+{x}+{y}")
+        self._center_window()
         
+        # Crear contenido
         self.create_widgets()
+        
+        # Configurar como modal
+        self.dialog.transient(self.parent)
+        self.dialog.grab_set()
+        self.dialog.focus_set()
         
         # Esperar hasta que se cierre la ventana
         self.dialog.wait_window()
+    
+
+    def _set_icon(self):
+        """Configurar icono de forma segura"""
+        try:
+            icon_path = Path(__file__).parent.parent.parent / "ico" / "ArkManager.ico"
+            if icon_path.exists() and self.dialog and self.dialog.winfo_exists():
+                self.dialog.wm_iconbitmap(str(icon_path))
+        except Exception:
+            pass  # Ignorar errores de icono
+    
+    def _center_window(self):
+        """Centrar la ventana en la pantalla"""
+        try:
+            if self.dialog and self.dialog.winfo_exists():
+                self.dialog.update_idletasks()
+                width = 650
+                height = 450
+                screen_width = self.dialog.winfo_screenwidth()
+                screen_height = self.dialog.winfo_screenheight()
+                x = (screen_width // 2) - (width // 2)
+                y = (screen_height // 2) - (height // 2)
+                self.dialog.geometry(f"{width}x{height}+{x}+{y}")
+        except Exception as e:
+            self.logger.warning(f"No se pudo centrar ventana: {e}")
+    
+    def _try_simple_dialog(self):
+        """Intentar crear un diálogo más simple como fallback"""
+        try:
+            import tkinter as tk
+            import tkinter.filedialog as filedialog
+            import tkinter.messagebox as msgbox
+            
+            self.logger.info("Intentando diálogo simple para configuración inicial...")
+            
+            # Mostrar mensaje explicativo
+            response = msgbox.askquestion(
+                "Configuración Inicial",
+                "Bienvenido a Ark Server Manager\n\n"
+                "Es necesario configurar la ruta raíz del servidor ARK.\n"
+                "¿Deseas seleccionar la carpeta ahora?"
+            )
+            
+            if response == 'yes':
+                # Mostrar selector de carpeta
+                folder_path = filedialog.askdirectory(
+                    title="Seleccionar carpeta raíz del servidor ARK",
+                    mustexist=True
+                )
+                
+                if folder_path:
+                    try:
+                        # Guardar la configuración
+                        self.config_manager.set("server", "root_path", folder_path)
+                        self.config_manager.save_config()
+                        
+                        msgbox.showinfo(
+                            "Configuración Completada",
+                            f"✅ Ruta configurada correctamente:\n{folder_path}"
+                        )
+                        
+                        self.result = True
+                        self.logger.info(f"Configuración simple completada: {folder_path}")
+                        
+                    except Exception as e:
+                        self.logger.error(f"Error al guardar configuración simple: {e}")
+                        msgbox.showerror(
+                            "Error",
+                            f"Error al guardar la configuración:\n{e}"
+                        )
+                        self.result = False
+                else:
+                    # Usuario canceló
+                    self.result = False
+            else:
+                # Usuario no quiere configurar ahora
+                self.result = False
+                
+        except Exception as e:
+            self.logger.error(f"Error en diálogo simple: {e}")
+            self.result = False
     
     def create_widgets(self):
         # Frame principal
@@ -255,41 +355,110 @@ class InitialSetupDialog:
     
     def continue_setup(self):
         """Continuar con la configuración"""
-        root_path = self.path_entry.get().strip()
-        
-        if not root_path:
-            # Mostrar error
-            error_label = ctk.CTkLabel(
-                self.dialog,
-                text="❌ Debe especificar una ruta raíz",
-                text_color="red"
-            )
-            error_label.pack(pady=10)
-            return
-        
-        if not os.path.exists(root_path):
+        try:
+            # Limpiar errores anteriores
+            for widget in self.dialog.winfo_children():
+                if isinstance(widget, ctk.CTkLabel) and widget.cget("text_color") == "red":
+                    widget.destroy()
+            
+            root_path = self.path_entry.get().strip()
+            
+            if not root_path:
+                self._show_error("❌ Debe especificar una ruta raíz")
+                return
+            
+            # Validar que la ruta sea válida
             try:
-                os.makedirs(root_path, exist_ok=True)
+                # Expandir variables de entorno si las hay
+                root_path = os.path.expandvars(root_path)
+                root_path = os.path.expanduser(root_path)
+                root_path = os.path.abspath(root_path)
             except Exception as e:
-                error_label = ctk.CTkLabel(
+                self._show_error(f"❌ Ruta inválida: {str(e)}")
+                return
+            
+            # Verificar permisos de escritura
+            test_dir = os.path.dirname(root_path)
+            if not os.access(test_dir, os.W_OK):
+                self._show_error("❌ Sin permisos de escritura en la ubicación seleccionada")
+                return
+            
+            if not os.path.exists(root_path):
+                try:
+                    os.makedirs(root_path, exist_ok=True)
+                    self.logger.info(f"Directorio creado: {root_path}")
+                except Exception as e:
+                    self._show_error(f"❌ Error al crear directorio: {str(e)}")
+                    return
+            
+            # Verificar que se puede escribir en el directorio
+            try:
+                test_file = os.path.join(root_path, "test_write.tmp")
+                with open(test_file, 'w') as f:
+                    f.write("test")
+                os.remove(test_file)
+            except Exception as e:
+                self._show_error(f"❌ No se puede escribir en el directorio: {str(e)}")
+                return
+            
+            # Guardar configuración
+            try:
+                self.config_manager.set("server", "root_path", root_path)
+                self.config_manager.set("server", "install_path", os.path.join(root_path, "servers"))
+                self.config_manager.save()
+                
+                self.logger.info(f"Ruta raíz configurada exitosamente: {root_path}")
+                
+                # Mostrar mensaje de éxito
+                success_label = ctk.CTkLabel(
                     self.dialog,
-                    text=f"❌ Error al crear directorio: {str(e)}",
-                    text_color="red"
+                    text="✅ Configuración guardada correctamente",
+                    text_color="green"
                 )
-                error_label.pack(pady=10)
+                success_label.pack(pady=10)
+                
+                # Esperar un momento antes de cerrar
+                self.dialog.after(1000, self._close_with_success)
+                
+            except Exception as e:
+                self.logger.error(f"Error al guardar configuración: {e}")
+                self._show_error(f"❌ Error al guardar configuración: {str(e)}")
                 return
         
-        # Guardar configuración
-        self.config_manager.set("server", "root_path", root_path)
-        self.config_manager.set("server", "install_path", os.path.join(root_path, "servers"))
-        self.config_manager.save()
+        except Exception as e:
+            self.logger.error(f"Error inesperado en continue_setup: {e}")
+            self._show_error(f"❌ Error inesperado: {str(e)}")
+    
+    def _show_error(self, message):
+        """Mostrar mensaje de error"""
+        error_label = ctk.CTkLabel(
+            self.dialog,
+            text=message,
+            text_color="red"
+        )
+        error_label.pack(pady=10)
         
-        self.logger.info(f"Ruta raíz configurada: {root_path}")
-        
-        self.result = True
-        self.dialog.destroy()
+        # Auto-eliminar el error después de 5 segundos
+        self.dialog.after(5000, lambda: error_label.destroy())
+    
+    def _close_with_success(self):
+        """Cerrar diálogo con éxito"""
+        try:
+            self.result = True
+            if self.dialog and self.dialog.winfo_exists():
+                self.dialog.grab_release()  # Liberar el grab antes de cerrar
+                self.dialog.destroy()
+        except Exception as e:
+            self.logger.error(f"Error al cerrar diálogo: {e}")
+            self.result = True  # Asegurar que result sea True
     
     def cancel_setup(self):
         """Cancelar configuración"""
-        self.result = False
-        self.dialog.destroy()
+        try:
+            self.result = False
+            if self.dialog and self.dialog.winfo_exists():
+                self.dialog.grab_release()
+                self.dialog.destroy()
+        except Exception as e:
+            self.logger.error(f"Error al cancelar diálogo: {e}")
+            self.result = False
