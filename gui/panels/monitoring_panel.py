@@ -12,7 +12,9 @@ class MonitoringPanel(ctk.CTkFrame):
         self.monitoring_active = False
         
         self.create_widgets()
-        self.start_monitoring()
+        
+        # Iniciar monitoreo con retraso para asegurar que la UI esté lista
+        self.after(2000, self.start_monitoring)  # 2 segundos de retraso
         
     def create_widgets(self):
         """Crear todos los widgets del panel"""
@@ -186,38 +188,54 @@ class MonitoringPanel(ctk.CTkFrame):
     def update_system_stats(self):
         """Actualizar estadísticas del sistema"""
         try:
-            # CPU
+            # Obtener datos del sistema
             cpu_percent = psutil.cpu_percent(interval=1)
-            self.cpu_label.configure(text=f"CPU: {cpu_percent:.1f}%")
-            self.cpu_progress.set(cpu_percent / 100)
-            
-            # Memoria RAM
             memory = psutil.virtual_memory()
             memory_percent = memory.percent
             memory_gb = memory.used / (1024**3)
             memory_total_gb = memory.total / (1024**3)
-            self.memory_label.configure(
-                text=f"Memoria RAM: {memory_percent:.1f}% ({memory_gb:.1f}GB / {memory_total_gb:.1f}GB)"
-            )
-            self.memory_progress.set(memory_percent / 100)
-            
-            # Disco
             disk = psutil.disk_usage('/')
             disk_percent = disk.percent
             disk_gb = disk.used / (1024**3)
             disk_total_gb = disk.total / (1024**3)
-            self.disk_label.configure(
-                text=f"Disco: {disk_percent:.1f}% ({disk_gb:.1f}GB / {disk_total_gb:.1f}GB)"
-            )
-            self.disk_progress.set(disk_percent / 100)
-            
-            # Red
             network = psutil.net_io_counters()
             network_mb = network.bytes_sent / (1024**2)
             network_recv_mb = network.bytes_recv / (1024**2)
-            self.network_label.configure(
-                text=f"Red: ↑{network_mb:.1f}MB ↓{network_recv_mb:.1f}MB"
-            )
+            
+            # Programar actualización de UI en el hilo principal
+            def update_ui():
+                try:
+                    if hasattr(self, 'cpu_label') and self.cpu_label.winfo_exists():
+                        self.cpu_label.configure(text=f"CPU: {cpu_percent:.1f}%")
+                        self.cpu_progress.set(cpu_percent / 100)
+                    
+                    if hasattr(self, 'memory_label') and self.memory_label.winfo_exists():
+                        self.memory_label.configure(
+                            text=f"Memoria RAM: {memory_percent:.1f}% ({memory_gb:.1f}GB / {memory_total_gb:.1f}GB)"
+                        )
+                        self.memory_progress.set(memory_percent / 100)
+                    
+                    if hasattr(self, 'disk_label') and self.disk_label.winfo_exists():
+                        self.disk_label.configure(
+                            text=f"Disco: {disk_percent:.1f}% ({disk_gb:.1f}GB / {disk_total_gb:.1f}GB)"
+                        )
+                        self.disk_progress.set(disk_percent / 100)
+                    
+                    if hasattr(self, 'network_label') and self.network_label.winfo_exists():
+                        self.network_label.configure(
+                            text=f"Red: ↑{network_mb:.1f}MB ↓{network_recv_mb:.1f}MB"
+                        )
+                except Exception:
+                    # Silenciar errores de UI
+                    pass
+            
+            # Programar la actualización en el hilo principal
+            try:
+                if hasattr(self, 'winfo_exists') and self.winfo_exists():
+                    self.after(0, update_ui)
+            except Exception:
+                # Widget ya no existe
+                pass
             
         except Exception as e:
             self.logger.error(f"Error al actualizar estadísticas del sistema: {e}")
@@ -235,32 +253,55 @@ class MonitoringPanel(ctk.CTkFrame):
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
             
+            # Obtener datos del servidor
             if ark_process:
-                self.server_status_label.configure(text="Estado: Ejecutándose", text_color="green")
-                
-                # CPU del servidor
                 server_cpu = ark_process.cpu_percent()
-                self.server_cpu_label.configure(text=f"CPU del servidor: {server_cpu:.1f}%")
-                
-                # Memoria del servidor
                 server_memory = ark_process.memory_info()
                 server_memory_mb = server_memory.rss / (1024**2)
-                self.server_memory_label.configure(text=f"Memoria del servidor: {server_memory_mb:.1f}MB")
-                
-                # Tiempo activo
                 create_time = ark_process.create_time()
                 uptime_seconds = time.time() - create_time
                 uptime_hours = uptime_seconds / 3600
-                self.uptime_label.configure(text=f"Tiempo activo: {uptime_hours:.1f} horas")
                 
+                status_text = "Estado: Ejecutándose"
+                status_color = "green"
+                cpu_text = f"CPU del servidor: {server_cpu:.1f}%"
+                memory_text = f"Memoria del servidor: {server_memory_mb:.1f}MB"
+                uptime_text = f"Tiempo activo: {uptime_hours:.1f} horas"
             else:
-                self.server_status_label.configure(text="Estado: No ejecutándose", text_color="red")
-                self.server_cpu_label.configure(text="CPU del servidor: --")
-                self.server_memory_label.configure(text="Memoria del servidor: --")
-                self.uptime_label.configure(text="Tiempo activo: --")
+                status_text = "Estado: No ejecutándose"
+                status_color = "red"
+                cpu_text = "CPU del servidor: --"
+                memory_text = "Memoria del servidor: --"
+                uptime_text = "Tiempo activo: --"
             
-            # Jugadores conectados (placeholder - necesitaría implementar lectura de logs)
-            self.players_connected_label.configure(text="Jugadores: 0 (placeholder)")
+            # Programar actualización de UI en el hilo principal
+            def update_ui():
+                try:
+                    if hasattr(self, 'server_status_label') and self.server_status_label.winfo_exists():
+                        self.server_status_label.configure(text=status_text, text_color=status_color)
+                    
+                    if hasattr(self, 'server_cpu_label') and self.server_cpu_label.winfo_exists():
+                        self.server_cpu_label.configure(text=cpu_text)
+                    
+                    if hasattr(self, 'server_memory_label') and self.server_memory_label.winfo_exists():
+                        self.server_memory_label.configure(text=memory_text)
+                    
+                    if hasattr(self, 'uptime_label') and self.uptime_label.winfo_exists():
+                        self.uptime_label.configure(text=uptime_text)
+                    
+                    if hasattr(self, 'players_connected_label') and self.players_connected_label.winfo_exists():
+                        self.players_connected_label.configure(text="Jugadores: 0 (placeholder)")
+                except Exception:
+                    # Silenciar errores de UI
+                    pass
+            
+            # Programar la actualización en el hilo principal
+            try:
+                if hasattr(self, 'winfo_exists') and self.winfo_exists():
+                    self.after(0, update_ui)
+            except Exception:
+                # Widget ya no existe
+                pass
             
         except Exception as e:
             self.logger.error(f"Error al actualizar estadísticas del servidor: {e}")

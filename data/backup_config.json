@@ -1,0 +1,14 @@
+{
+  "backup_path": "D:\\ASA\\Backup",
+  "auto_backup": true,
+  "interval_type": "minutos",
+  "interval_value": 15,
+  "compress": true,
+  "include_saves": true,
+  "include_configs": true,
+  "include_logs": false,
+  "backup_name_format": "",
+  "max_backups": 10,
+  "backup_before_start": false,
+  "verify_backup": true
+}

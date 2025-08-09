@@ -22,7 +22,14 @@ class ServerPanel:
         self.selected_map = None
         
         self.create_widgets()
-        self.start_monitoring()
+        
+        # Iniciar monitoreo con retraso para asegurar que main_window esté listo
+        if self.main_window and hasattr(self.main_window, 'after'):
+            self.main_window.after(2000, self.start_monitoring)  # 2 segundos de retraso
+        else:
+            # Fallback si no hay main_window
+            import threading
+            threading.Timer(2.0, self.start_monitoring).start()
     
     def create_widgets(self):
         # Si no hay parent, no crear widgets (modo backend solamente)
@@ -365,22 +372,37 @@ class ServerPanel:
             else:
                 status_color = "red"
             
-            # Actualizar etiquetas solo si existen (cuando hay widgets)
-            if hasattr(self, 'status_label') and self.status_label:
-                self.status_label.configure(text=status, text_color=status_color)
+            # Programar actualizaciones de UI en el hilo principal
+            def update_ui():
+                try:
+                    # Actualizar etiquetas solo si existen (cuando hay widgets)
+                    if hasattr(self, 'status_label') and self.status_label and self.status_label.winfo_exists():
+                        self.status_label.configure(text=status, text_color=status_color)
+                    
+                    if hasattr(self, 'uptime_label') and self.uptime_label and self.uptime_label.winfo_exists():
+                        self.uptime_label.configure(text=uptime)
+                    
+                    if hasattr(self, 'cpu_label') and self.cpu_label and self.cpu_label.winfo_exists():
+                        self.cpu_label.configure(text=f"{stats['cpu']:.1f}%")
+                    
+                    if hasattr(self, 'memory_label') and self.memory_label and self.memory_label.winfo_exists():
+                        self.memory_label.configure(text=f"{stats['memory_mb']:.1f} MB")
+                    
+                    # Actualizar en la ventana principal si está disponible
+                    if hasattr(self.main_window, 'update_server_status'):
+                        self.main_window.update_server_status(status, status_color)
+                except Exception as e:
+                    # Silenciar errores de UI para evitar spam en logs
+                    pass
             
-            if hasattr(self, 'uptime_label') and self.uptime_label:
-                self.uptime_label.configure(text=uptime)
-            
-            if hasattr(self, 'cpu_label') and self.cpu_label:
-                self.cpu_label.configure(text=f"{stats['cpu']:.1f}%")
-            
-            if hasattr(self, 'memory_label') and self.memory_label:
-                self.memory_label.configure(text=f"{stats['memory_mb']:.1f} MB")
-            
-            # Actualizar en la ventana principal si está disponible
-            if hasattr(self.main_window, 'update_server_status'):
-                self.main_window.update_server_status(status, status_color)
+            # Programar la actualización en el hilo principal
+            if self.main_window and hasattr(self.main_window, 'after') and hasattr(self.main_window, 'winfo_exists'):
+                try:
+                    if self.main_window.winfo_exists():
+                        self.main_window.after(0, update_ui)
+                except Exception:
+                    # Ventana ya no existe, parar el monitoreo
+                    pass
             
             if hasattr(self.main_window, 'update_uptime'):
                 self.main_window.update_uptime(uptime)

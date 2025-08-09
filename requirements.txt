@@ -3,10 +3,4 @@ Pillow==10.0.1
 psutil==5.9.6
 requests==2.31.0
 configparser==6.0.0
-threading
-subprocess
-json
-os
-sys
-time
-datetime
+schedule==1.2.2

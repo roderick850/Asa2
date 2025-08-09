@@ -375,7 +375,7 @@ class MainWindow:
         self.config_panel = ConfigPanel(self.tab_configuraciones_content, self.config_manager, self.logger, self)
         self.mods_panel = ModsPanel(self.tab_mods_content, self.config_manager, self.logger, self)
         self.monitoring_panel = MonitoringPanel(self.tab_reinicios_content, self.config_manager, self.logger)
-        self.backup_panel = BackupPanel(self.tab_backup_content, self.config_manager, self.logger)
+        self.backup_panel = BackupPanel(self.tab_backup_content, self.config_manager, self.logger, self)
         self.rcon_panel = RconPanel(self.tab_rcon_content, self.config_manager, self.logger, self)
         self.logs_panel = LogsPanel(self.tab_logs_content, self.config_manager, self.logger)
         
@@ -439,7 +439,7 @@ class MainWindow:
             self.tabview.set("RCON")
         elif tab_name == "Logs":
             self.tab_logs.configure(fg_color="blue")
-            self.tabview.set("Logs")
+        self.tabview.set("Logs")
         
     def setup_button_callbacks(self):
         """Configurar callbacks de los botones"""
@@ -541,6 +541,9 @@ class MainWindow:
         # Actualizar panel de configuración
         if hasattr(self, 'config_panel'):
             self.config_panel.update_server_selection(server_name)
+        # Actualizar panel de backup
+        if hasattr(self, 'backup_panel'):
+            self.backup_panel.update_server_selection(server_name)
     
     def on_map_selected(self, map_name):
         """Maneja la selección de un mapa"""
