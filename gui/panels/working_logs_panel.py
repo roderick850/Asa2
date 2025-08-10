@@ -216,38 +216,9 @@ class WorkingLogsPanel(ctk.CTkFrame):
         control_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
         control_frame.grid_columnconfigure(1, weight=1)
         
-        # Estado del servidor (más prominente)
-        status_frame = ctk.CTkFrame(control_frame)
-        status_frame.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-        
-        # Título del estado
-        status_title = ctk.CTkLabel(
-            status_frame,
-            text="Estado del Servidor:",
-            font=("Arial", 10, "bold")
-        )
-        status_title.grid(row=0, column=0, padx=(5, 0), pady=2, sticky="w")
-        
-        # Estado del servidor
-        self.server_status = ctk.CTkLabel(
-            status_frame, 
-            text="⏸️ Inactivo", 
-            font=("Arial", 14, "bold"),
-            text_color="orange"
-        )
-        self.server_status.grid(row=1, column=0, padx=5, pady=2, sticky="w")
-        
-        # Estado de la consola
-        self.console_status = ctk.CTkLabel(
-            status_frame, 
-            text="📡 Consola: Inactiva", 
-            font=("Arial", 10)
-        )
-        self.console_status.grid(row=2, column=0, padx=5, pady=2, sticky="w")
-        
         # Frame de botones
         button_frame = ctk.CTkFrame(control_frame)
-        button_frame.grid(row=0, column=1, padx=10, pady=5, sticky="e")
+        button_frame.grid(row=0, column=0, padx=10, pady=5, sticky="e")
         
         # Botón de conexión
         self.connect_btn = ctk.CTkButton(
@@ -395,8 +366,6 @@ class WorkingLogsPanel(ctk.CTkFrame):
         self.console_scrollbar = ctk.CTkScrollbar(console_frame, command=self.console_text.yview)
         self.console_scrollbar.pack(side="right", fill="y")
         self.console_text.configure(yscrollcommand=self.console_scrollbar.set)
-        
-
         
         # Frame inferior con información
         info_frame = ctk.CTkFrame(self.tab_console)
@@ -972,7 +941,7 @@ class WorkingLogsPanel(ctk.CTkFrame):
         threading.Thread(target=simulate_console, daemon=True).start()
         
     def add_console_line(self, line, line_type="info"):
-        """Agregar una línea a la consola"""
+        """Agregar una línea a la consola del servidor ARK"""
         try:
             # Filtrar mensajes internos de la aplicación
             if self._should_skip_line(line):
@@ -1002,10 +971,10 @@ class WorkingLogsPanel(ctk.CTkFrame):
             self.logger.error(f"Error al agregar línea a consola: {e}")
             
     def _should_skip_line(self, line):
-        """Determinar si una línea debe ser omitida de la consola"""
+        """Determinar si una línea debe ser omitida de la consola del servidor ARK"""
         line_lower = line.lower()
         
-        # Patrones de mensajes internos de la aplicación
+        # Patrones de mensajes internos de la aplicación (siempre omitir)
         app_patterns = [
             "estado del servidor actualizado",
             "ark server manager",
@@ -1030,10 +999,25 @@ class WorkingLogsPanel(ctk.CTkFrame):
             "verificando que el proceso se cerró",
             "no se encontraron procesos",
             "servidor completamente detenido",
-            "configuración guardada correctamente"
+            "configuración guardada correctamente",
+            "debug:",
+            "conectando automáticamente",
+            "conectando a",
+            "rcon falló",
+            "intentando captura directa",
+            "no se encontró proceso",
+            "no se pudo conectar",
+            "iniciando servidor",
+            "configuración guardada",
+            "archivo actualizado",
+            "mapa seleccionado",
+            "argumentos finales generados",
+            "comando final del servidor",
+            "parámetros recibidos",
+            "usando argumentos personalizados"
         ]
         
-        # Patrones de mensajes de estado del servidor
+        # Patrones de mensajes de estado del servidor (siempre omitir)
         status_patterns = [
             "estado del servidor actualizado",
             "configurando",
@@ -1045,7 +1029,7 @@ class WorkingLogsPanel(ctk.CTkFrame):
             "advertencia"
         ]
         
-        # Patrones de mensajes del juego ARK
+        # Patrones de mensajes del juego ARK (siempre mostrar si no son internos)
         game_patterns = [
             "player connected", "jugador conectado", "player joined", "jugador se unió",
             "player disconnected", "jugador desconectado", "world saved", "mundo guardado",
@@ -1054,7 +1038,9 @@ class WorkingLogsPanel(ctk.CTkFrame):
             "startup complete", "ready for connections", "listening", "escuchando",
             "advertising for join", "server is ready", "world loaded", "mundo cargado",
             "map loaded", "mapa cargado", "mod loaded", "plugin loaded", "world save",
-            "backup", "shutting down", "stopping", "server stopped", "exit", "shutdown"
+            "backup", "shutting down", "stopping", "server stopped", "exit", "shutdown",
+            "fatal error", "failed to start", "crash", "exception", "critical error",
+            "startup failed", "launch failed"
         ]
         
         # Aplicar filtros según configuración
@@ -1071,8 +1057,8 @@ class WorkingLogsPanel(ctk.CTkFrame):
             if not any(pattern in line_lower for pattern in game_patterns):
                 return True
         
-                return False
-        
+        return False
+    
     def toggle_app_messages_filter(self):
         """Alternar filtro de mensajes internos de la aplicación"""
         try:
@@ -1364,7 +1350,7 @@ class WorkingLogsPanel(ctk.CTkFrame):
         try:
             line_lower = line.lower()
             
-            # Evitar procesar líneas que son logs internos de la aplicación
+            # Solo procesar líneas que son del servidor ARK, no logs internos de la aplicación
             if any(skip_pattern in line_lower for skip_pattern in [
                 "estado del servidor actualizado", "ark server manager", "info -", "warning -", "error -",
                 "logger", "configurando", "iniciando", "detenido", "listo para conectar"
@@ -1407,39 +1393,33 @@ class WorkingLogsPanel(ctk.CTkFrame):
                 "mod loaded", "plugin loaded", "world save", "backup"
             ]):
                 # Solo actualizar si no estamos ya en estado de configuración
-                current_status = getattr(self, 'server_status', None)
-                if current_status and "Configurando" not in current_status.cget("text"):
-                    self.update_server_status("🔧 Configurando", "blue")
+                self.update_server_status("🔧 Configurando", "blue")
                 
         except Exception as e:
             self.logger.error(f"Error detectando estado del servidor: {e}")
     
     def update_server_status(self, status_text, color):
-        """Actualizar el estado del servidor en la interfaz"""
+        """Actualizar el estado del servidor en la ventana principal"""
         try:
-            if hasattr(self, 'server_status'):
-                # Mapear colores a colores de customtkinter
-                color_map = {
-                    "green": "green",
-                    "red": "red", 
-                    "orange": "orange",
-                    "blue": "blue",
-                    "purple": "purple"
-                }
+            # Mapear colores a colores de customtkinter
+            color_map = {
+                "green": "green",
+                "red": "red", 
+                "orange": "orange",
+                "blue": "blue",
+                "purple": "purple"
+            }
+            
+            # Actualizar el estado en la ventana principal si está disponible
+            if self.main_window and hasattr(self.main_window, 'update_server_status'):
+                # Mapear estados a colores apropiados para la ventana principal
+                main_window_color = color_map.get(color, "red")
                 
-                text_color = color_map.get(color, "white")
+                # Actualizar el estado en la ventana principal
+                self.main_window.update_server_status(status_text, main_window_color)
                 
-                # Solo actualizar si el estado cambió
-                current_status = self.server_status.cget("text")
-                if current_status != status_text:
-                    # Actualizar el estado
-                    self.server_status.configure(
-                        text=status_text,
-                        text_color=text_color
-                    )
-                    
-                    # Log del cambio de estado solo cuando realmente cambie
-                    self.logger.debug(f"Estado del servidor actualizado: {status_text}")
+                # Log del cambio de estado
+                self.logger.debug(f"Estado del servidor actualizado en ventana principal: {status_text}")
                 
         except Exception as e:
             self.logger.error(f"Error actualizando estado del servidor: {e}")
@@ -1462,13 +1442,9 @@ class WorkingLogsPanel(ctk.CTkFrame):
             if test_result:
                 self.is_connected = True
                 self.set_console_active(True)
-                self.add_console_line("🎮 Consola del servidor ARK activa (RCON)", "success")
                 
-                # Establecer estado inicial
+                # Establecer estado inicial en la ventana principal
                 self.update_server_status("🔍 Conectando...", "blue")
-                
-                # Agregar mensaje de estado inicial
-                self.add_console_line("🔍 Conectando al servidor...", "info")
                 
                 # Iniciar monitoreo en tiempo real
                 self.start_real_time_monitoring()
@@ -1481,13 +1457,9 @@ class WorkingLogsPanel(ctk.CTkFrame):
                 if self.connect_to_server_direct():
                     self.is_connected = True
                     self.set_console_active(True)
-                    self.add_console_line("🎮 Consola del servidor ARK activa (Captura directa)", "success")
                     
-                    # Establecer estado inicial
+                    # Establecer estado inicial en la ventana principal
                     self.update_server_status("🔍 Conectando...", "blue")
-                    
-                    # Agregar mensaje de estado inicial
-                    self.add_console_line("🔍 Conectando al servidor...", "info")
                     
                     # Iniciar monitoreo directo
                     self.start_direct_monitoring()
@@ -1840,38 +1812,38 @@ class WorkingLogsPanel(ctk.CTkFrame):
             self.add_console_line(f"❌ Error desconectando: {e}", "error")
     
     def start_real_time_monitoring(self):
-        """Iniciar monitoreo en tiempo real del servidor ARK REAL"""
-        if not self.console_active or not self.is_connected:
+        """Iniciar monitoreo en tiempo real del servidor via RCON"""
+        if self.monitoring_thread and self.monitoring_thread.is_alive():
             return
-            
+        
         def monitor_server():
-            # Primera ejecución inmediata
             try:
+                # Primera ejecución inmediata
                 if self.console_active and self.is_connected:
-                    # Obtener información inicial inmediatamente
-                    self.add_console_line("🔄 Obteniendo información del servidor...", "info")
-                    
-                    # Obtener jugadores conectados
-                    players_result = self.execute_rcon_command("ListPlayers")
-                    if players_result:
-                        self.add_console_line(f"👥 Jugadores: {players_result}", "info")
-                    else:
-                        self.add_console_line("👥 No hay jugadores conectados", "info")
-                    
-                    # Obtener tiempo del mundo
-                    time_result = self.execute_rcon_command("GetWorldTime")
-                    if time_result:
-                        self.add_console_line(f"⏰ Tiempo del mundo: {time_result}", "info")
-                    
-                    # Obtener estadísticas del servidor
-                    stats_result = self.execute_rcon_command("GetServerInfo")
-                    if stats_result:
-                        self.add_console_line(f"📊 Información del servidor: {stats_result}", "info")
-                    
-                    self.add_console_line("✅ Monitoreo en tiempo real activo", "success")
+                    # Obtener información inicial del servidor
+                    try:
+                        # Obtener jugadores conectados
+                        players_result = self.execute_rcon_command("ListPlayers")
+                        if players_result and players_result != "Comando ejecutado sin respuesta":
+                            self.add_console_line(f"👥 {players_result}", "info")
+                        
+                        # Obtener tiempo del mundo
+                        time_result = self.execute_rcon_command("GetWorldTime")
+                        if time_result and time_result != "Comando ejecutado sin respuesta":
+                            self.add_console_line(f"⏰ {time_result}", "info")
+                        
+                        # Obtener estadísticas del servidor
+                        stats_result = self.execute_rcon_command("GetServerInfo")
+                        if stats_result and stats_result != "Comando ejecutado sin respuesta":
+                            # Parsear información básica
+                            if "Players:" in stats_result:
+                                self.add_console_line(f"📊 {stats_result}", "info")
+                    except Exception as e:
+                        # Solo log, no mostrar en consola
+                        self.logger.error(f"Error en monitoreo inicial: {e}")
             except Exception as e:
-                if self.console_active and self.is_connected:
-                    self.add_console_line(f"❌ Error en monitoreo inicial: {e}", "error")
+                # Solo log, no mostrar en consola
+                self.logger.error(f"Error en monitoreo inicial: {e}")
             
             # Monitoreo continuo cada 30 segundos
             while self.console_active and self.is_connected:
@@ -1881,24 +1853,24 @@ class WorkingLogsPanel(ctk.CTkFrame):
                     if self.console_active and self.is_connected:
                         # Obtener jugadores conectados
                         players_result = self.execute_rcon_command("ListPlayers")
-                        if players_result:
+                        if players_result and players_result != "Comando ejecutado sin respuesta":
                             self.add_console_line(f"👥 {players_result}", "info")
                         
                         # Obtener tiempo del mundo
                         time_result = self.execute_rcon_command("GetWorldTime")
-                        if time_result:
+                        if time_result and time_result != "Comando ejecutado sin respuesta":
                             self.add_console_line(f"⏰ {time_result}", "info")
                         
                         # Obtener estadísticas del servidor
                         stats_result = self.execute_rcon_command("GetServerInfo")
-                        if stats_result:
+                        if stats_result and stats_result != "Comando ejecutado sin respuesta":
                             # Parsear información básica
                             if "Players:" in stats_result:
                                 self.add_console_line(f"📊 {stats_result}", "info")
                         
                 except Exception as e:
-                    if self.console_active and self.is_connected:
-                        self.add_console_line(f"❌ Error en monitoreo: {e}", "error")
+                    # Solo log, no mostrar en consola
+                    self.logger.error(f"Error en monitoreo: {e}")
                     break
         
         # Ejecutar monitoreo en hilo separado
@@ -1909,7 +1881,8 @@ class WorkingLogsPanel(ctk.CTkFrame):
         """Ejecutar comando RCON REAL al servidor"""
         try:
             if not self.is_connected:
-                self.add_console_line("❌ No hay conexión activa al servidor", "error")
+                # Solo log, no mostrar en consola
+                self.logger.error("No hay conexión activa al servidor")
                 return None
             
             rcon_exe = self.find_rcon_executable()
@@ -1941,14 +1914,17 @@ class WorkingLogsPanel(ctk.CTkFrame):
                     return "Comando ejecutado sin respuesta"
             else:
                 error_msg = result.stderr.strip() if result.stderr else "Error desconocido"
-                self.add_console_line(f"❌ Error RCON '{command}': {error_msg}", "error")
+                # Solo log, no mostrar en consola
+                self.logger.error(f"Error RCON '{command}': {error_msg}")
                 return None
                 
         except subprocess.TimeoutExpired:
-            self.add_console_line(f"❌ Timeout en comando '{command}'", "error")
+            # Solo log, no mostrar en consola
+            self.logger.error(f"Timeout en comando '{command}'")
             return None
         except Exception as e:
-            self.add_console_line(f"❌ Error ejecutando '{command}': {e}", "error")
+            # Solo log, no mostrar en consola
+            self.logger.error(f"Error ejecutando '{command}': {e}")
             return None
     
     def get_server_status(self):
