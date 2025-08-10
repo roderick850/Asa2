@@ -903,6 +903,9 @@ class MainWindow:
         # Actualizar panel de reinicios
         if hasattr(self, 'monitoring_panel'):
             self.monitoring_panel.update_server_selection(server_name)
+        # Actualizar panel de logs (consola RCON)
+        if hasattr(self, 'working_logs_panel'):
+            self.working_logs_panel.on_server_selection_changed(server_name)
         # Guardar última selección
         self.save_last_server_map_selection()
     

@@ -12,10 +12,18 @@ class ServerManager:
     def __init__(self, config_manager, logger):
         self.config_manager = config_manager
         self.logger = logger
+        
+        # Referencia a la consola del servidor
+        self.server_console = None
         self.server_process = None
         self.server_running = False
         self.server_pid = None
         self.uptime_start = None
+        
+    def register_console(self, console_panel):
+        """Registrar el panel de consola del servidor"""
+        self.server_console = console_panel
+        self.logger.info("Consola del servidor registrada")
         
     def get_server_status(self):
         """Obtiene el estado actual del servidor"""
@@ -223,14 +231,21 @@ class ServerManager:
                 if callback:
                     callback("info", f"Comando del servidor: {' '.join(cmd)}")
                 
-                # Iniciar el proceso del servidor
+                # Iniciar el proceso del servidor (OCULTO)
+                startupinfo = None
+                if os.name == 'nt':  # Windows
+                    startupinfo = subprocess.STARTUPINFO()
+                    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                    startupinfo.wShowWindow = subprocess.SW_HIDE
+                
                 self.server_process = subprocess.Popen(
                     cmd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True,
                     bufsize=1,
-                    universal_newlines=True
+                    universal_newlines=True,
+                    startupinfo=startupinfo  # Ocultar ventana DOS
                 )
                 
                 self.server_pid = self.server_process.pid
@@ -240,29 +255,39 @@ class ServerManager:
                 if callback:
                     callback("success", f"Servidor iniciado con PID: {self.server_pid}")
                 
-                # Monitorear la salida del servidor
-                for line in iter(self.server_process.stdout.readline, ''):
-                    if line:
-                        line = line.strip()
-                        if callback:
-                            callback("info", line)
-                        self.logger.info(f"Servidor: {line}")
+                # Monitorear la salida del servidor en tiempo real
+                def monitor_output():
+                    try:
+                        for line in iter(self.server_process.stdout.readline, ''):
+                            if line:
+                                line = line.strip()
+                                if callback:
+                                    callback("info", line)
+                                self.logger.info(f"Servidor: {line}")
+                    except Exception as e:
+                        self.logger.error(f"Error en monitoreo de salida: {e}")
                 
-                # El monitoreo terminó, pero verificar si el proceso aún existe
+                # Iniciar monitoreo en hilo separado
+                self.monitor_thread = threading.Thread(target=monitor_output, daemon=True)
+                self.monitor_thread.start()
+                
+                # Esperar un poco para que el proceso se estabilice
+                import time
+                time.sleep(1)
+                
+                # Verificar que el proceso esté ejecutándose
                 if self.server_process.poll() is not None:
-                    # El proceso realmente terminó
+                    # El proceso terminó inmediatamente
                     self.server_running = False
                     self.server_pid = None
                     self.uptime_start = None
                     
                     if callback:
-                        callback("info", "Servidor detenido")
-                    self.logger.info("Proceso del servidor terminado")
+                        callback("error", "Servidor terminó inmediatamente después del inicio")
+                    self.logger.error("Servidor terminado inmediatamente después del inicio")
                 else:
-                    # El proceso sigue ejecutándose, solo terminó el monitoreo
-                    self.logger.info("Monitoreo del servidor finalizado, pero el proceso continúa ejecutándose")
                     if callback:
-                        callback("info", "Monitoreo finalizado - Servidor sigue ejecutándose")
+                        callback("info", "Monitoreo de consola iniciado - Servidor ejecutándose en segundo plano")
                 
             except Exception as e:
                 self.logger.error(f"Error al iniciar servidor con argumentos personalizados: {e}")
