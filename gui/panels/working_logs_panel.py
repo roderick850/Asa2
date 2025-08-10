@@ -210,10 +210,18 @@ class WorkingLogsPanel(ctk.CTkFrame):
         self.system_text.grid(row=1, column=0, sticky="nsew", padx=10, pady=5)
         
     def create_console_tab(self):
-        """Crear pestaña de consola del servidor"""
+        """Crear pestaña de consola del servidor - SOLO consola del servidor"""
+        # Título principal
+        title_label = ctk.CTkLabel(
+            self.tab_console,
+            text="🎮 CONSOLA DEL SERVIDOR ARK",
+            font=("Arial", 16, "bold")
+        )
+        title_label.grid(row=0, column=0, pady=(10, 20), sticky="ew")
+        
         # Frame superior con controles
         control_frame = ctk.CTkFrame(self.tab_console)
-        control_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
+        control_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
         control_frame.grid_columnconfigure(1, weight=1)
         
         # Frame de botones
@@ -267,70 +275,31 @@ class WorkingLogsPanel(ctk.CTkFrame):
         )
         self.auto_scroll_check.grid(row=0, column=4, padx=10, pady=5)
         
-        # Botón de estadísticas de consola
-        self.debug_btn = ctk.CTkButton(
-            button_frame,
-            text="📊 Stats",
-            command=self.show_console_stats,
-            width=60,
-            fg_color="purple"
-        )
-        self.debug_btn.grid(row=0, column=5, padx=5, pady=5)
-        
-        # Botón de actualización forzada
-        self.force_update_btn = ctk.CTkButton(
-            button_frame,
-            text="🔄 Forzar",
-            command=self.force_console_update,
-            width=60,
-            fg_color="blue"
-        )
-        self.force_update_btn.grid(row=0, column=6, padx=5, pady=5)
-        
-        # Botón de expansión forzada
+        # Botón de expansión - DESTACADO
         self.expand_btn = ctk.CTkButton(
             button_frame,
-            text="📏 Expandir",
+            text="📏 EXPANDIR CONSOLA",
             command=self.open_console_window,
-            width=70,
-            fg_color="green"
+            width=120,
+            fg_color="green",
+            font=("Arial", 11, "bold")
         )
-        self.expand_btn.grid(row=0, column=7, padx=5, pady=5)
+        self.expand_btn.grid(row=0, column=5, padx=10, pady=5)
         
-        # Frame de filtros de consola
+        # Frame de filtros simplificado
         filter_frame = ctk.CTkFrame(self.tab_console)
-        filter_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
+        filter_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
         filter_frame.grid_columnconfigure(1, weight=1)
         
         # Título de filtros
         filter_title = ctk.CTkLabel(
             filter_frame,
-            text="🔍 Filtros de Consola:",
+            text="🔍 Filtros para diferentes tipos de mensajes:",
             font=("Arial", 10, "bold")
         )
         filter_title.grid(row=0, column=0, padx=(10, 5), pady=5, sticky="w")
         
-        # Checkbox para mostrar mensajes internos de la app
-        self.show_app_messages_var = ctk.BooleanVar(value=False)
-        self.show_app_messages_check = ctk.CTkCheckBox(
-            filter_frame,
-            text="Mostrar mensajes internos de la app",
-            variable=self.show_app_messages_var,
-            command=self.toggle_app_messages_filter
-        )
-        self.show_app_messages_check.grid(row=0, column=1, padx=10, pady=5, sticky="w")
-        
-        # Checkbox para mostrar mensajes de estado del servidor
-        self.show_status_messages_var = ctk.BooleanVar(value=False)
-        self.show_status_messages_check = ctk.CTkCheckBox(
-            filter_frame,
-            text="Mostrar mensajes de estado del servidor",
-            variable=self.show_status_messages_var,
-            command=self.toggle_status_messages_filter
-        )
-        self.show_status_messages_check.grid(row=0, column=2, padx=10, pady=5, sticky="w")
-        
-        # Checkbox para mostrar solo mensajes del juego
+        # Checkbox para mostrar solo mensajes del juego (por defecto activado)
         self.show_game_only_var = ctk.BooleanVar(value=True)
         self.show_game_only_check = ctk.CTkCheckBox(
             filter_frame,
@@ -338,7 +307,7 @@ class WorkingLogsPanel(ctk.CTkFrame):
             variable=self.show_game_only_var,
             command=self.toggle_game_only_filter
         )
-        self.show_game_only_check.grid(row=0, column=3, padx=10, pady=5, sticky="w")
+        self.show_game_only_check.grid(row=0, column=1, padx=10, pady=5, sticky="w")
         
         # Botón para limpiar filtros
         self.clear_filters_btn = ctk.CTkButton(
@@ -348,16 +317,16 @@ class WorkingLogsPanel(ctk.CTkFrame):
             width=120,
             fg_color="orange"
         )
-        self.clear_filters_btn.grid(row=0, column=4, padx=10, pady=5, sticky="e")
+        self.clear_filters_btn.grid(row=0, column=2, padx=10, pady=5, sticky="e")
         
-        # Área de la consola
+        # Área de la consola - MÁS GRANDE
         console_frame = ctk.CTkFrame(self.tab_console)
-        console_frame.grid(row=2, column=0, sticky="nsew", padx=10, pady=5)
+        console_frame.grid(row=3, column=0, sticky="nsew", padx=10, pady=5)
         
         # Texto de la consola - usar pack para asegurar expansión
         self.console_text = ctk.CTkTextbox(
             console_frame,
-            font=("Consolas", 10),
+            font=("Consolas", 11),
             wrap="word"
         )
         self.console_text.pack(fill="both", expand=True, padx=5, pady=5)
@@ -367,9 +336,9 @@ class WorkingLogsPanel(ctk.CTkFrame):
         self.console_scrollbar.pack(side="right", fill="y")
         self.console_text.configure(yscrollcommand=self.console_scrollbar.set)
         
-        # Frame inferior con información
+        # Frame inferior con información mínima
         info_frame = ctk.CTkFrame(self.tab_console)
-        info_frame.grid(row=3, column=0, sticky="ew", padx=10, pady=5)
+        info_frame.grid(row=4, column=0, sticky="ew", padx=10, pady=5)
         info_frame.grid_columnconfigure(1, weight=1)
         
         # Información de líneas
@@ -408,20 +377,12 @@ class WorkingLogsPanel(ctk.CTkFrame):
         )
         self.buffer_size_label.grid(row=0, column=3, padx=10, pady=5, sticky="w")
         
-        # Tiempo de ejecución
-        self.uptime_label = ctk.CTkLabel(
-            info_frame, 
-            text="Tiempo: 00:00:00", 
-            font=("Arial", 10)
-        )
-        self.uptime_label.grid(row=0, column=4, padx=10, pady=5, sticky="w")
-        
         # Inicializar estado de botones
         self.update_connection_buttons()
         
         # Configurar expansión específica para la pestaña de consola
         self.tab_console.grid_columnconfigure(0, weight=1)
-        self.tab_console.grid_rowconfigure(1, weight=1)  # La fila del console_frame
+        self.tab_console.grid_rowconfigure(3, weight=1)  # La fila del console_frame
         
         # Forzar actualización del layout
         self.tab_console.update_idletasks()
@@ -652,36 +613,28 @@ class WorkingLogsPanel(ctk.CTkFrame):
             self.logger.error(f"Error al mostrar estadísticas: {e}")
     
     def force_widget_expansion(self):
-        """Forzar la expansión de todos los widgets"""
+        """Forzar la expansión de widgets de consola"""
         try:
             # Forzar actualización del layout principal
             self.update_idletasks()
             
-            # Forzar actualización del tabview
-            if self.tabview:
-                self.tabview.update_idletasks()
-                
-            # Forzar actualización de cada pestaña
-            if hasattr(self, 'tab_system'):
-                self.tab_system.update_idletasks()
+            # Forzar actualización de la pestaña de consola
             if hasattr(self, 'tab_console'):
                 self.tab_console.update_idletasks()
-            if hasattr(self, 'tab_events'):
-                self.tab_events.update_idletasks()
-            if hasattr(self, 'tab_app'):
-                self.tab_app.update_idletasks()
                 
-            # Forzar actualización de los textboxes
+                # Configurar expansión específica para la consola
+                self.tab_console.grid_columnconfigure(0, weight=1)
+                self.tab_console.grid_rowconfigure(3, weight=1)  # La fila del console_frame
+                
+            # Forzar actualización del área de texto de la consola
             if self.console_text:
                 self.console_text.update_idletasks()
-            if self.system_text:
-                self.system_text.update_idletasks()
-            if self.events_text:
-                self.events_text.update_idletasks()
-            if self.app_text:
-                self.app_text.update_idletasks()
                 
-            self.logger.info("Expansión de widgets forzada")
+            # Forzar actualización del scrollbar
+            if hasattr(self, 'console_scrollbar') and self.console_scrollbar:
+                self.console_scrollbar.update_idletasks()
+                
+            self.logger.info("Expansión de widgets de consola forzada")
             
         except Exception as e:
             self.logger.error(f"Error al forzar expansión: {e}")
@@ -803,7 +756,9 @@ class WorkingLogsPanel(ctk.CTkFrame):
 • 📜 Auto-scroll automático activado
 • 🧹 Botón para limpiar la consola
 • 📁 Exportar contenido a archivo
-• 📊 Información en tiempo real del servidor ARK
+• 📏 Botón EXPANDIR para ventana independiente
+• 🔍 Filtros para diferentes tipos de mensajes
+• 🔌 Conexión automática al servidor
 
 🔄 La consola se conectará automáticamente cuando:
 • El servidor esté ejecutándose
@@ -844,32 +799,21 @@ class WorkingLogsPanel(ctk.CTkFrame):
         try:
             # Verificar que los widgets existan
             widgets_status = {
-                "system_text": self.system_text is not None,
                 "console_text": self.console_text is not None,
-                "events_text": self.events_text is not None,
-                "app_text": self.app_text is not None,
-                "tabview": self.tabview is not None
+                "console_scrollbar": self.console_scrollbar is not None,
+                "tab_console": hasattr(self, 'tab_console')
             }
             
             # Verificar contenido de los textboxes
             content_status = {}
-            if self.system_text:
-                content_status["system"] = len(self.system_text.get("1.0", "end"))
             if self.console_text:
                 content_status["console"] = len(self.console_text.get("1.0", "end"))
-            if self.events_text:
-                content_status["events"] = len(self.events_text.get("1.0", "end"))
-            if self.app_text:
-                content_status["app"] = len(self.app_text.get("1.0", "end"))
             
             # Log del estado
             self.logger.info(f"Estado de widgets: {widgets_status}")
             self.logger.info(f"Contenido de textboxes: {content_status}")
             
             # Verificar geometría
-            if self.tabview:
-                self.logger.info(f"Tabview geometry: {self.tabview.winfo_geometry()}")
-                self.logger.info(f"Tabview width: {self.tabview.winfo_width()}, height: {self.tabview.winfo_height()}")
             if self.console_text:
                 self.logger.info(f"Console text geometry: {self.console_text.winfo_geometry()}")
                 self.logger.info(f"Console text width: {self.console_text.winfo_width()}, height: {self.console_text.winfo_height()}")
@@ -878,7 +822,7 @@ class WorkingLogsPanel(ctk.CTkFrame):
             # Verificar configuración del grid
             if hasattr(self, 'tab_console'):
                 self.logger.info(f"Tab console grid config: column 0 weight: {self.tab_console.grid_columnconfigure(0)}")
-                self.logger.info(f"Tab console grid config: row 1 weight: {self.tab_console.grid_rowconfigure(1)}")
+                self.logger.info(f"Tab console grid config: row 3 weight: {self.tab_console.grid_rowconfigure(3)}")
                 
         except Exception as e:
             self.logger.error(f"Error en debug_widgets: {e}")
@@ -1289,12 +1233,6 @@ class WorkingLogsPanel(ctk.CTkFrame):
             buffer_size = len(self.console_buffer)
             self.buffer_size_label.configure(text=f"Buffer: {buffer_size}/{self.max_buffer_lines}")
             
-            # Actualizar tiempo de ejecución
-            uptime = datetime.now() - self.start_time
-            hours, remainder = divmod(int(uptime.total_seconds()), 3600)
-            minutes, seconds = divmod(remainder, 60)
-            self.uptime_label.configure(text=f"Tiempo: {hours:02d}:{minutes:02d}:{seconds:02d}")
-            
             # Actualizar última actualización
             current_time = datetime.now().strftime("%H:%M:%S")
             self.last_update_label.configure(text=f"Última actualización: {current_time}")
@@ -1302,10 +1240,6 @@ class WorkingLogsPanel(ctk.CTkFrame):
             # Actualizar información de filtros en el estado de conexión
             if hasattr(self, 'connection_status_label'):
                 filter_info = []
-                if not self.show_app_messages_var.get():
-                    filter_info.append("App")
-                if not self.show_status_messages_var.get():
-                    filter_info.append("Estado")
                 if self.show_game_only_var.get():
                     filter_info.append("Solo ARK")
                 
@@ -1323,9 +1257,9 @@ class WorkingLogsPanel(ctk.CTkFrame):
         self.console_active = active
         
         if active:
-            self.console_status.configure(text="✅ Consola activa")
+            self.connection_status_label.configure(text="✅ Consola activa")
         else:
-            self.console_status.configure(text="⏸️ Consola inactiva")
+            self.connection_status_label.configure(text="⏸️ Consola inactiva")
             
         # Actualizar botones de conexión
         self.update_connection_buttons()

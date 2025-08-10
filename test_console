@@ -1,0 +1,24 @@
+2025-08-10 09:16:40 - ArkServerManager - INFO - Consola inicializada con 644 caracteres
+2025-08-10 09:16:40 - ArkServerManager - INFO - Consola inicializada con 644 caracteres
+2025-08-10 09:16:40 - ArkServerManager - INFO - Expansión de widgets de consola forzada
+2025-08-10 09:16:40 - ArkServerManager - INFO - Estado de widgets: {'console_text': True, 'console_scrollbar': True, 'tab_console': True}
+2025-08-10 09:16:40 - ArkServerManager - INFO - Contenido de textboxes: {'console': 644}
+2025-08-10 09:16:40 - ArkServerManager - INFO - Console text geometry: 1x1+0+0
+2025-08-10 09:16:40 - ArkServerManager - INFO - Console text width: 1, height: 1
+2025-08-10 09:16:40 - ArkServerManager - INFO - Console text sticky: {}
+2025-08-10 09:16:40 - ArkServerManager - INFO - Tab console grid config: column 0 weight: {'minsize': 0, 'pad': 0, 'uniform': None, 'weight': 1}
+2025-08-10 09:16:40 - ArkServerManager - INFO - Tab console grid config: row 3 weight: {'minsize': 0, 'pad': 0, 'uniform': None, 'weight': 1}
+2025-08-10 09:16:41 - ArkServerManager - INFO - Estado de widgets: {'console_text': True, 'console_scrollbar': True, 'tab_console': True}
+2025-08-10 09:16:41 - ArkServerManager - INFO - Contenido de textboxes: {'console': 644}
+2025-08-10 09:16:41 - ArkServerManager - INFO - Console text geometry: 1x1+0+0
+2025-08-10 09:16:41 - ArkServerManager - INFO - Console text width: 1, height: 1
+2025-08-10 09:16:41 - ArkServerManager - INFO - Console text sticky: {}
+2025-08-10 09:16:41 - ArkServerManager - INFO - Tab console grid config: column 0 weight: {'minsize': 0, 'pad': 0, 'uniform': None, 'weight': 1}
+2025-08-10 09:16:41 - ArkServerManager - INFO - Tab console grid config: row 3 weight: {'minsize': 0, 'pad': 0, 'uniform': None, 'weight': 1}
+2025-08-10 09:16:42 - ArkServerManager - INFO - Configuración RCON cargada: 127.0.0.1:27030
+2025-08-10 09:16:43 - ArkServerManager - INFO - Conectando automáticamente al servidor...
+2025-08-10 09:16:43 - ArkServerManager - INFO - Conectando a 127.0.0.1:27030...
+2025-08-10 09:16:45 - ArkServerManager - ERROR - Error RCON: cli: execute: auth: rcon: dial tcp 127.0.0.1:27030: connectex: No connection could be made because the target machine actively refused it.
+2025-08-10 09:16:45 - ArkServerManager - WARNING - RCON falló, intentando captura directa del servidor...
+2025-08-10 09:16:45 - ArkServerManager - WARNING - No hay ventana principal disponible para captura directa
+2025-08-10 09:16:45 - ArkServerManager - ERROR - No se pudo conectar ni por RCON ni por captura directa
