@@ -21,6 +21,19 @@ class DirectCommandsPanel(ctk.CTkFrame):
         self.stop_monitoring = False
         self.auto_connect_enabled = True
         
+        # Variables para monitoreo del archivo de log
+        self.log_monitoring_thread = None
+        self.stop_log_monitoring_flag = False
+        self.last_log_position = 0
+        self.current_log_file = None
+        
+        # Variables para monitoreo directo del stdout
+        self.stdout_monitoring_thread = None
+        self.stop_stdout_monitoring_flag = False
+        
+        # Variable para modo debug
+        self.debug_mode = False
+        
         # Empaquetar el frame principal
         self.pack(fill="both", expand=True)
         
@@ -170,6 +183,16 @@ class DirectCommandsPanel(ctk.CTkFrame):
         
         ctk.CTkButton(monitoring_buttons_frame, text="🔄 Actualizar Ahora", 
                      command=self.refresh_server_info).pack(side="left", padx=5)
+        
+        # Botón para recargar contenido
+        self.reload_log_button = ctk.CTkButton(monitoring_buttons_frame, text="🔄 Solicitar Info", 
+                                             command=self.reload_log_content, fg_color="blue")
+        self.reload_log_button.pack(side="left", padx=5)
+        
+        # Botón para modo debug
+        self.debug_button = ctk.CTkButton(monitoring_buttons_frame, text="🐛 Modo Debug", 
+                                        command=self.toggle_debug_mode, fg_color="orange")
+        self.debug_button.pack(side="left", padx=5)
         
         # Separador
         separator4 = ctk.CTkFrame(main_frame, height=2)
@@ -338,6 +361,9 @@ class DirectCommandsPanel(ctk.CTkFrame):
         self.monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
         self.monitoring_thread.start()
         
+        # Iniciar monitoreo directo del stdout del servidor
+        self.start_stdout_monitoring()
+        
         self.monitor_button.configure(text="⏹️ Detener Monitoreo", fg_color="red")
         self.add_result("📡 Monitoreo", "Monitoreo en tiempo real iniciado")
     
@@ -346,6 +372,9 @@ class DirectCommandsPanel(ctk.CTkFrame):
         self.stop_monitoring = True
         if self.monitoring_thread:
             self.monitoring_thread.join(timeout=1)
+        
+        # Detener también el monitoreo del stdout
+        self.stop_stdout_monitoring()
         
         self.monitor_button.configure(text="📡 Iniciar Monitoreo", fg_color="green")
         self.add_result("📡 Monitoreo", "Monitoreo en tiempo real detenido")
@@ -448,6 +477,7 @@ class DirectCommandsPanel(ctk.CTkFrame):
     def start_auto_connect_monitoring(self):
         """Iniciar monitoreo automático para conectar cuando el servidor esté disponible"""
         def auto_connect_loop():
+            self.logger.info("Iniciando monitoreo automático de conexión...")
             while self.auto_connect_enabled and not self.is_connected:
                 try:
                     # Verificar si el servidor está disponible
@@ -461,31 +491,50 @@ class DirectCommandsPanel(ctk.CTkFrame):
                         self.logger.info("Servidor detectado, conectando automáticamente...")
                         self.auto_connect_to_server()
                         break
+                    else:
+                        self.logger.debug("Servidor no disponible aún, verificando en 5 segundos...")
                     
                     time.sleep(5)  # Verificar cada 5 segundos
                     
                 except Exception as e:
                     self.logger.error(f"Error en monitoreo automático: {e}")
                     time.sleep(10)  # Esperar más tiempo si hay error
+            
+            self.logger.info("Monitoreo automático de conexión finalizado")
         
         # Iniciar en un hilo separado
         auto_connect_thread = threading.Thread(target=auto_connect_loop, daemon=True)
         auto_connect_thread.start()
+        self.logger.info("Hilo de monitoreo automático iniciado")
     
     def auto_connect_to_server(self):
         """Conectar automáticamente al servidor cuando esté disponible"""
         try:
             if self.is_connected:
+                self.logger.info("Ya conectado, saltando conexión automática")
                 return
             
             # Obtener el proceso del servidor
             server_process = self.main_window.server_manager.server_process
-            if not server_process or server_process.poll() is not None:
+            if not server_process:
+                self.logger.warning("server_process es None en auto_connect_to_server")
                 return
+                
+            if server_process.poll() is not None:
+                self.logger.warning(f"Proceso del servidor terminado con código: {server_process.poll()}")
+                return
+            
+            self.logger.info("Proceso del servidor encontrado, intentando conexión...")
             
             # Intentar conectar enviando un comando de prueba
             try:
+                # Verificar que stdin esté disponible
+                if not hasattr(server_process, 'stdin') or server_process.stdin is None:
+                    self.logger.error("stdin no disponible en el proceso del servidor")
+                    return
+                
                 # Enviar comando de prueba
+                self.logger.info("Enviando comando de prueba 'time'...")
                 server_process.stdin.write("time\n".encode())
                 server_process.stdin.flush()
                 
@@ -493,18 +542,301 @@ class DirectCommandsPanel(ctk.CTkFrame):
                 self.is_connected = True
                 self.server_process = server_process
                 
-                # Actualizar interfaz
-                self.status_label.configure(text="✅ Conectado", fg_color="green")
-                self.connect_button.configure(state="disabled")
-                self.disconnect_button.configure(state="normal")
+                self.logger.info("Conexión automática exitosa, actualizando UI...")
                 
-                self.add_result("🔌 Conexión Automática", "Conectado automáticamente al servidor")
+                # Actualizar interfaz en el hilo principal
+                self.parent.after(0, self._update_ui_after_auto_connect)
                 
-                # Iniciar monitoreo automáticamente
-                self.start_monitoring()
+                # Iniciar monitoreo automáticamente en el hilo principal
+                self.parent.after(0, self.start_monitoring)
                 
             except Exception as e:
-                self.logger.error(f"Error en conexión automática: {e}")
+                self.logger.error(f"Error al enviar comando de prueba: {e}")
                 
         except Exception as e:
-            self.logger.error(f"Error en conexión automática: {e}")
+            self.logger.error(f"Error general en conexión automática: {e}")
+    
+    def _update_ui_after_auto_connect(self):
+        """Actualizar la interfaz después de la conexión automática (llamado en hilo principal)"""
+        try:
+            # Actualizar interfaz
+            self.status_label.configure(text="✅ Conectado", fg_color="green")
+            self.connect_button.configure(state="disabled")
+            self.disconnect_button.configure(state="normal")
+            
+            self.add_result("🔌 Conexión Automática", "Conectado automáticamente al servidor")
+            
+        except Exception as e:
+            self.logger.error(f"Error al actualizar UI después de conexión automática: {e}")
+    
+    def start_stdout_monitoring(self):
+        """Iniciar monitoreo directo del stdout del servidor"""
+        if self.stdout_monitoring_thread and self.stdout_monitoring_thread.is_alive():
+            return
+            
+        self.stop_stdout_monitoring_flag = False
+        self.stdout_monitoring_thread = threading.Thread(target=self._stdout_monitoring_loop, daemon=True)
+        self.stdout_monitoring_thread.start()
+        self.logger.info("Monitoreo directo del stdout del servidor iniciado")
+    
+    def stop_stdout_monitoring(self):
+        """Detener monitoreo directo del stdout del servidor"""
+        self.stop_stdout_monitoring_flag = True
+        if self.stdout_monitoring_thread:
+            self.stdout_monitoring_thread.join(timeout=1)
+        self.logger.info("Monitoreo directo del stdout del servidor detenido")
+    
+    def _stdout_monitoring_loop(self):
+        """Bucle de monitoreo directo del stdout del servidor"""
+        self.logger.info("Bucle de monitoreo del stdout iniciado")
+        while not self.stop_stdout_monitoring_flag and self.is_connected:
+            try:
+                if self.server_process and self.server_process.poll() is None:
+                    # Leer del stdout del servidor
+                    self._read_server_stdout()
+                else:
+                    self.logger.warning("Proceso del servidor no disponible")
+                    break
+                
+                time.sleep(0.1)  # Verificar cada 100ms para respuestas rápidas
+                
+            except Exception as e:
+                self.logger.error(f"Error en monitoreo del stdout: {e}")
+                time.sleep(1)  # Esperar más tiempo si hay error
+        
+        self.logger.info("Bucle de monitoreo del stdout finalizado")
+    
+    def _read_server_stdout(self):
+        """Leer respuesta del stdout del servidor"""
+        try:
+            if not hasattr(self.server_process, 'stdout') or self.server_process.stdout is None:
+                return
+            
+            # Intentar leer del stdout
+            import select
+            if hasattr(select, 'select'):
+                # En Windows, usar select si está disponible
+                ready, _, _ = select.select([self.server_process.stdout], [], [], 0.1)
+                if ready:
+                    line = self.server_process.stdout.readline()
+                    if line:
+                        line = line.decode('utf-8', errors='ignore').strip()
+                        if line and self._is_command_response(line):
+                            self.parent.after(0, lambda l=line: self._add_server_response(l))
+                            self.logger.info(f"Respuesta del servidor capturada: {line}")
+            
+        except Exception as e:
+            # Si select falla, intentar lectura directa
+            try:
+                if self.server_process.stdout.readable():
+                    line = self.server_process.stdout.readline()
+                    if line:
+                        line = line.decode('utf-8', errors='ignore').strip()
+                        if line and self._is_command_response(line):
+                            self.parent.after(0, lambda l=line: self._add_server_response(l))
+                            self.logger.info(f"Respuesta del servidor capturada: {line}")
+            except Exception as e2:
+                self.logger.debug(f"No se pudo leer stdout: {e2}")
+                
+        except Exception as e:
+            self.logger.debug(f"Error en lectura de stdout: {e}")
+    
+    def _get_server_log_file(self):
+        """Obtener la ruta del archivo de log del servidor"""
+        try:
+            if not self.main_window.server_manager:
+                self.logger.info("server_manager no disponible")
+                return None
+            
+            # Obtener el servidor seleccionado del MainWindow
+            selected_server = getattr(self.main_window, 'selected_server', None)
+            if not selected_server:
+                self.logger.info("No hay servidor seleccionado en MainWindow")
+                return None
+            
+            self.logger.info(f"Servidor seleccionado: {selected_server}")
+            
+            # Obtener la ruta del servidor desde el server_manager
+            server_path = self.main_window.server_manager.get_server_path(selected_server)
+            if not server_path:
+                self.logger.info("No se pudo obtener server_path")
+                return None
+            
+            self.logger.info(f"Server path obtenido: {server_path}")
+            
+            # Construir la ruta del archivo de log
+            log_dir = os.path.join(server_path, "ShooterGame", "Saved", "Logs")
+            if not os.path.exists(log_dir):
+                self.logger.info(f"Directorio de logs no existe: {log_dir}")
+                return None
+            
+            self.logger.info(f"Directorio de logs encontrado: {log_dir}")
+            
+            # Buscar el archivo de log más reciente
+            log_files = [f for f in os.listdir(log_dir) if f.startswith("ShooterGame") and f.endswith(".log")]
+            if not log_files:
+                self.logger.info("No se encontraron archivos de log ShooterGame")
+                return None
+            
+            self.logger.info(f"Archivos de log encontrados: {log_files}")
+            
+            # Obtener el archivo más reciente
+            latest_log = max(log_files, key=lambda f: os.path.getmtime(os.path.join(log_dir, f)))
+            log_file_path = os.path.join(log_dir, latest_log)
+            self.logger.info(f"Archivo de log más reciente: {log_file_path}")
+            
+            return log_file_path
+            
+        except Exception as e:
+            self.logger.error(f"Error al obtener archivo de log: {e}")
+            return None
+    
+    def _read_new_log_content(self, log_file):
+        """Leer nuevo contenido del archivo de log"""
+        try:
+            # Si es un archivo nuevo, resetear la posición
+            if log_file != self.current_log_file:
+                self.current_log_file = log_file
+                self.last_log_position = 0
+                self.logger.info(f"Nuevo archivo de log detectado: {log_file}")
+            
+            with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
+                # Ir al final del archivo
+                f.seek(0, 2)
+                current_size = f.tell()
+                
+                # Si el archivo se ha truncado o es nuevo, resetear posición
+                if current_size < self.last_log_position:
+                    self.last_log_position = 0
+                    self.logger.info("Archivo de log truncado, reseteando posición")
+                
+                # Leer solo el contenido nuevo
+                if current_size > self.last_log_position:
+                    f.seek(self.last_log_position, 0)
+                    new_content = f.read()
+                    
+                    if new_content.strip():
+                        self.logger.info(f"Leyendo {len(new_content)} bytes de contenido nuevo")
+                        
+                        # Filtrar solo líneas que parezcan respuestas a comandos
+                        lines = new_content.split('\n')
+                        filtered_lines = 0
+                        for line in lines:
+                            line = line.strip()
+                            if line:
+                                if self.debug_mode or self._is_command_response(line):
+                                    # En modo debug, mostrar todas las líneas
+                                    if self.debug_mode:
+                                        self.parent.after(0, lambda l=line: self._add_server_response(f"[DEBUG] {l}"))
+                                    else:
+                                        # Mostrar en la interfaz en el hilo principal
+                                        self.parent.after(0, lambda l=line: self._add_server_response(l))
+                                    filtered_lines += 1
+                                else:
+                                    # Log de líneas filtradas para depuración
+                                    self.logger.debug(f"Línea filtrada: {line[:100]}...")
+                        
+                        self.logger.info(f"Procesadas {len(lines)} líneas, {filtered_lines} mostradas")
+                    else:
+                        self.logger.debug("No hay contenido nuevo para procesar")
+                    
+                    self.last_log_position = current_size
+                else:
+                    self.logger.debug("No hay contenido nuevo en el archivo de log")
+                    
+        except Exception as e:
+            self.logger.error(f"Error al leer archivo de log: {e}")
+    
+    def _is_command_response(self, line):
+        """Verificar si una línea es una respuesta a un comando"""
+        # Filtrar líneas que parezcan respuestas del servidor
+        # Excluir líneas de debug, warnings, etc.
+        if not line or len(line) < 3:
+            return False
+            
+        # Excluir líneas que sean claramente de debug o warnings
+        debug_patterns = [
+            'log:', 'warning:', 'error:', 'debug:', 'trace:', 'verbose:',
+            'shootergame', 'ue4', 'unreal', 'engine', 'garbage collection',
+            'memory', 'performance', 'fps', 'tick', 'garbage', 'gc'
+        ]
+        
+        line_lower = line.lower()
+        if any(pattern in line_lower for pattern in debug_patterns):
+            return False
+            
+        # Incluir líneas que parezcan respuestas a comandos
+        command_responses = [
+            'players online:', 'online players:', 'player list:', 'time:', 'weather:',
+            'world saved', 'server restarting', 'broadcast:', 'admin command:',
+            'player', 'players', 'online', 'time', 'weather', 'world', 'server',
+            'broadcast', 'admin', 'command', 'list', 'info', 'status', 'saved',
+            'restarting', 'restart', 'shutdown', 'exit', 'stopping', 'stopped'
+        ]
+        
+        # Permitir líneas con timestamps (formato [HH:MM:SS])
+        if line.startswith('[') and ']' in line:
+            # Verificar si es un timestamp válido
+            timestamp_part = line[1:line.find(']')]
+            if ':' in timestamp_part and len(timestamp_part.split(':')) == 3:
+                # Es un timestamp, verificar si el resto de la línea contiene información útil
+                content_after_timestamp = line[line.find(']')+1:].strip()
+                if content_after_timestamp and len(content_after_timestamp) > 3:
+                    # Excluir solo líneas muy específicas de debug
+                    if not any(pattern in content_after_timestamp.lower() for pattern in debug_patterns):
+                        return True
+        
+        # Verificar si contiene respuestas de comandos
+        if any(response in line_lower for response in command_responses):
+            return True
+            
+        # Incluir líneas que parezcan respuestas de comandos específicos
+        if any(keyword in line_lower for keyword in ['list', 'players', 'time', 'weather', 'broadcast', 'save']):
+            return True
+            
+        return False
+    
+    def _add_server_response(self, response):
+        """Agregar respuesta del servidor al área de resultados"""
+        try:
+            self.add_result("📥 Respuesta del Servidor", response)
+        except Exception as e:
+            self.logger.error(f"Error al agregar respuesta del servidor: {e}")
+    
+    def reload_log_content(self):
+        """Recargar contenido del servidor (ahora lee del stdout)"""
+        try:
+            if not self.is_connected:
+                self.show_error("Debes conectarte al servidor primero")
+                return
+            
+            self.add_result("🔄 Recarga", "Solicitando información del servidor...")
+            
+            # Enviar comandos de prueba para obtener respuestas
+            test_commands = ["time", "listplayers", "showworldinfo"]
+            
+            for cmd in test_commands:
+                try:
+                    self.server_process.stdin.write(f"{cmd}\n".encode())
+                    self.server_process.stdin.flush()
+                    self.logger.info(f"Comando de prueba enviado: {cmd}")
+                    time.sleep(0.5)  # Pequeña pausa entre comandos
+                except Exception as e:
+                    self.logger.error(f"Error al enviar comando {cmd}: {e}")
+            
+            self.add_result("📊 Recarga Completada", f"Enviados {len(test_commands)} comandos de prueba. Las respuestas aparecerán automáticamente si están disponibles.")
+                
+        except Exception as e:
+            self.logger.error(f"Error al recargar contenido: {e}")
+            self.show_error(f"Error al recargar: {e}")
+    
+    def toggle_debug_mode(self):
+        """Alternar modo debug para ver todas las líneas del log"""
+        self.debug_mode = not self.debug_mode
+        
+        if self.debug_mode:
+            self.debug_button.configure(text="🐛 Debug ON", fg_color="red")
+            self.add_result("🐛 Debug", "Modo debug activado - Mostrando todas las líneas del log")
+        else:
+            self.debug_button.configure(text="🐛 Modo Debug", fg_color="orange")
+            self.add_result("🐛 Debug", "Modo debug desactivado - Solo mostrando respuestas relevantes")

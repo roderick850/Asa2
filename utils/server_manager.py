@@ -70,6 +70,38 @@ class ServerManager:
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             return {"cpu": 0, "memory": 0, "memory_mb": 0}
     
+    def get_server_path(self, server_name=None):
+        """Obtiene la ruta del directorio del servidor"""
+        try:
+            self.logger.info(f"get_server_path llamado con server_name: {server_name}")
+            
+            if server_name:
+                # Obtener la ruta específica del servidor
+                root_path = self.config_manager.get("server", "root_path")
+                self.logger.info(f"root_path obtenido para server_name '{server_name}': {root_path}")
+                if root_path:
+                    server_path = os.path.join(root_path, server_name)
+                    self.logger.info(f"server_path construido: {server_path}")
+                    return server_path
+            else:
+                # Obtener la ruta del servidor actual desde la configuración
+                current_server = self.config_manager.get("app", "selected_server")
+                self.logger.info(f"current_server obtenido: {current_server}")
+                if current_server:
+                    root_path = self.config_manager.get("server", "root_path")
+                    self.logger.info(f"root_path obtenido para current_server '{current_server}': {root_path}")
+                    if root_path:
+                        server_path = os.path.join(root_path, current_server)
+                        self.logger.info(f"server_path construido: {server_path}")
+                        return server_path
+            
+            self.logger.warning("No se pudo construir server_path")
+            return None
+            
+        except Exception as e:
+            self.logger.error(f"Error al obtener ruta del servidor: {e}")
+            return None
+    
     def start_server(self, callback=None, server_name=None, map_name=None, capture_console=False):
         """Inicia el servidor de Ark"""
         def _start():
