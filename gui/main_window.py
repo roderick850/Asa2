@@ -333,27 +333,27 @@ class MainWindow:
         
         # La lista de servidores se inicializará después de crear el server_panel
         
-        # Frame para opciones de consola (fila 4)
-        console_options_frame = ctk.CTkFrame(self.top_bar, fg_color="transparent")
-        console_options_frame.grid(row=4, column=0, columnspan=3, padx=10, pady=5, sticky="ew")
+        # Frame para opciones de consola (fila 4) - MOVIDO A LA PESTAÑA CONSOLA
+        # console_options_frame = ctk.CTkFrame(self.top_bar, fg_color="transparent")
+        # console_options_frame.grid(row=4, column=0, columnspan=3, padx=10, pady=5, sticky="ew")
         
-        # Switch para mostrar/ocultar consola del servidor
-        self.console_visibility_var = ctk.BooleanVar(value=self.config_manager.get("app", "show_server_console", default="true").lower() == "true")
-        self.show_console_switch = ctk.CTkSwitch(
-            console_options_frame,
-            text="Mostrar Consola del Servidor",
-            command=self.toggle_server_console_visibility,
-            variable=self.console_visibility_var
-        )
-        self.show_console_switch.grid(row=0, column=0, padx=(0, 20), pady=2, sticky="w")
+        # Switch para mostrar/ocultar consola del servidor - MOVIDO A LA PESTAÑA CONSOLA
+        # self.console_visibility_var = ctk.BooleanVar(value=self.config_manager.get("app", "show_server_console", default="true").lower() == "true")
+        # self.show_console_switch = ctk.CTkSwitch(
+        #     console_options_frame,
+        #     text="Mostrar Consola del Servidor",
+        #     command=self.toggle_server_console_visibility,
+        #     variable=self.console_visibility_var
+        # )
+        # self.show_console_switch.grid(row=0, column=0, padx=(0, 20), pady=2, sticky="w")
         
-        # Etiqueta explicativa
-        ctk.CTkLabel(
-            console_options_frame, 
-            text="Controla si la ventana de consola del servidor es visible o se ejecuta en segundo plano",
-            font=("Arial", 10),
-            text_color=("gray50", "gray70")
-        ).grid(row=0, column=1, padx=(0, 20), pady=2, sticky="w")
+        # Etiqueta explicativa - MOVIDO A LA PESTAÑA CONSOLA
+        # ctk.CTkLabel(
+        #     console_options_frame, 
+        #     text="Controla si la ventana de consola del servidor es visible o se ejecuta en segundo plano",
+        #     font=("Arial", 10),
+        #     text_color=("gray50", "gray70")
+        #     ).grid(row=0, column=1, padx=(0, 20), pady=2, sticky="w")
         
         
     def create_tabview(self):
@@ -2154,60 +2154,9 @@ Versión de la app: {self.APP_VERSION}
         # Este método puede expandirse en el futuro para callbacks específicos
         pass
     
-    def toggle_server_console_visibility(self):
-        """Cambiar la visibilidad de la consola del servidor en tiempo real"""
-        try:
-            # Obtener el estado actual del switch
-            show_console = self.show_console_switch.get()
-            
-            # Guardar la configuración
-            self.config_manager.set("app", "show_server_console", str(show_console).lower())
-            self.config_manager.save()
-            
-            # Aplicar el cambio en tiempo real si el servidor está corriendo
-            if hasattr(self, 'server_manager') and self.server_manager and self.server_manager.server_process:
-                if self.server_manager.server_process.poll() is None:  # Servidor activo
-                    if show_console:
-                        if self.server_manager.show_server_console():
-                            self.add_log_message("✅ Consola del servidor: VISIBLE")
-                        else:
-                            self.add_log_message("⚠️ No se pudo mostrar la consola del servidor")
-                    else:
-                        if self.server_manager.hide_server_console():
-                            self.add_log_message("✅ Consola del servidor: OCULTA")
-                        else:
-                            self.add_log_message("⚠️ No se pudo ocultar la consola del servidor")
-                else:
-                    self.add_log_message("ℹ️ El cambio se aplicará cuando se inicie el servidor")
-            else:
-                self.add_log_message("ℹ️ El cambio se aplicará cuando se inicie el servidor")
-            
-            self.logger.info(f"Configuración de consola del servidor cambiada a: {'visible' if show_console else 'oculta'}")
-            
-        except Exception as e:
-            self.logger.error(f"Error al cambiar configuración de consola del servidor: {e}")
-            self.add_log_message(f"❌ Error al cambiar configuración: {str(e)}")
-    
-    def refresh_console_visibility_switch(self):
-        """Actualizar el estado del switch de visibilidad de consola"""
-        try:
-            if hasattr(self, 'server_manager') and self.server_manager and self.server_manager.server_process:
-                if self.server_manager.server_process.poll() is None:  # Servidor activo
-                    # Verificar si la consola está visible
-                    if self.server_manager.server_console_hwnd:
-                        # La consola existe, verificar si está visible
-                        import ctypes
-                        is_visible = ctypes.windll.user32.IsWindowVisible(self.server_manager.server_console_hwnd)
-                        self.console_visibility_var.set(is_visible)
-                    else:
-                        # Buscar la ventana de consola
-                        self.server_manager._find_server_console_window()
-                        if self.server_manager.server_console_hwnd:
-                            import ctypes
-                            is_visible = ctypes.windll.user32.IsWindowVisible(self.server_manager.server_console_hwnd)
-                            self.console_visibility_var.set(is_visible)
-        except Exception as e:
-            self.logger.debug(f"Error al actualizar switch de visibilidad: {e}")
+    # Los métodos de control de consola se han movido a ConsolePanel
+    # def toggle_server_console_visibility(self): - MOVIDO A CONSOLEPANEL
+    # def refresh_console_visibility_switch(self): - MOVIDO A CONSOLEPANEL
     
     def setup_window_events(self):
         """Configurar eventos de la ventana principal"""

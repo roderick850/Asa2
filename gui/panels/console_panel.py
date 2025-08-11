@@ -51,9 +51,35 @@ class ConsolePanel:
         controls_frame = ctk.CTkFrame(main_frame)
         controls_frame.pack(fill="x", padx=5, pady=5)
         
+        # Frame para el switch de visibilidad de consola
+        console_visibility_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
+        console_visibility_frame.pack(fill="x", padx=10, pady=5)
+        
+        # Switch para mostrar/ocultar consola del servidor
+        self.console_visibility_var = ctk.BooleanVar(value=self.config_manager.get("app", "show_server_console", default="true").lower() == "true")
+        self.show_console_switch = ctk.CTkSwitch(
+            console_visibility_frame,
+            text="Mostrar Consola del Servidor",
+            command=self.toggle_server_console_visibility,
+            variable=self.console_visibility_var
+        )
+        self.show_console_switch.pack(side="left", padx=(0, 20))
+        
+        # Etiqueta explicativa
+        ctk.CTkLabel(
+            console_visibility_frame, 
+            text="Controla si la ventana de consola del servidor es visible o se ejecuta en segundo plano",
+            font=("Arial", 10),
+            text_color=("gray50", "gray70")
+        ).pack(side="left", padx=(0, 20))
+        
+        # Frame para botones de control
+        buttons_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
+        buttons_frame.pack(fill="x", padx=10, pady=5)
+        
         # Label informativo
         info_label = ctk.CTkLabel(
-            controls_frame,
+            buttons_frame,
             text="La consola del servidor se muestra automáticamente",
             font=ctk.CTkFont(size=12),
             text_color="green"
@@ -62,7 +88,7 @@ class ConsolePanel:
         
         # Botón para limpiar consola
         self.clear_button = ctk.CTkButton(
-            controls_frame,
+            buttons_frame,
             text="🧹 Limpiar Consola",
             command=self.clear_console,
             width=120,
@@ -72,7 +98,7 @@ class ConsolePanel:
         
         # Botón para guardar consola
         self.save_button = ctk.CTkButton(
-            controls_frame,
+            buttons_frame,
             text="💾 Guardar Consola",
             command=self.save_console,
             width=120,
@@ -82,7 +108,7 @@ class ConsolePanel:
         
         # Botón para forzar recarga del contenido del archivo de log
         self.reload_content_button = ctk.CTkButton(
-            controls_frame,
+            buttons_frame,
             text="📄 Recargar Contenido",
             command=self.force_reload_content,
             width=140,
@@ -92,7 +118,7 @@ class ConsolePanel:
         
         # Botón para iniciar monitoreo de consola (se eliminará - siempre monitorear)
         self.start_monitoring_button = ctk.CTkButton(
-            controls_frame,
+            buttons_frame,
             text="🔄 Reiniciar Monitoreo",
             command=self.start_console,
             width=140,
@@ -293,10 +319,9 @@ class ConsolePanel:
         self.console_thread = threading.Thread(target=self.console_monitor, daemon=True)
         self.console_thread.start()
         
-        # Actualizar el switch de visibilidad de consola en la ventana principal
-        if hasattr(self.main_window, 'refresh_console_visibility_switch'):
-            # Usar after para programar la llamada en el hilo principal
-            self.main_window.root.after(1000, self.main_window.refresh_console_visibility_switch)
+        # Actualizar el switch de visibilidad de consola
+        if self.main_window and hasattr(self.main_window, 'root'):
+            self.main_window.root.after(1000, self.refresh_console_visibility_switch)
     
     def _start_server_in_capture_mode(self):
         """Método auxiliar para iniciar el servidor en modo de captura"""
@@ -668,3 +693,67 @@ class ConsolePanel:
             # Notificar al MainWindow que hay un error
             if hasattr(self.main_window, 'update_server_status'):
                 self.main_window.update_server_status("Error")
+        elif status == "active":
+            self._notify_server_active()
+    
+    def toggle_server_console_visibility(self):
+        """Cambiar la visibilidad de la consola del servidor en tiempo real"""
+        try:
+            # Obtener el estado actual del switch
+            show_console = self.show_console_switch.get()
+            
+            # Guardar la configuración
+            self.config_manager.set("app", "show_server_console", str(show_console).lower())
+            self.config_manager.save()
+            
+            # Aplicar el cambio en tiempo real si el servidor está corriendo
+            if self.server_manager and self.server_manager.server_process:
+                if self.server_manager.server_process.poll() is None:  # Servidor activo
+                    if show_console:
+                        if self.server_manager.show_server_console():
+                            if self.main_window:
+                                self.main_window.add_log_message("✅ Consola del servidor: VISIBLE")
+                        else:
+                            if self.main_window:
+                                self.main_window.add_log_message("⚠️ No se pudo mostrar la consola del servidor")
+                    else:
+                        if self.server_manager.hide_server_console():
+                            if self.main_window:
+                                self.main_window.add_log_message("✅ Consola del servidor: OCULTA")
+                        else:
+                            if self.main_window:
+                                self.main_window.add_log_message("⚠️ No se pudo ocultar la consola del servidor")
+                else:
+                    if self.main_window:
+                        self.main_window.add_log_message("ℹ️ El cambio se aplicará cuando se inicie el servidor")
+            else:
+                if self.main_window:
+                    self.main_window.add_log_message("ℹ️ El cambio se aplicará cuando se inicie el servidor")
+            
+            self.logger.info(f"Configuración de consola del servidor cambiada a: {'visible' if show_console else 'oculta'}")
+            
+        except Exception as e:
+            self.logger.error(f"Error al cambiar configuración de consola del servidor: {e}")
+            if self.main_window:
+                self.main_window.add_log_message(f"❌ Error al cambiar configuración: {str(e)}")
+    
+    def refresh_console_visibility_switch(self):
+        """Actualizar el estado del switch de visibilidad de consola"""
+        try:
+            if self.server_manager and self.server_manager.server_process:
+                if self.server_manager.server_process.poll() is None:  # Servidor activo
+                    # Verificar si la consola está visible
+                    if self.server_manager.server_console_hwnd:
+                        # La consola existe, verificar si está visible
+                        import ctypes
+                        is_visible = ctypes.windll.user32.IsWindowVisible(self.server_manager.server_console_hwnd)
+                        self.console_visibility_var.set(is_visible)
+                    else:
+                        # Buscar la ventana de consola
+                        self.server_manager._find_server_console_window()
+                        if self.server_manager.server_console_hwnd:
+                            import ctypes
+                            is_visible = ctypes.windll.user32.IsWindowVisible(self.server_manager.server_console_hwnd)
+                            self.console_visibility_var.set(is_visible)
+        except Exception as e:
+            self.logger.debug(f"Error al actualizar switch de visibilidad: {e}")
