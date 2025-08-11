@@ -509,7 +509,7 @@ class PrincipalPanel:
             self.logger.error(f"Error al cargar configuración: {e}")
             self.show_message(f"❌ Error al cargar: {str(e)}", "error")
     
-    def start_server_with_config(self):
+    def start_server_with_config(self, capture_console=False):
         """Iniciar servidor con la configuración actual"""
         # Obtener servidor y mapa desde main_window
         selected_server = None
@@ -545,13 +545,17 @@ class PrincipalPanel:
         try:
             self.show_message(f"🚀 Iniciando servidor {selected_server} con mapa {selected_map}", "info")
             
+            # Log de depuración
+            self.logger.info(f"DEBUG: principal_panel.start_server_with_config - capture_console = {capture_console}")
+            
             # Llamar al método de inicio del servidor con argumentos personalizados
             if self.server_manager:
                 self.server_manager.start_server_with_args(
                     self.add_status_message, 
                     selected_server, 
                     selected_map, 
-                    server_args
+                    server_args,
+                    capture_console
                 )
                 
                 # También notificar al main window si hay uno
@@ -562,7 +566,7 @@ class PrincipalPanel:
             self.logger.error(f"Error al iniciar servidor: {e}")
             self.show_message(f"❌ Error al iniciar servidor: {str(e)}", "error")
     
-    def restart_server_with_config(self):
+    def restart_server_with_config(self, capture_console=False):
         """Reiniciar servidor con la configuración actual"""
         # Obtener servidor y mapa desde main_window
         selected_server = None
@@ -604,7 +608,8 @@ class PrincipalPanel:
                     self.add_status_message, 
                     selected_server, 
                     selected_map, 
-                    server_args
+                    server_args,
+                    capture_console
                 )
                 
                 # También notificar al main window si hay uno
@@ -677,47 +682,15 @@ class PrincipalPanel:
                 
         if selected_map and selected_map in map_identifiers:
             map_identifier = map_identifiers[selected_map]
-            map_arg = f"{map_identifier}?listen"
             if self.logger.should_log_debug():
                 self.logger.info(f"DEBUG: ✅ Mapa encontrado. Usando identificador: {map_identifier}")
         else:
             # Mapa por defecto si no hay selección
-            map_arg = "TheIsland_WP?listen"
+            map_identifier = "TheIsland_WP"
             if self.logger.should_log_debug():
                 self.logger.warning(f"DEBUG: ❌ Mapa no encontrado o vacío. Razón: selected_map='{selected_map}', en diccionario={selected_map in map_identifiers if selected_map else False}. Usando por defecto: TheIsland_WP")
         
-        # 2. Agregar parámetros básicos en el orden correcto
-        # Port
-        port = self.port_entry.get() or "7777"
-        map_arg += f"?Port={port}"
-        
-        # QueryPort
-        query_port = self.query_port_entry.get() or "27015"
-        map_arg += f"?QueryPort={query_port}"
-        
-        # MultiHome (usar valor del campo o por defecto)
-        multihome = self.multihome_entry.get() or "127.0.0.1"
-        map_arg += f"?MultiHome={multihome}"
-        
-        # 3. Procesar argumentos personalizados antes del final
-        custom_args = self.custom_args_text.get("1.0", "end-1c").strip()
-        if custom_args:
-            for line in custom_args.split('\n'):
-                line = line.strip()
-                if line and not line.startswith('#'):  # Ignorar líneas vacías y comentarios
-                    # Si la línea ya comienza con ?, la agregamos tal como está
-                    if line.startswith('?'):
-                        map_arg += line
-                    else:
-                        # Si no, agregamos el ? al principio
-                        map_arg += f"?{line}"
-        
-        # 4. Agregar argumentos RCON si está habilitado
-        if hasattr(self.main_window, 'rcon_panel') and self.main_window.rcon_panel.get_rcon_enabled():
-            rcon_port = self.main_window.rcon_panel.get_rcon_port()
-            map_arg += f"?EnableRCON=True?RCONPort={rcon_port}"
-        
-        # 5. Obtener mods configurados (buscar por servidor/mapa específico primero)
+        # 2. Obtener mods configurados (buscar por servidor/mapa específico primero)
         # Obtener servidor seleccionado
         selected_server = None
         if hasattr(self.main_window, 'selected_server') and self.main_window.selected_server:
@@ -732,10 +705,46 @@ class PrincipalPanel:
         if not mod_ids:
             mod_ids = self.config_manager.get("server", "mod_ids", "").strip()
         
-        # 6. Construir la lista final con un solo argumento y los flags del servidor
+        # 3. Construir la lista final con argumentos separados
+        # El primer argumento debe ser el mapa con todos sus parámetros concatenados
+        map_arg = map_identifier + "?listen"
+        
+        # Agregar los parámetros de configuración al argumento del mapa
+        # Port
+        port = self.port_entry.get() or "7777"
+        map_arg += f"?Port={port}"
+        
+        # QueryPort
+        query_port = self.query_port_entry.get() or "27015"
+        map_arg += f"?QueryPort={query_port}"
+        
+        # MultiHome
+        multihome = self.multihome_entry.get() or "127.0.0.1"
+        map_arg += f"?MultiHome={multihome}"
+        
+        # Argumentos personalizados
+        custom_args = self.custom_args_text.get("1.0", "end-1c").strip()
+        if custom_args:
+            for line in custom_args.split('\n'):
+                line = line.strip()
+                if line and not line.startswith('#'):  # Ignorar líneas vacías y comentarios
+                    # Si la línea ya comienza con ?, la agregamos tal como está
+                    if line.startswith('?'):
+                        map_arg += line
+                    else:
+                        # Si no, agregamos el ? al principio
+                        map_arg += f"?{line}"
+        
+        # RCON
+        if hasattr(self.main_window, 'rcon_panel') and self.main_window.rcon_panel.get_rcon_enabled():
+            rcon_port = self.main_window.rcon_panel.get_rcon_port()
+            map_arg += "?EnableRCON=True"
+            map_arg += f"?RCONPort={rcon_port}"
+        
+        # Construir la lista final
         args = [map_arg, "-server", "-log"]
         
-        # 7. Agregar mods si existen
+        # 4. Agregar mods si existen
         if mod_ids:
             args.append(f"-mods={mod_ids}")
         

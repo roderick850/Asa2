@@ -581,11 +581,11 @@ class ServerPanel:
             
             # Iniciar servidor con configuración del panel principal
             self.update_server_status("Iniciando...", "orange")
-            self.main_window.principal_panel.start_server_with_config()
+            self.main_window.principal_panel.start_server_with_config(capture_console=True)
         else:
             # Fallback al método antiguo si no hay panel principal
             self.update_server_status("Iniciando...", "orange")
-            self.server_manager.start_server(self.add_status_message, self.selected_server, self.selected_map)
+            self.server_manager.start_server(self.add_status_message, self.selected_server, self.selected_map, capture_console=True)
     
     def stop_server(self):
         """Detiene el servidor"""
@@ -724,10 +724,10 @@ class ServerPanel:
             self.main_window.principal_panel.selected_map = self.selected_map
             
             # Reiniciar servidor con configuración del panel principal
-            self.main_window.principal_panel.restart_server_with_config()
+            self.main_window.principal_panel.restart_server_with_config(capture_console=True)
         else:
             # Fallback al método antiguo si no hay panel principal
-            self.server_manager.restart_server(self.add_status_message, self.selected_server, self.selected_map)
+            self.server_manager.restart_server(self.add_status_message, self.selected_server, self.selected_map, capture_console=True)
     
     def show_progress(self, message="", progress=0):
         """Muestra la barra de progreso con un mensaje y porcentaje"""

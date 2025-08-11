@@ -11,6 +11,7 @@ from .panels.players_panel import PlayersPanel
 from .panels.mods_panel import ModsPanel
 from .panels.working_logs_panel import WorkingLogsPanel
 from .panels.rcon_panel import RconPanel
+from .panels.console_panel import ConsolePanel
 from .dialogs.advanced_settings_dialog import AdvancedSettingsDialog
 from .dialogs.custom_dialogs import show_info, show_warning, show_error, ask_yes_no, ask_string
 from utils.app_settings import AppSettings
@@ -21,27 +22,62 @@ class MainWindow:
     APP_VERSION = "1.0"
     
     def __init__(self, root, config_manager, logger):
+        """Inicializar la ventana principal"""
         self.root = root
         self.config_manager = config_manager
         self.logger = logger
         
-        # Importar ServerEventLogger aquí para evitar problemas de importación circular
-        from utils.server_logger import ServerEventLogger
-        self.server_event_logger = ServerEventLogger("default")
+        # Configuración de la ventana
+        self.root.title("ARK Server Manager")
+        self.root.geometry("1200x800")
+        self.root.minsize(1000, 600)
         
-        # Variables para el servidor y mapa seleccionados
+        # Variables de estado
         self.selected_server = None
         self.selected_map = None
+        self.console_panel_managing_startup = False
         
-        # Inicializar configuraciones avanzadas
+        # Configuración de la aplicación
         self.app_settings = AppSettings(config_manager, logger)
+        self.system_tray = None
+        self.started_with_windows = False
         
-        # Inicializar bandeja del sistema
-        self.system_tray = SystemTray(self, self.app_settings, logger)
+        # Inicializar componentes
+        self.server_manager = None
+        self.principal_panel = None
+        self.server_panel = None
+        self.console_panel = None
+        self.backup_panel = None
+        self.logs_panel = None
+        self.rcon_panel = None
+        self.mods_panel = None
+        self.monitoring_panel = None
+        self.players_panel = None
+        self.advanced_backup_panel = None
+        self.advanced_restart_panel = None
+        self.dynamic_config_panel = None
+        self.server_config_panel = None
         
-        # Variables para diálogos
-        self.settings_dialog = None
+        # Configurar la ventana
+        self.setup_window()
         
+        # Configurar eventos
+        self.setup_window_events()
+        
+        # Aplicar configuraciones de la aplicación
+        self.apply_app_settings()
+        
+        # Cargar última configuración
+        self.load_last_configuration()
+        
+        # Detectar si se inició con Windows
+        self.detect_startup_with_windows()
+        
+        # Configurar auto-inicio si es necesario
+        self.check_auto_start_fallback()
+    
+    def setup_window(self):
+        """Configurar la ventana principal"""
         # Configurar el grid principal
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_rowconfigure(1, weight=1)
@@ -61,20 +97,7 @@ class MainWindow:
         
         # Inicializar bandeja del sistema
         self.start_system_tray()
-        
-        # Cargar última configuración
-        self.load_last_configuration()
-        
-        # Detectar si se inició con Windows
-        self.started_with_windows = self.detect_startup_with_windows()
-        
-        # Debug: Mostrar todas las configuraciones para diagnóstico
-        if hasattr(self.app_settings, 'debug_all_settings'):
-            self.app_settings.debug_all_settings()
-        
-        # Verificar auto-inicio si no hay bandeja disponible
-        self.check_auto_start_fallback()
-        
+    
     def create_top_bar(self):
         """Crear la barra superior con menú, administración y estado del servidor"""
         # Frame principal de la barra superior
@@ -315,6 +338,7 @@ class MainWindow:
         self.tab_backup_content = self.tabview.add("Backup")
         self.tab_reinicios_content = self.tabview.add("Reinicios")
         self.tab_rcon_content = self.tabview.add("RCON")
+        self.tab_console_content = self.tabview.add("Consola")
         self.tab_logs_content = self.tabview.add("Logs")
         
         # Crear paneles
@@ -326,6 +350,7 @@ class MainWindow:
         self.monitoring_panel = MonitoringPanel(self.tab_reinicios_content, self.config_manager, self.logger, self)
         self.backup_panel = BackupPanel(self.tab_backup_content, self.config_manager, self.logger, self)
         self.rcon_panel = RconPanel(self.tab_rcon_content, self.config_manager, self.logger, self)
+        self.console_panel = ConsolePanel(self.tab_console_content, self.config_manager, self.logger, self)
         self.logs_panel = WorkingLogsPanel(self.tab_logs_content, self.config_manager, self.logger, self)
         
         # Configurar callbacks para los botones
@@ -396,6 +421,7 @@ class MainWindow:
         ctk.CTkButton(main_frame, text="💾 Realizar Backup", command=self.quick_backup).pack(pady=5, fill="x", padx=20)
         ctk.CTkButton(main_frame, text="🔄 Reiniciar Servidor", command=self.quick_restart).pack(pady=5, fill="x", padx=20)
         ctk.CTkButton(main_frame, text="📊 Monitoreo", command=lambda: self.switch_to_tab("Reinicios")).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="🖥️ Consola del Servidor", command=lambda: self.switch_to_tab("Consola")).pack(pady=5, fill="x", padx=20)
         ctk.CTkButton(main_frame, text="📝 Ver Logs", command=lambda: self.switch_to_tab("Logs")).pack(pady=5, fill="x", padx=20)
         
         # Separador
@@ -861,8 +887,22 @@ class MainWindow:
                 text_color=("red", "orange")
             )
     
-    def update_server_status(self, status, color="red"):
-        """Actualizar el estado del servidor"""
+    def update_server_status(self, status):
+        """Actualizar el estado del servidor con colores automáticos"""
+        # Definir colores según el estado
+        if status == "Inactivo":
+            color = "red"
+        elif status == "Iniciando":
+            color = "orange"
+        elif status == "Activo":
+            color = "green"
+        elif status == "Error":
+            color = "red"
+        elif status == "Verificando...":
+            color = "blue"
+        else:
+            color = "gray"  # Color por defecto para estados desconocidos
+        
         self.status_label.configure(text=status, fg_color=color)
     
     def update_uptime(self, uptime):
@@ -1963,72 +2003,48 @@ Versión de la app: {self.APP_VERSION}
             self.logger.error(f"Error al actualizar paneles: {e}")
     
     def auto_start_server_if_configured(self):
-        """Auto-iniciar servidor si hay configuración válida"""
+        """Auto-iniciar el servidor si está configurado para hacerlo"""
         try:
-            # Evitar ejecuciones duplicadas
-            if hasattr(self, 'auto_start_attempted') and self.auto_start_attempted:
-                return False
-            self.auto_start_attempted = True
+            # Verificar si ya hay un servidor ejecutándose
+            if hasattr(self, 'server_manager') and self.server_manager.is_server_running():
+                self.logger.info("El servidor ya está ejecutándose, omitiendo auto-inicio")
+                self.add_log_message("ℹ️ Servidor ya está ejecutándose")
+                return
             
-            import os
+            # Verificar si ConsolePanel ya está manejando el inicio del servidor
+            if hasattr(self, 'console_panel_managing_startup') and self.console_panel_managing_startup:
+                self.logger.info("ConsolePanel ya está manejando el inicio del servidor, omitiendo auto-inicio desde MainWindow")
+                self.add_log_message("ℹ️ ConsolePanel ya está iniciando el servidor")
+                return
             
-            # Verificar configuración de último servidor y mapa (sin logs innecesarios)
-            last_server = self.config_manager.get("app", "last_server", "")
-            last_map = self.config_manager.get("app", "last_map", "")
+            # Iniciar el servidor
+            self.add_log_message(f"🚀 Auto-iniciando servidor: {self.selected_server} con mapa: {self.selected_map}")
             
-            if not last_server:
-                self.add_log_message("⚠️ Auto-inicio cancelado: No hay servidor configurado")
-                return False
-            
-            if not last_map:
-                self.add_log_message("⚠️ Auto-inicio cancelado: No hay mapa configurado")
-                return False
-            
-            # Verificar que el servidor existe
-            server_executable = self.config_manager.get("server", f"executable_path_{last_server.lower()}", "")
-            if not server_executable or not os.path.exists(server_executable):
-                self.add_log_message(f"⚠️ Auto-inicio cancelado: Servidor '{last_server}' no encontrado")
-                return False
-            
-            # Mensaje único importante para el usuario
-            self.logger.info(f"Auto-iniciando servidor '{last_server}' con mapa '{last_map}'")
-            self.add_log_message(f"🚀 Auto-iniciando servidor '{last_server}' con mapa '{last_map}'...")
-            
-            # Actualizar paneles con la configuración
-            if hasattr(self, 'server_panel'):
-                # Configurar paneles silenciosamente
-                if hasattr(self.server_panel, 'server_combo'):
-                    try:
-                        self.server_panel.server_combo.set(last_server)
-                        self.server_panel.on_server_selected()
-                    except Exception:
-                        pass  # Error silencioso para no ralentizar
+            if hasattr(self, 'principal_panel'):
+                # Usar el método de inicio completo con configuraciones
+                self.principal_panel.start_server_with_config()
+                self.add_log_message("✅ Auto-inicio del servidor completado")
                 
-                if hasattr(self.server_panel, 'map_combo'):
-                    try:
-                        self.server_panel.map_combo.set(last_map)
-                    except Exception:
-                        pass  # Error silencioso para no ralentizar
-                
-                # Iniciar servidor
-                if hasattr(self.server_panel, 'start_server'):
-                    try:
-                        # Programar inicio con un pequeño retraso
-                        self.root.after(1000, self.server_panel.start_server)
-                        return True
-                    except Exception as e:
-                        self.add_log_message(f"❌ Error en auto-inicio: {e}")
-                else:
-                    self.add_log_message("❌ Auto-inicio falló: Método no disponible")
+                # Notificar en la bandeja si está disponible
+                if hasattr(self, 'system_tray') and self.system_tray.is_available():
+                    self.system_tray.show_notification(
+                        "ARK Server Manager",
+                        f"Servidor '{self.selected_server}' iniciado automáticamente"
+                    )
             else:
-                self.add_log_message("❌ Auto-inicio falló: Panel no disponible")
-            
-            return False
-            
+                self.logger.error("Panel principal no disponible para auto-inicio")
+                self.add_log_message("❌ Error: Panel principal no disponible")
+                
         except Exception as e:
-            self.logger.error(f"❌ Error crítico en auto-inicio: {e}")
+            self.logger.error(f"Error en auto-inicio del servidor: {e}")
             self.add_log_message(f"❌ Error en auto-inicio: {e}")
-            return False
+            
+            # Notificar error en la bandeja si está disponible
+            if hasattr(self, 'system_tray') and self.system_tray.is_available():
+                self.system_tray.show_notification(
+                    "ARK Server Manager - Error",
+                    "Error al auto-iniciar el servidor"
+                )
     
     def detect_startup_with_windows(self):
         """Detectar si la aplicación se inició automáticamente con Windows"""

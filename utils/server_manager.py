@@ -70,7 +70,7 @@ class ServerManager:
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             return {"cpu": 0, "memory": 0, "memory_mb": 0}
     
-    def start_server(self, callback=None, server_name=None, map_name=None):
+    def start_server(self, callback=None, server_name=None, map_name=None, capture_console=False):
         """Inicia el servidor de Ark"""
         def _start():
             try:
@@ -95,39 +95,71 @@ class ServerManager:
                         callback("error", "Ruta del ejecutable no válida")
                     return
                 
-                # Obtener configuración del servidor
-                port = self.config_manager.get("server", "port", "7777")
-                max_players = self.config_manager.get("server", "max_players", "70")
-                server_display_name = self.config_manager.get("server", "server_name", "Mi Servidor Ark")
+                # Construir comando
+                cmd = [server_path, "-server", "-log"]
                 
-                # Construir comando del servidor
-                cmd = [
-                    server_path,
-                    f"?Port={port}",
-                    f"?MaxPlayers={max_players}",
-                    f"?ServerName={server_display_name}",
-                    "-server",
-                    "-log"
-                ]
-                
-                # Agregar el mapa si se especifica
-                if map_name and map_name != "Seleccionar mapa...":
-                    cmd.append(f"?Map={map_name}")
+                # Agregar mapa si se especifica
+                if map_name:
+                    # Mapear nombre amigable a identificador técnico
+                    # IDENTIFICADORES PARA ARK SURVIVAL ASCENDED
+                    map_identifiers = {
+                        "The Island": "TheIsland_WP",
+                        "TheIsland": "TheIsland_WP",
+                        "TheIsland_WP": "TheIsland_WP",
+                        "The Center": "TheCenter_WP",        # ✅ ASA usa _WP
+                        "TheCenter": "TheCenter_WP",
+                        "TheCenter_WP": "TheCenter_WP",
+                        "Scorched Earth": "ScorchedEarth_WP", 
+                        "ScorchedEarth": "ScorchedEarth_WP",
+                        "ScorchedEarth_WP": "ScorchedEarth_WP",
+                        "Ragnarok": "Ragnarok_WP",           # ✅ ASA usa _WP
+                        "Ragnarok_WP": "Ragnarok_WP",
+                        "Aberration": "Aberration_P",
+                        "Extinction": "Extinction",
+                        "Valguero": "Valguero_P",
+                        "Genesis: Part 1": "Genesis",
+                        "Genesis1": "Genesis",  # Variante sin espacio/abreviada
+                        "Crystal Isles": "CrystalIsles",
+                        "CrystalIsles": "CrystalIsles",  # Variante sin espacio
+                        "Genesis: Part 2": "Genesis2",
+                        "Genesis2": "Genesis2",  # Variante sin espacio/abreviada
+                        "Lost Island": "LostIsland",
+                        "LostIsland": "LostIsland",  # Variante sin espacio
+                        "Fjordur": "Fjordur"
+                    }
+                    
+                    map_identifier = map_identifiers.get(map_name, map_name)
+                    cmd.append(f"/Game/Mods/{map_identifier}/{map_identifier}")
                 
                 # Agregar parámetros adicionales si existen
-                additional_params = self.config_manager.get("server", "additional_params", "")
+                additional_params = self.config_manager.get("server", "additional_params")
                 if additional_params:
                     cmd.extend(additional_params.split())
                 
                 self.logger.info(f"Iniciando servidor {server_name} con mapa {map_name} - comando: {' '.join(cmd)}")
                 
                 # Iniciar proceso del servidor
-                self.server_process = subprocess.Popen(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    creationflags=subprocess.CREATE_NEW_CONSOLE
-                )
+                # Si se quiere capturar la consola, no usar CREATE_NEW_CONSOLE
+                self.logger.info(f"DEBUG: capture_console = {capture_console}")
+                if capture_console:
+                    self.logger.info("DEBUG: Iniciando servidor en modo CAPTURA de consola (sin CREATE_NEW_CONSOLE)")
+                    # Modo para capturar consola: usar pipes para stdout/stdin
+                    self.server_process = subprocess.Popen(
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,  # Combinar stderr con stdout
+                        stdin=subprocess.PIPE,
+                        bufsize=1,
+                        universal_newlines=True,  # Para compatibilidad con texto
+                        # NO usar CREATE_NEW_CONSOLE para poder capturar la salida
+                    )
+                else:
+                    self.logger.info("DEBUG: Iniciando servidor en modo NORMAL (con CREATE_NEW_CONSOLE)")
+                    # Modo normal: crear nueva consola separada
+                    self.server_process = subprocess.Popen(
+                        cmd,
+                        creationflags=subprocess.CREATE_NEW_CONSOLE
+                    )
                 
                 self.server_pid = self.server_process.pid
                 self.server_running = True
@@ -144,7 +176,7 @@ class ServerManager:
         
         threading.Thread(target=_start, daemon=True).start()
     
-    def start_server_with_args(self, callback=None, server_name=None, map_name=None, custom_args=None):
+    def start_server_with_args(self, callback=None, server_name=None, map_name=None, custom_args=None, capture_console=False):
         """Inicia el servidor de Ark con argumentos personalizados"""
         def _start_with_args():
             try:
@@ -224,14 +256,61 @@ class ServerManager:
                     callback("info", f"Comando del servidor: {' '.join(cmd)}")
                 
                 # Iniciar el proceso del servidor
-                self.server_process = subprocess.Popen(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    bufsize=1,
-                    universal_newlines=True
-                )
+                # Si se quiere capturar la consola, usar pipes para stdout/stdin
+                self.logger.info(f"DEBUG: start_server_with_args - capture_console = {capture_console}")
+                
+                # Obtener el directorio de trabajo del servidor
+                server_dir = os.path.dirname(server_path)
+                self.logger.info(f"DEBUG: Directorio de trabajo del servidor: {server_dir}")
+                
+                if capture_console:
+                    self.logger.info("DEBUG: start_server_with_args - Iniciando servidor en modo CAPTURA de consola (con CREATE_NEW_CONSOLE y archivo de log)")
+                    
+                    # Crear un archivo de log temporal para capturar la salida
+                    import tempfile
+                    
+                    # Crear archivo de log temporal en el directorio del servidor
+                    log_file_path = os.path.join(server_dir, "server_console.log")
+                    self.log_file_path = log_file_path
+                    
+                    # Limpiar archivo de log anterior si existe
+                    if os.path.exists(log_file_path):
+                        try:
+                            os.remove(log_file_path)
+                        except:
+                            pass
+                    
+                    # Iniciar servidor con consola real pero redirigir salida a archivo
+                    self.server_process = subprocess.Popen(
+                        cmd,
+                        stdout=open(log_file_path, 'w', encoding='utf-8', errors='ignore'),
+                        stderr=subprocess.STDOUT,
+                        stdin=subprocess.PIPE,
+                        creationflags=subprocess.CREATE_NEW_CONSOLE,  # Usar consola real para que funcione
+                        cwd=server_dir
+                    )
+                    
+                    # Logging adicional para debug
+                    self.logger.info(f"DEBUG: Proceso del servidor iniciado con PID: {self.server_process.pid}")
+                    self.logger.info(f"DEBUG: Archivo de log creado en: {log_file_path}")
+                    
+                    # Verificar estado del proceso inmediatamente
+                    if self.server_process.poll() is None:
+                        self.logger.info("DEBUG: ✅ Proceso del servidor está ejecutándose correctamente")
+                    else:
+                        exit_code = self.server_process.poll()
+                        self.logger.error(f"DEBUG: ❌ El servidor terminó inmediatamente con código: {exit_code}")
+                        
+                else:
+                    self.logger.info("DEBUG: start_server_with_args - Iniciando servidor en modo NORMAL (con CREATE_NEW_CONSOLE)")
+                    # Modo normal: crear nueva consola separada
+                    self.server_process = subprocess.Popen(
+                        cmd,
+                        creationflags=subprocess.CREATE_NEW_CONSOLE,
+                        cwd=server_dir
+                    )
+                    
+                    self.logger.info(f"DEBUG: Proceso del servidor iniciado con PID: {self.server_process.pid}")
                 
                 self.server_pid = self.server_process.pid
                 self.server_running = True
@@ -240,36 +319,46 @@ class ServerManager:
                 if callback:
                     callback("success", f"Servidor iniciado con PID: {self.server_pid}")
                 
-                # Monitorear la salida del servidor
-                for line in iter(self.server_process.stdout.readline, ''):
-                    if line:
-                        line = line.strip()
+                # Cuando se está capturando la consola, NO leer stdout aquí
+                # El ConsolePanel se encargará de leer la salida del servidor
+                if capture_console:
+                    self.logger.info("DEBUG: Modo captura de consola activado - ConsolePanel se encargará de leer stdout")
+                    # Solo verificar que el proceso esté ejecutándose
+                    if self.server_process.poll() is not None:
+                        # El proceso terminó inmediatamente
+                        self.server_running = False
+                        self.server_pid = None
+                        self.uptime_start = None
+                        
                         if callback:
-                            callback("info", line)
-                        self.logger.info(f"Servidor: {line}")
-                
-                # El monitoreo terminó, pero verificar si el proceso aún existe
-                if self.server_process.poll() is not None:
-                    # El proceso realmente terminó
-                    self.server_running = False
-                    self.server_pid = None
-                    self.uptime_start = None
-                    
-                    if callback:
-                        callback("info", "Servidor detenido")
-                    self.logger.info("Proceso del servidor terminado")
+                            callback("error", "El servidor se detuvo inmediatamente después de iniciar")
+                        self.logger.error("El servidor se detuvo inmediatamente después de iniciar")
                 else:
-                    # El proceso sigue ejecutándose, solo terminó el monitoreo
-                    self.logger.info("Monitoreo del servidor finalizado, pero el proceso continúa ejecutándose")
-                    if callback:
-                        callback("info", "Monitoreo finalizado - Servidor sigue ejecutándose")
+                    # No se está capturando la consola, solo esperar a que el proceso termine
+                    self.logger.info("DEBUG: No se está capturando la consola, esperando a que el proceso termine")
+                    if self.server_process.poll() is not None:
+                        # El proceso realmente terminó
+                        self.server_running = False
+                        self.server_pid = None
+                        self.uptime_start = None
+                        
+                        if callback:
+                            callback("info", "Servidor detenido")
+                        self.logger.info("Proceso del servidor terminado")
                 
             except Exception as e:
                 self.logger.error(f"Error al iniciar servidor con argumentos personalizados: {e}")
                 if callback:
                     callback("error", f"Error al iniciar servidor: {str(e)}")
         
-        threading.Thread(target=_start_with_args, daemon=True).start()
+        # Ejecutar en el hilo principal para poder retornar el resultado
+        _start_with_args()
+        
+        # Retornar el estado del servidor después de iniciar
+        if hasattr(self, 'server_process') and self.server_process and self.server_process.poll() is None:
+            return True
+        else:
+            return False
     
     def stop_server(self, callback=None):
         """Detiene el servidor de Ark"""
@@ -363,7 +452,7 @@ class ServerManager:
         
         threading.Thread(target=_stop, daemon=True).start()
     
-    def restart_server(self, callback=None, server_name=None, map_name=None, custom_args=None):
+    def restart_server(self, callback=None, server_name=None, map_name=None, custom_args=None, capture_console=False):
         """Reinicia el servidor de Ark con argumentos personalizados"""
         def _restart():
             try:
@@ -379,9 +468,9 @@ class ServerManager:
                 
                 # Usar start_server_with_args para conservar argumentos personalizados y mods
                 if custom_args:
-                    self.start_server_with_args(callback, server_name, map_name, custom_args)
+                    self.start_server_with_args(callback, server_name, map_name, custom_args, capture_console)
                 else:
-                    self.start_server(callback, server_name, map_name)
+                    self.start_server(callback, server_name, map_name, capture_console)
                 
             except Exception as e:
                 self.logger.error(f"Error al reiniciar el servidor: {e}")
