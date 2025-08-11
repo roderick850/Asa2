@@ -1,7 +1,15 @@
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
 import customtkinter as ctk
 import os
-import platform
+import json
+import time
+import threading
+import logging
 from datetime import datetime
+from utils.config_manager import ConfigManager
+from utils.app_settings import AppSettings
+from utils.system_tray import SystemTray
 from .panels.principal_panel import PrincipalPanel
 from .panels.server_panel import ServerPanel
 from .panels.config_panel import ConfigPanel
@@ -15,8 +23,6 @@ from .panels.direct_commands_panel import DirectCommandsPanel
 from .panels.console_panel import ConsolePanel
 from .dialogs.advanced_settings_dialog import AdvancedSettingsDialog
 from .dialogs.custom_dialogs import show_info, show_warning, show_error, ask_yes_no, ask_string
-from utils.app_settings import AppSettings
-from utils.system_tray import SystemTray
 
 class MainWindow:
 
@@ -40,7 +46,7 @@ class MainWindow:
         
         # Configuración de la aplicación
         self.app_settings = AppSettings(config_manager, logger)
-        self.system_tray = None
+        self.system_tray = SystemTray(self, self.app_settings, logger)
         self.started_with_windows = False
         
         # Inicializar componentes
@@ -327,6 +333,28 @@ class MainWindow:
         
         # La lista de servidores se inicializará después de crear el server_panel
         
+        # Frame para opciones de consola (fila 4)
+        console_options_frame = ctk.CTkFrame(self.top_bar, fg_color="transparent")
+        console_options_frame.grid(row=4, column=0, columnspan=3, padx=10, pady=5, sticky="ew")
+        
+        # Switch para mostrar/ocultar consola del servidor
+        self.console_visibility_var = ctk.BooleanVar(value=self.config_manager.get("app", "show_server_console", default="true").lower() == "true")
+        self.show_console_switch = ctk.CTkSwitch(
+            console_options_frame,
+            text="Mostrar Consola del Servidor",
+            command=self.toggle_server_console_visibility,
+            variable=self.console_visibility_var
+        )
+        self.show_console_switch.grid(row=0, column=0, padx=(0, 20), pady=2, sticky="w")
+        
+        # Etiqueta explicativa
+        ctk.CTkLabel(
+            console_options_frame, 
+            text="Controla si la ventana de consola del servidor es visible o se ejecuta en segundo plano",
+            font=("Arial", 10),
+            text_color=("gray50", "gray70")
+        ).grid(row=0, column=1, padx=(0, 20), pady=2, sticky="w")
+        
         
     def create_tabview(self):
         """Crear el sistema de pestañas principal"""
@@ -543,7 +571,7 @@ class MainWindow:
                 self.app_settings.save_settings()
             
             # Detener bandeja del sistema
-            if hasattr(self, 'system_tray'):
+            if self.system_tray:
                 self.system_tray.stop_tray()
             
             self.add_log_message("🚪 Cerrando aplicación...")
@@ -2126,6 +2154,61 @@ Versión de la app: {self.APP_VERSION}
         # Este método puede expandirse en el futuro para callbacks específicos
         pass
     
+    def toggle_server_console_visibility(self):
+        """Cambiar la visibilidad de la consola del servidor en tiempo real"""
+        try:
+            # Obtener el estado actual del switch
+            show_console = self.show_console_switch.get()
+            
+            # Guardar la configuración
+            self.config_manager.set("app", "show_server_console", str(show_console).lower())
+            self.config_manager.save()
+            
+            # Aplicar el cambio en tiempo real si el servidor está corriendo
+            if hasattr(self, 'server_manager') and self.server_manager and self.server_manager.server_process:
+                if self.server_manager.server_process.poll() is None:  # Servidor activo
+                    if show_console:
+                        if self.server_manager.show_server_console():
+                            self.add_log_message("✅ Consola del servidor: VISIBLE")
+                        else:
+                            self.add_log_message("⚠️ No se pudo mostrar la consola del servidor")
+                    else:
+                        if self.server_manager.hide_server_console():
+                            self.add_log_message("✅ Consola del servidor: OCULTA")
+                        else:
+                            self.add_log_message("⚠️ No se pudo ocultar la consola del servidor")
+                else:
+                    self.add_log_message("ℹ️ El cambio se aplicará cuando se inicie el servidor")
+            else:
+                self.add_log_message("ℹ️ El cambio se aplicará cuando se inicie el servidor")
+            
+            self.logger.info(f"Configuración de consola del servidor cambiada a: {'visible' if show_console else 'oculta'}")
+            
+        except Exception as e:
+            self.logger.error(f"Error al cambiar configuración de consola del servidor: {e}")
+            self.add_log_message(f"❌ Error al cambiar configuración: {str(e)}")
+    
+    def refresh_console_visibility_switch(self):
+        """Actualizar el estado del switch de visibilidad de consola"""
+        try:
+            if hasattr(self, 'server_manager') and self.server_manager and self.server_manager.server_process:
+                if self.server_manager.server_process.poll() is None:  # Servidor activo
+                    # Verificar si la consola está visible
+                    if self.server_manager.server_console_hwnd:
+                        # La consola existe, verificar si está visible
+                        import ctypes
+                        is_visible = ctypes.windll.user32.IsWindowVisible(self.server_manager.server_console_hwnd)
+                        self.console_visibility_var.set(is_visible)
+                    else:
+                        # Buscar la ventana de consola
+                        self.server_manager._find_server_console_window()
+                        if self.server_manager.server_console_hwnd:
+                            import ctypes
+                            is_visible = ctypes.windll.user32.IsWindowVisible(self.server_manager.server_console_hwnd)
+                            self.console_visibility_var.set(is_visible)
+        except Exception as e:
+            self.logger.debug(f"Error al actualizar switch de visibilidad: {e}")
+    
     def setup_window_events(self):
         """Configurar eventos de la ventana principal"""
         try:
@@ -2149,7 +2232,7 @@ Versión de la app: {self.APP_VERSION}
                 self.logger.info("Sistema de bandeja ya está inicializado")
                 return
             
-            if hasattr(self, 'system_tray') and self.system_tray.is_available():
+            if self.system_tray and self.system_tray.is_available():
                 # Iniciar la bandeja del sistema
                 if self.system_tray.start_tray():
                     self._tray_initialized = True
@@ -2187,9 +2270,9 @@ Versión de la app: {self.APP_VERSION}
         """Manejar el cierre de la ventana"""
         try:
             # Verificar configuración de minimizar a bandeja al cerrar
-            if (hasattr(self, 'app_settings') and 
+            if (self.app_settings and 
                 self.app_settings.get_setting("close_to_tray") and 
-                hasattr(self, 'system_tray') and 
+                self.system_tray and 
                 self.system_tray.is_available()):
                 
                 # Minimizar a bandeja en lugar de cerrar
@@ -2209,9 +2292,9 @@ Versión de la app: {self.APP_VERSION}
             # Solo actuar si el evento es de la ventana principal
             if event.widget == self.root:
                 # Verificar si debe minimizar a bandeja
-                if (hasattr(self, 'app_settings') and 
+                if (self.app_settings and 
                     self.app_settings.get_setting("minimize_to_tray") and 
-                    hasattr(self, 'system_tray') and 
+                    self.system_tray and 
                     self.system_tray.is_available() and
                     not self.system_tray.is_hidden):
                     
@@ -2227,7 +2310,7 @@ Versión de la app: {self.APP_VERSION}
         try:
             # Solo actuar si el evento es de la ventana principal
             if event.widget == self.root:
-                if hasattr(self, 'system_tray'):
+                if self.system_tray:
                     self.system_tray.is_hidden = False
                     
         except Exception as e:
@@ -2236,7 +2319,7 @@ Versión de la app: {self.APP_VERSION}
     def minimize_to_tray(self):
         """Minimizar la aplicación a la bandeja del sistema"""
         try:
-            if (hasattr(self, 'system_tray') and 
+            if (self.system_tray and 
                 self.system_tray.is_available() and 
                 self.system_tray.tray_icon):
                 
@@ -2251,7 +2334,7 @@ Versión de la app: {self.APP_VERSION}
     def restore_from_tray(self):
         """Restaurar la aplicación desde la bandeja del sistema"""
         try:
-            if hasattr(self, 'system_tray'):
+            if self.system_tray:
                 self.system_tray.show_window()
                 self.logger.info("Aplicación restaurada desde la bandeja del sistema")
                 
@@ -2264,12 +2347,12 @@ Versión de la app: {self.APP_VERSION}
             self.logger.info("Cerrando aplicación...")
             
             # Detener bandeja del sistema
-            if hasattr(self, 'system_tray'):
+            if self.system_tray:
                 self.system_tray.stop_tray()
                 self.logger.info("Bandeja del sistema detenida")
             
             # Guardar configuraciones
-            if hasattr(self, 'config_manager'):
+            if self.config_manager:
                 self.config_manager.save()
                 
             # Cerrar ventana principal

@@ -6,17 +6,121 @@ import psutil
 import shutil
 from pathlib import Path
 from datetime import datetime
+import logging
+from .config_manager import ConfigManager
+import ctypes
+from ctypes import wintypes
 
 
 class ServerManager:
-    def __init__(self, config_manager, logger):
+    def __init__(self, config_manager):
         self.config_manager = config_manager
-        self.logger = logger
         self.server_process = None
-        self.server_running = False
-        self.server_pid = None
-        self.uptime_start = None
+        self.server_console_hwnd = None
+        self.logger = logging.getLogger(__name__)
         
+        # Cargar APIs de Windows para controlar ventanas
+        self.user32 = ctypes.windll.user32
+        self.kernel32 = ctypes.windll.kernel32
+        
+        # Constantes de Windows
+        self.SW_HIDE = 0
+        self.SW_SHOW = 5
+        self.SW_MINIMIZE = 6
+        self.SW_RESTORE = 9
+        
+        # Configurar nivel de logging
+        self.logger.setLevel(logging.DEBUG)
+        
+    def _find_server_console_window(self):
+        """Encontrar la ventana de la consola del servidor"""
+        if not self.server_process or self.server_process.poll() is not None:
+            return None
+            
+        try:
+            # Obtener el PID del proceso del servidor
+            pid = self.server_process.pid
+            
+            # Enumerar todas las ventanas para encontrar la del servidor
+            def enum_windows_callback(hwnd, lparam):
+                try:
+                    # Obtener el PID de la ventana
+                    window_pid = ctypes.c_ulong()
+                    self.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(window_pid))
+                    
+                    if window_pid.value == pid:
+                        # Verificar si es una ventana de consola
+                        window_text = ctypes.create_unicode_buffer(256)
+                        self.user32.GetWindowTextW(hwnd, window_text, 256)
+                        
+                        # Buscar ventanas que contengan "ShooterGame" o "Ark"
+                        if any(keyword in window_text.value.lower() for keyword in ['shootergame', 'ark', 'asa']):
+                            self.server_console_hwnd = hwnd
+                            self.logger.info(f"Ventana de consola del servidor encontrada: {window_text.value}")
+                            return False  # Detener enumeración
+                except Exception as e:
+                    self.logger.debug(f"Error al procesar ventana: {e}")
+                return True  # Continuar enumeración
+            
+            # Enumerar ventanas
+            self.user32.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)(enum_windows_callback), 0)
+            
+            return self.server_console_hwnd is not None
+            
+        except Exception as e:
+            self.logger.error(f"Error al buscar ventana de consola: {e}")
+            return False
+    
+    def show_server_console(self):
+        """Mostrar la consola del servidor"""
+        try:
+            if self._find_server_console_window():
+                self.user32.ShowWindow(self.server_console_hwnd, self.SW_SHOW)
+                self.user32.SetForegroundWindow(self.server_console_hwnd)
+                self.logger.info("Consola del servidor mostrada")
+                return True
+            return False
+        except Exception as e:
+            self.logger.error(f"Error al mostrar consola: {e}")
+            return False
+    
+    def hide_server_console(self):
+        """Ocultar la consola del servidor"""
+        try:
+            if self._find_server_console_window():
+                self.user32.ShowWindow(self.server_console_hwnd, self.SW_HIDE)
+                self.logger.info("Consola del servidor oculta")
+                return True
+            return False
+        except Exception as e:
+            self.logger.error(f"Error al ocultar consola: {e}")
+            return False
+    
+    def minimize_server_console(self):
+        """Minimizar la consola del servidor"""
+        try:
+            if self._find_server_console_window():
+                self.user32.ShowWindow(self.server_console_hwnd, self.SW_MINIMIZE)
+                self.logger.info("Consola del servidor minimizada")
+                return True
+            return False
+        except Exception as e:
+            self.logger.error(f"Error al minimizar consola: {e}")
+            return False
+    
+    def restore_server_console(self):
+        """Restaurar la consola del servidor"""
+        try:
+            if self._find_server_console_window():
+                self.user32.ShowWindow(self.server_console_hwnd, self.SW_RESTORE)
+                self.user32.SetForegroundWindow(self.server_console_hwnd)
+                self.logger.info("Consola del servidor restaurada")
+                return True
+            return False
+        except Exception as e:
+            self.logger.error(f"Error al restaurar consola: {e}")
+            return False
+
     def get_server_status(self):
         """Obtiene el estado actual del servidor"""
         # Verificar proceso guardado
@@ -238,13 +342,13 @@ class ServerManager:
                 
                 # Agregar argumentos personalizados si se proporcionan
                 if custom_args and isinstance(custom_args, list):
-                    if self.logger.should_log_debug():
-                        self.logger.info(f"DEBUG: Usando argumentos personalizados: {custom_args}")
+                    if self.logger.level <= logging.DEBUG:
+                        self.logger.debug(f"DEBUG: Usando argumentos personalizados: {custom_args}")
                     cmd.extend(custom_args)
                 else:
                     # Si no hay argumentos personalizados, usar el método básico con mapeo correcto
-                    if self.logger.should_log_debug():
-                        self.logger.info(f"DEBUG: Sin argumentos personalizados, usando método básico con mapa: {map_name}")
+                    if self.logger.level <= logging.DEBUG:
+                        self.logger.debug(f"DEBUG: Sin argumentos personalizados, usando método básico con mapa: {map_name}")
                     cmd.extend(["-server", "-log"])
                     if map_name:
                         # Mapear nombre amigable a identificador técnico
@@ -276,14 +380,14 @@ class ServerManager:
                         }
                         
                         map_identifier = map_identifiers.get(map_name, map_name)
-                        if self.logger.should_log_debug():
-                            self.logger.info(f"DEBUG: Convertido '{map_name}' a '{map_identifier}'")
+                        if self.logger.level <= logging.DEBUG:
+                            self.logger.debug(f"DEBUG: Convertido '{map_name}' a '{map_identifier}'")
                         cmd.append(f"?Map={map_identifier}")
                 
                 # Log del comando (solo en desarrollo)
-                if self.logger.should_log_debug():
-                    self.logger.info(f"DEBUG: Comando final del servidor: {' '.join(cmd)}")
-                    self.logger.info(f"DEBUG: Parámetros recibidos - server_name: '{server_name}', map_name: '{map_name}', custom_args: {custom_args}")
+                if self.logger.level <= logging.DEBUG:
+                    self.logger.debug(f"DEBUG: Comando final del servidor: {' '.join(cmd)}")
+                    self.logger.debug(f"DEBUG: Parámetros recibidos - server_name: '{server_name}', map_name: '{map_name}', custom_args: {custom_args}")
                 if callback:
                     callback("info", f"Comando del servidor: {' '.join(cmd)}")
                 
@@ -296,7 +400,7 @@ class ServerManager:
                 self.logger.info(f"DEBUG: Directorio de trabajo del servidor: {server_dir}")
                 
                 if capture_console:
-                    self.logger.info("DEBUG: start_server_with_args - Iniciando servidor en modo CAPTURA de consola (con CREATE_NEW_CONSOLE y archivo de log)")
+                    self.logger.info("DEBUG: start_server_with_args - Iniciando servidor en modo CAPTURA de consola (con control de visibilidad de consola)")
                     
                     # Crear un archivo de log temporal para capturar la salida
                     import tempfile
@@ -312,13 +416,19 @@ class ServerManager:
                         except:
                             pass
                     
-                    # Iniciar servidor con consola real pero redirigir salida a archivo
+                    # Determinar si mostrar la consola del servidor según la configuración
+                    show_console = self.config_manager.get("app", "show_server_console", default="true").lower() == "true"
+                    creation_flags = subprocess.CREATE_NEW_CONSOLE if show_console else subprocess.CREATE_NO_WINDOW
+                    
+                    self.logger.info(f"DEBUG: show_server_console = {show_console}, usando flags: {creation_flags}")
+                    
+                    # Iniciar servidor con o sin consola visible según configuración
                     self.server_process = subprocess.Popen(
                         cmd,
                         stdout=open(log_file_path, 'w', encoding='utf-8', errors='ignore'),
                         stderr=subprocess.STDOUT,
                         stdin=subprocess.PIPE,
-                        creationflags=subprocess.CREATE_NEW_CONSOLE,  # Usar consola real para que funcione
+                        creationflags=creation_flags,
                         cwd=server_dir
                     )
                     
@@ -334,11 +444,16 @@ class ServerManager:
                         self.logger.error(f"DEBUG: ❌ El servidor terminó inmediatamente con código: {exit_code}")
                         
                 else:
-                    self.logger.info("DEBUG: start_server_with_args - Iniciando servidor en modo NORMAL (con CREATE_NEW_CONSOLE)")
-                    # Modo normal: crear nueva consola separada
+                    self.logger.info("DEBUG: start_server_with_args - Iniciando servidor en modo NORMAL (con control de visibilidad de consola)")
+                    # Modo normal: crear nueva consola separada según configuración
+                    show_console = self.config_manager.get("app", "show_server_console", default="true").lower() == "true"
+                    creation_flags = subprocess.CREATE_NEW_CONSOLE if show_console else subprocess.CREATE_NO_WINDOW
+                    
+                    self.logger.info(f"DEBUG: show_server_console = {show_console}, usando flags: {creation_flags}")
+                    
                     self.server_process = subprocess.Popen(
                         cmd,
-                        creationflags=subprocess.CREATE_NEW_CONSOLE,
+                        creationflags=creation_flags,
                         cwd=server_dir
                     )
                     

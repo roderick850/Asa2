@@ -26,7 +26,7 @@ class ConsolePanel:
             self.server_manager = main_window.server_panel.server_manager
         else:
             from utils.server_manager import ServerManager
-            self.server_manager = ServerManager(config_manager, logger)
+            self.server_manager = ServerManager(config_manager)
         
         self.create_widgets()
         
@@ -292,6 +292,11 @@ class ConsolePanel:
         # Iniciar el thread de monitoreo
         self.console_thread = threading.Thread(target=self.console_monitor, daemon=True)
         self.console_thread.start()
+        
+        # Actualizar el switch de visibilidad de consola en la ventana principal
+        if hasattr(self.main_window, 'refresh_console_visibility_switch'):
+            # Usar after para programar la llamada en el hilo principal
+            self.main_window.root.after(1000, self.main_window.refresh_console_visibility_switch)
     
     def _start_server_in_capture_mode(self):
         """Método auxiliar para iniciar el servidor en modo de captura"""

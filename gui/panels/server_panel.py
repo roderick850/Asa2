@@ -1,12 +1,13 @@
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
 import customtkinter as ctk
-import threading
-import time
-import psutil
 import os
-import subprocess
-from datetime import datetime
-from tkinter import filedialog
+import time
+import threading
+import logging
 from utils.server_manager import ServerManager
+from utils.config_manager import ConfigManager
+from datetime import datetime
 
 
 class ServerPanel:
@@ -15,7 +16,7 @@ class ServerPanel:
         self.config_manager = config_manager
         self.logger = logger
         self.main_window = main_window
-        self.server_manager = ServerManager(config_manager, logger)
+        self.server_manager = ServerManager(config_manager)
         
         # Inicializar variables de selección
         self.selected_server = None

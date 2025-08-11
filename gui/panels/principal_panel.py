@@ -1,5 +1,12 @@
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
 import customtkinter as ctk
 import os
+import json
+import re
+import logging
+from utils.config_manager import ConfigManager
+from utils.app_settings import AppSettings
 import threading
 import requests
 import configparser
@@ -16,7 +23,7 @@ class PrincipalPanel:
         # Inicializar server_manager si está disponible
         try:
             from utils.server_manager import ServerManager
-            self.server_manager = ServerManager(config_manager, logger)
+            self.server_manager = ServerManager(config_manager)
         except ImportError:
             self.logger.warning("ServerManager no disponible")
         
@@ -666,7 +673,7 @@ class PrincipalPanel:
         
         # Construir el argumento base del mapa siguiendo el formato correcto
         # Solo mostrar logs de debug en desarrollo
-        if self.logger.should_log_debug():
+ocu        if self.logger.should_log_debug():
             self.logger.info(f"DEBUG: Mapa seleccionado: '{selected_map}' (tipo: {type(selected_map)}, len: {len(selected_map) if selected_map else 'N/A'})")
             self.logger.info(f"DEBUG: Mapas disponibles: {list(map_identifiers.keys())}")
             self.logger.info(f"DEBUG: ¿Mapa es None?: {selected_map is None}")
@@ -688,7 +695,7 @@ class PrincipalPanel:
             # Mapa por defecto si no hay selección
             map_identifier = "TheIsland_WP"
             if self.logger.should_log_debug():
-                self.logger.warning(f"DEBUG: ❌ Mapa no encontrado o vacío. Razón: selected_map='{selected_map}', en diccionario={selected_map in map_identifiers if selected_map else False}. Usando por defecto: TheIsland_WP")
+                self.logger.info(f"DEBUG: ❌ Mapa no encontrado o vacío. Razón: selected_map='{selected_map}', en diccionario={selected_map in map_identifiers if selected_map else False}. Usando por defecto: TheIsland_WP")
         
         # 2. Obtener mods configurados (buscar por servidor/mapa específico primero)
         # Obtener servidor seleccionado
