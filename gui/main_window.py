@@ -11,6 +11,7 @@ from .panels.players_panel import PlayersPanel
 from .panels.mods_panel import ModsPanel
 from .panels.working_logs_panel import WorkingLogsPanel
 from .panels.rcon_panel import RconPanel
+from .panels.direct_commands_panel import DirectCommandsPanel
 from .panels.console_panel import ConsolePanel
 from .dialogs.advanced_settings_dialog import AdvancedSettingsDialog
 from .dialogs.custom_dialogs import show_info, show_warning, show_error, ask_yes_no, ask_string
@@ -50,6 +51,7 @@ class MainWindow:
         self.backup_panel = None
         self.logs_panel = None
         self.rcon_panel = None
+        self.direct_commands_panel = None
         self.mods_panel = None
         self.monitoring_panel = None
         self.players_panel = None
@@ -338,6 +340,7 @@ class MainWindow:
         self.tab_backup_content = self.tabview.add("Backup")
         self.tab_reinicios_content = self.tabview.add("Reinicios")
         self.tab_rcon_content = self.tabview.add("RCON")
+        self.tab_ark_api_content = self.tabview.add("Comandos Directos")
         self.tab_console_content = self.tabview.add("Consola")
         self.tab_logs_content = self.tabview.add("Logs")
         
@@ -350,8 +353,12 @@ class MainWindow:
         self.monitoring_panel = MonitoringPanel(self.tab_reinicios_content, self.config_manager, self.logger, self)
         self.backup_panel = BackupPanel(self.tab_backup_content, self.config_manager, self.logger, self)
         self.rcon_panel = RconPanel(self.tab_rcon_content, self.config_manager, self.logger, self)
+        self.direct_commands_panel = DirectCommandsPanel(self.tab_ark_api_content, self.config_manager, self.logger, self)
         self.console_panel = ConsolePanel(self.tab_console_content, self.config_manager, self.logger, self)
         self.logs_panel = WorkingLogsPanel(self.tab_logs_content, self.config_manager, self.logger, self)
+        
+        # Configurar el server_manager principal para que apunte al del server_panel
+        self.server_manager = self.server_panel.server_manager
         
         # Configurar callbacks para los botones
         self.setup_button_callbacks()
@@ -421,6 +428,7 @@ class MainWindow:
         ctk.CTkButton(main_frame, text="💾 Realizar Backup", command=self.quick_backup).pack(pady=5, fill="x", padx=20)
         ctk.CTkButton(main_frame, text="🔄 Reiniciar Servidor", command=self.quick_restart).pack(pady=5, fill="x", padx=20)
         ctk.CTkButton(main_frame, text="📊 Monitoreo", command=lambda: self.switch_to_tab("Reinicios")).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="⌨️ Comandos Directos", command=lambda: self.switch_to_tab("Comandos Directos")).pack(pady=5, fill="x", padx=20)
         ctk.CTkButton(main_frame, text="🖥️ Consola del Servidor", command=lambda: self.switch_to_tab("Consola")).pack(pady=5, fill="x", padx=20)
         ctk.CTkButton(main_frame, text="📝 Ver Logs", command=lambda: self.switch_to_tab("Logs")).pack(pady=5, fill="x", padx=20)
         
