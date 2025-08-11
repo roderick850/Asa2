@@ -673,7 +673,7 @@ class PrincipalPanel:
         
         # Construir el argumento base del mapa siguiendo el formato correcto
         # Solo mostrar logs de debug en desarrollo
-ocu        if self.logger.should_log_debug():
+        if self.logger.should_log_debug():
             self.logger.info(f"DEBUG: Mapa seleccionado: '{selected_map}' (tipo: {type(selected_map)}, len: {len(selected_map) if selected_map else 'N/A'})")
             self.logger.info(f"DEBUG: Mapas disponibles: {list(map_identifiers.keys())}")
             self.logger.info(f"DEBUG: ¿Mapa es None?: {selected_map is None}")
