@@ -495,7 +495,6 @@ class IniConfigPanel(ctk.CTkFrame):
         """Crear campos del formulario para GameUserSettings.ini"""
         if category == "PlayersAndTribes":
             fields = [
-                ("MaxPlayers", "Máximo de jugadores", "int"),
                 ("MaxNumbersofPlayersInTribe", "Máximo de jugadores por tribu", "int"),
                 ("MaxAlliancesPerTribe", "Máximo de alianzas por tribu", "int"),
                 ("MaxTribeLogs", "Máximo de logs de tribu", "int"),
@@ -1308,33 +1307,68 @@ class IniConfigPanel(ctk.CTkFrame):
             if hasattr(self, 'main_window') and self.main_window:
                 current_server = getattr(self.main_window, 'selected_server', None)
                 
+                # Debug: mostrar servidor actual
+                if hasattr(self, '_last_server'):
+                    self.logger.debug(f"🔄 Verificando cambios - Servidor anterior: {self._last_server}, Servidor actual: {current_server}")
+                else:
+                    self.logger.debug(f"🔄 Primera verificación - Servidor actual: {current_server}")
+                
                 # Verificar si el servidor cambió
                 if not hasattr(self, '_last_server') or self._last_server != current_server:
                     self._last_server = current_server
                     if current_server:
-                        self.logger.info(f"Servidor cambió a: {current_server}, recargando archivos INI...")
+                        self.logger.info(f"🔄 Servidor cambió a: {current_server}, recargando archivos INI...")
                         self.reload_for_new_server()
+                    else:
+                        self.logger.debug("Servidor no seleccionado, esperando...")
+                else:
+                    self.logger.debug(f"✅ Servidor sin cambios: {current_server}")
                 
                 # Programar próxima verificación
                 self.main_window.root.after(2000, self.check_for_server_changes)
+            else:
+                self.logger.debug("MainWindow no disponible, esperando...")
+                # Programar próxima verificación incluso si no hay main_window
+                if hasattr(self, 'root') and self.root:
+                    self.root.after(2000, self.check_for_server_changes)
         except Exception as e:
-            self.logger.error(f"Error verificando cambios de servidor: {e}")
+            self.logger.error(f"❌ Error verificando cambios de servidor: {e}")
+            import traceback
+            self.logger.error(f"Traceback completo: {traceback.format_exc()}")
     
     def reload_for_new_server(self):
         """Recargar archivos INI para el nuevo servidor seleccionado"""
         try:
+            self.logger.info("🔄 Iniciando recarga de archivos INI para nuevo servidor...")
+            
             # Limpiar datos de formato anterior
             self.original_file_content.clear()
             self.case_sensitive_keys.clear()
+            self.logger.debug("Datos de formato anterior limpiados")
             
             # Recargar rutas y archivos
+            self.logger.debug("Recargando rutas INI...")
             self.load_ini_paths()
+            self.logger.debug("Recargando archivos INI...")
             self.load_ini_files()
+            
             # Repoblar todos los campos
+            self.logger.debug("Repoblando campos del formulario...")
             self.populate_form_fields()
-            self.logger.info("Archivos INI recargados para el nuevo servidor")
+            
+            self.logger.info("✅ Archivos INI recargados para el nuevo servidor")
+            
+            # Actualizar indicador de estado
+            if hasattr(self, 'status_label'):
+                self.status_label.configure(
+                    text="🔄 Archivos INI recargados para nuevo servidor",
+                    fg_color=("blue", "darkblue")
+                )
+                
         except Exception as e:
-            self.logger.error(f"Error recargando archivos INI: {e}")
+            self.logger.error(f"❌ Error recargando archivos INI: {e}")
+            import traceback
+            self.logger.error(f"Traceback completo: {traceback.format_exc()}")
     
     def force_reload_ini(self):
         """Forzar recarga manual de archivos INI"""
@@ -1379,28 +1413,49 @@ class IniConfigPanel(ctk.CTkFrame):
     def load_single_ini_file(self, file_path, file_type):
         """Cargar un archivo INI específico preservando formato original"""
         try:
+            self.logger.info(f"Cargando archivo {file_type} desde: {file_path}")
+            
             # Leer contenido original línea por línea para preservar formato
             with open(file_path, 'r', encoding='utf-8') as f:
                 original_lines = f.readlines()
             
+            self.logger.debug(f"Archivo {file_type} leído, {len(original_lines)} líneas")
+            
             # Guardar contenido original
             self.original_file_content[file_type] = original_lines
             
-            # Crear un configparser que preserve las mayúsculas
+            # Crear un configparser que preserve las mayúsculas y sea tolerante a errores
             config = configparser.RawConfigParser()
             config.optionxform = str  # Preservar mayúsculas y minúsculas
-            config.read(file_path, encoding='utf-8')
+            
+            # Intentar cargar con manejo de errores más robusto
+            try:
+                config.read(file_path, encoding='utf-8')
+            except configparser.DuplicateOptionError as e:
+                self.logger.warning(f"Archivo {file_type} tiene opciones duplicadas, intentando cargar manualmente: {e}")
+                # Cargar manualmente línea por línea para evitar errores de duplicados
+                config = self.load_ini_manually(original_lines, file_type)
+            except Exception as e:
+                self.logger.error(f"Error al parsear {file_type}, intentando carga manual: {e}")
+                config = self.load_ini_manually(original_lines, file_type)
             
             self.ini_data[file_type] = config
+            
+            self.logger.info(f"Archivo {file_type} parseado, secciones encontradas: {list(config.sections())}")
             
             # Construir mapeo de claves con formato original
             if file_type not in self.case_sensitive_keys:
                 self.case_sensitive_keys[file_type] = {}
             
             # Guardar valores originales con mapeo completo
+            total_fields = 0
             for section in config.sections():
                 if section not in self.case_sensitive_keys[file_type]:
                     self.case_sensitive_keys[file_type][section] = {}
+                
+                section_fields = list(config.items(section))
+                self.logger.debug(f"Sección {section} tiene {len(section_fields)} campos")
+                total_fields += len(section_fields)
                     
                 for key, value in config.items(section):
                     # Guardar la clave original con su formato
@@ -1412,10 +1467,58 @@ class IniConfigPanel(ctk.CTkFrame):
                     self.original_values[key] = value
                     self.original_values[key.lower()] = value  # Para búsquedas insensibles a mayúsculas
                     
-            self.logger.info(f"Archivo {file_type} cargado preservando formato original")
+            self.logger.info(f"Archivo {file_type} cargado preservando formato original. Total campos: {total_fields}")
                     
         except Exception as e:
             self.logger.error(f"Error al cargar {file_type}: {e}")
+            import traceback
+            self.logger.error(f"Traceback completo: {traceback.format_exc()}")
+            
+    def load_ini_manually(self, lines, file_type):
+        """Cargar archivo INI manualmente para evitar errores de duplicados"""
+        try:
+            config = configparser.RawConfigParser()
+            config.optionxform = str
+            
+            current_section = None
+            seen_options = set()
+            
+            for line_num, line in enumerate(lines, 1):
+                line = line.strip()
+                
+                # Líneas vacías o comentarios
+                if not line or line.startswith(';') or line.startswith('#'):
+                    continue
+                
+                # Nueva sección
+                if line.startswith('[') and line.endswith(']'):
+                    current_section = line[1:-1]
+                    if not config.has_section(current_section):
+                        config.add_section(current_section)
+                    seen_options.clear()
+                    continue
+                
+                # Opción key=value
+                if '=' in line and current_section:
+                    key, value = line.split('=', 1)
+                    key = key.strip()
+                    value = value.strip()
+                    
+                    # Evitar duplicados
+                    option_key = f"{current_section}.{key}"
+                    if option_key not in seen_options:
+                        config.set(current_section, key, value)
+                        seen_options.add(option_key)
+                    else:
+                        self.logger.warning(f"Omitiendo opción duplicada en línea {line_num}: {key}")
+            
+            self.logger.info(f"Archivo {file_type} cargado manualmente, secciones: {list(config.sections())}")
+            return config
+            
+        except Exception as e:
+            self.logger.error(f"Error en carga manual de {file_type}: {e}")
+            # Crear config vacío como fallback
+            return configparser.RawConfigParser()
             
     def populate_form_fields(self):
         """Poblar los campos del formulario con valores actuales"""
@@ -1459,29 +1562,55 @@ class IniConfigPanel(ctk.CTkFrame):
             
     def find_field_value(self, field_name):
         """Buscar el valor de un campo en los archivos INI"""
+        # Debug: mostrar qué se está buscando
+        self.logger.debug(f"Buscando valor para campo: {field_name}")
+        
         # Primero buscar en el mapeo de campos para encontrar la sección correcta
         if field_name in self.field_mappings:
             mapping = self.field_mappings[field_name]
             target_file = mapping['file']
             target_section = mapping['section']
             
+            self.logger.debug(f"Campo {field_name} mapeado a: archivo={target_file}, sección={target_section}")
+            
             # Buscar en el archivo y sección específicos
             if target_file in self.ini_data:
                 config = self.ini_data[target_file]
-                if target_section in config and field_name in config[target_section]:
-                    return config[target_section][field_name]
+                self.logger.debug(f"Archivo {target_file} encontrado, secciones disponibles: {list(config.sections())}")
+                
+                if target_section in config:
+                    self.logger.debug(f"Sección {target_section} encontrada, campos disponibles: {list(config[target_section].keys())}")
+                    if field_name in config[target_section]:
+                        value = config[target_section][field_name]
+                        self.logger.debug(f"Valor encontrado para {field_name}: {value}")
+                        return value
+                    else:
+                        self.logger.debug(f"Campo {field_name} no encontrado en sección {target_section}")
+                else:
+                    self.logger.debug(f"Sección {target_section} no encontrada en archivo {target_file}")
+            else:
+                self.logger.debug(f"Archivo {target_file} no encontrado en ini_data")
+        else:
+            self.logger.debug(f"Campo {field_name} no tiene mapeo")
         
         # Fallback: buscar en todas las secciones de todos los archivos
+        self.logger.debug("Intentando búsqueda fallback...")
         for file_type, config in self.ini_data.items():
+            self.logger.debug(f"Revisando archivo {file_type}, secciones: {list(config.sections())}")
             for section in config.sections():
                 if field_name in config[section]:
-                    return config[section][field_name]
+                    value = config[section][field_name]
+                    self.logger.debug(f"Valor encontrado en fallback: {field_name} = {value} (archivo: {file_type}, sección: {section})")
+                    return value
         
         # Si no se encuentra, buscar en valores originales
+        self.logger.debug("Buscando en valores originales...")
         for key, value in self.original_values.items():
             if key.endswith(f".{field_name}"):
+                self.logger.debug(f"Valor encontrado en originales: {key} = {value}")
                 return value
                 
+        self.logger.debug(f"Campo {field_name} no encontrado en ningún lugar")
         return None
         
     def set_field_value(self, widget, value):
