@@ -300,7 +300,7 @@ class AdvancedSettingsDialog:
         confirm_frame = ctk.CTkFrame(main_frame)
         confirm_frame.pack(fill="x", pady=5)
         
-        self.confirm_exit_var = ctk.BooleanVar(value=False)  # Valor por defecto, no cargar automáticamente
+        self.confirm_exit_var = ctk.BooleanVar(value=self.app_settings.get_setting("confirm_exit"))
         ctk.CTkSwitch(
             confirm_frame,
             text="⚠️ Confirmar salida",
@@ -344,6 +344,23 @@ class AdvancedSettingsDialog:
         ctk.CTkLabel(
             autosave_frame,
             text="Guarda automáticamente los cambios de configuración",
+            text_color="gray"
+        ).pack(side="left", padx=(10, 0), pady=10)
+        
+        # Ocultar consola
+        console_frame = ctk.CTkFrame(main_frame)
+        console_frame.pack(fill="x", pady=5)
+        
+        self.hide_console_var = ctk.BooleanVar(value=self.app_settings.get_setting("hide_console"))
+        ctk.CTkSwitch(
+            console_frame,
+            text="🖥️ Ocultar consola",
+            variable=self.hide_console_var
+        ).pack(side="left", padx=10, pady=10)
+        
+        ctk.CTkLabel(
+            console_frame,
+            text="Oculta la ventana de consola en modo debug",
             text_color="gray"
         ).pack(side="left", padx=(10, 0), pady=10)
         

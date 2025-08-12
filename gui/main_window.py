@@ -2355,27 +2355,3 @@ Versión de la app: {self.APP_VERSION}
                 
         except Exception as e:
             self.logger.error(f"Error al restaurar desde bandeja: {e}")
-    
-    def salir_aplicacion(self):
-        """Salir completamente de la aplicación"""
-        try:
-            self.logger.info("Cerrando aplicación...")
-            
-            # Detener bandeja del sistema
-            if self.system_tray:
-                self.system_tray.stop_tray()
-                self.logger.info("Bandeja del sistema detenida")
-            
-            # Guardar configuraciones
-            if self.config_manager:
-                self.config_manager.save()
-                
-            # Cerrar ventana principal
-            self.root.quit()
-            self.root.destroy()
-            
-        except Exception as e:
-            self.logger.error(f"Error al cerrar aplicación: {e}")
-            # Forzar cierre
-            import sys
-            sys.exit(0)
