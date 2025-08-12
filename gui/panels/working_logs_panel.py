@@ -736,8 +736,16 @@ class WorkingLogsPanel(ctk.CTkFrame):
 """
         
         try:
+<<<<<<< HEAD
             self.system_text.delete("1.0", "end")
             self.system_text.insert("1.0", content)
+=======
+            self.text_area.delete("1.0", "end")
+            self.text_area.insert("1.0", content)
+            if self.logger:
+                # self.logger.info("Panel de logs cargado con éxito")  # Optimizado: reducir ruido
+                pass
+>>>>>>> Prod
         except Exception as e:
             self.logger.error(f"Error al cargar contenido inicial: {e}")
             

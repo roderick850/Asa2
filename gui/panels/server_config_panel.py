@@ -277,6 +277,7 @@ class ServerConfigPanel(ctk.CTkFrame):
                     strict=False,
                     interpolation=None
                 )
+                config.optionxform = str  # Preservar mayúsculas/minúsculas en las claves
                 config.read(file_path, encoding='utf-8')
                 self.config_data[ini_type] = config
                 
@@ -301,6 +302,7 @@ class ServerConfigPanel(ctk.CTkFrame):
     def parse_ini_manually(self, file_path):
         """Parser manual para archivos INI con claves duplicadas"""
         config = configparser.ConfigParser(allow_no_value=True, strict=False)
+        config.optionxform = str  # Preservar mayúsculas/minúsculas en las claves
         current_section = None
         
         with open(file_path, 'r', encoding='utf-8') as f:

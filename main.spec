@@ -47,6 +47,7 @@ hiddenimports = [
     'PIL',
     'PIL.Image',
     'PIL.ImageTk',
+    'PIL._tkinter_finder',
     
     # Sistema
     'psutil',
@@ -65,6 +66,12 @@ hiddenimports = [
     'subprocess',
     'os',
     'sys',
+    'datetime',
+    'time',
+    're',
+    'shutil',
+    'zipfile',
+    'win10toast',
     
     # Módulos de la aplicación
     'gui.main_window',
@@ -80,11 +87,23 @@ hiddenimports = [
     'gui.panels.mods_panel',
     'gui.panels.logs_panel',
     'gui.panels.rcon_panel',
+    'gui.panels.console_panel',
+    'gui.panels.dynamic_config_panel',
+    'gui.panels.ini_config_panel',
+    'gui.panels.direct_commands_panel',
+    'gui.panels.advanced_backup_panel',
+    'gui.panels.advanced_restart_panel',
+    'gui.panels.server_config_panel',
+    'gui.panels.simple_logs_panel',
+    'gui.panels.logs_panel_new',
+    'gui.panels.working_logs_panel',
     'utils.config_manager',
     'utils.logger',
     'utils.server_manager',
     'utils.app_settings',
     'utils.system_tray',
+    'utils.server_logger',
+    'utils.ini_cleaner',
 ]
 
 # Exclusiones

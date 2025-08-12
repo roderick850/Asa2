@@ -1,5 +1,12 @@
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
 import customtkinter as ctk
 import os
+import json
+import re
+import logging
+from utils.config_manager import ConfigManager
+from utils.app_settings import AppSettings
 import threading
 import requests
 import configparser
@@ -16,7 +23,7 @@ class PrincipalPanel:
         # Inicializar server_manager si está disponible
         try:
             from utils.server_manager import ServerManager
-            self.server_manager = ServerManager(config_manager, logger)
+            self.server_manager = ServerManager(config_manager)
         except ImportError:
             self.logger.warning("ServerManager no disponible")
         
@@ -125,6 +132,16 @@ class PrincipalPanel:
         self.admin_password_entry = ctk.CTkEntry(col3_frame, placeholder_text="Contraseña de admin", show="*", width=200, height=28)
         self.admin_password_entry.pack(fill="x", pady=(0, 6))
         
+        # Message (MessageOfTheDay)
+        ctk.CTkLabel(col3_frame, text="Message:", font=("Arial", 11, "bold")).pack(anchor="w", pady=(0, 2))
+        self.message_entry = ctk.CTkEntry(col3_frame, placeholder_text="Mensaje del día", width=200, height=28)
+        self.message_entry.pack(fill="x", pady=(0, 6))
+        
+        # Duration (MessageOfTheDay)
+        ctk.CTkLabel(col3_frame, text="Duration:", font=("Arial", 11, "bold")).pack(anchor="w", pady=(0, 2))
+        self.duration_entry = ctk.CTkEntry(col3_frame, placeholder_text="60", width=200, height=28)
+        self.duration_entry.pack(fill="x", pady=(0, 6))
+        
         # Frame para argumentos personalizados
         custom_frame = ctk.CTkFrame(main_frame)
         custom_frame.pack(fill="x", padx=5, pady=5)
@@ -190,6 +207,8 @@ class PrincipalPanel:
             self.query_port_entry.insert(0, self.config_manager.get("server", "query_port", "27015"))
             self.port_entry.insert(0, self.config_manager.get("server", "port", "7777"))
             self.multihome_entry.insert(0, self.config_manager.get("server", "multihome", "127.0.0.1"))
+            self.message_entry.insert(0, self.config_manager.get("server", "message", ""))
+            self.duration_entry.insert(0, self.config_manager.get("server", "duration", "60"))
             
             # Cargar argumentos personalizados
             custom_args = self.config_manager.get("server", "custom_args", "")
@@ -210,6 +229,8 @@ class PrincipalPanel:
             self.config_manager.set("server", "query_port", self.query_port_entry.get())
             self.config_manager.set("server", "port", self.port_entry.get())
             self.config_manager.set("server", "multihome", self.multihome_entry.get())
+            self.config_manager.set("server", "message", self.message_entry.get())
+            self.config_manager.set("server", "duration", self.duration_entry.get())
             
             # Guardar argumentos personalizados
             custom_args = self.custom_args_text.get("1.0", "end-1c")
@@ -266,6 +287,8 @@ class PrincipalPanel:
             admin_password = self.admin_password_entry.get()
             session_name = self.session_name_entry.get()
             max_players = self.max_players_entry.get()
+            message = self.message_entry.get()
+            duration = self.duration_entry.get()
             
             # Usar método personalizado para preservar el archivo existente
             self._update_ini_file_preserving_content(
@@ -280,6 +303,10 @@ class PrincipalPanel:
                     },
                     '/Script/Engine.GameSession': {
                         'MaxPlayers': max_players if max_players else None
+                    },
+                    'MessageOfTheDay': {
+                        'Message': message if message else None,
+                        'Duration': duration if duration else None
                     }
                 }
             )
@@ -477,6 +504,17 @@ class PrincipalPanel:
                     self.max_players_entry.delete(0, "end")
                     self.max_players_entry.insert(0, config.get('/Script/Engine.GameSession', 'MaxPlayers'))
             
+            if config.has_section('MessageOfTheDay'):
+                # Message
+                if config.has_option('MessageOfTheDay', 'Message'):
+                    self.message_entry.delete(0, "end")
+                    self.message_entry.insert(0, config.get('MessageOfTheDay', 'Message'))
+                
+                # Duration
+                if config.has_option('MessageOfTheDay', 'Duration'):
+                    self.duration_entry.delete(0, "end")
+                    self.duration_entry.insert(0, config.get('MessageOfTheDay', 'Duration'))
+            
             if self.logger:
                 self.logger.info(f"Configuración cargada desde GameUserSettings.ini: {gameusersettings_path}")
                 
@@ -495,6 +533,8 @@ class PrincipalPanel:
             self.query_port_entry.delete(0, "end")
             self.port_entry.delete(0, "end")
             self.multihome_entry.delete(0, "end")
+            self.message_entry.delete(0, "end")
+            self.duration_entry.delete(0, "end")
             self.custom_args_text.delete("1.0", "end")
             
             # Cargar valores
@@ -509,7 +549,7 @@ class PrincipalPanel:
             self.logger.error(f"Error al cargar configuración: {e}")
             self.show_message(f"❌ Error al cargar: {str(e)}", "error")
     
-    def start_server_with_config(self):
+    def start_server_with_config(self, capture_console=False):
         """Iniciar servidor con la configuración actual"""
         # Obtener servidor y mapa desde main_window
         selected_server = None
@@ -545,13 +585,17 @@ class PrincipalPanel:
         try:
             self.show_message(f"🚀 Iniciando servidor {selected_server} con mapa {selected_map}", "info")
             
+            # Log de depuración
+            self.logger.info(f"DEBUG: principal_panel.start_server_with_config - capture_console = {capture_console}")
+            
             # Llamar al método de inicio del servidor con argumentos personalizados
             if self.server_manager:
                 self.server_manager.start_server_with_args(
                     self.add_status_message, 
                     selected_server, 
                     selected_map, 
-                    server_args
+                    server_args,
+                    capture_console
                 )
                 
                 # También notificar al main window si hay uno
@@ -562,7 +606,7 @@ class PrincipalPanel:
             self.logger.error(f"Error al iniciar servidor: {e}")
             self.show_message(f"❌ Error al iniciar servidor: {str(e)}", "error")
     
-    def restart_server_with_config(self):
+    def restart_server_with_config(self, capture_console=False):
         """Reiniciar servidor con la configuración actual"""
         # Obtener servidor y mapa desde main_window
         selected_server = None
@@ -604,7 +648,8 @@ class PrincipalPanel:
                     self.add_status_message, 
                     selected_server, 
                     selected_map, 
-                    server_args
+                    server_args,
+                    capture_console
                 )
                 
                 # También notificar al main window si hay uno
@@ -677,47 +722,15 @@ class PrincipalPanel:
                 
         if selected_map and selected_map in map_identifiers:
             map_identifier = map_identifiers[selected_map]
-            map_arg = f"{map_identifier}?listen"
             if self.logger.should_log_debug():
                 self.logger.info(f"DEBUG: ✅ Mapa encontrado. Usando identificador: {map_identifier}")
         else:
             # Mapa por defecto si no hay selección
-            map_arg = "TheIsland_WP?listen"
+            map_identifier = "TheIsland_WP"
             if self.logger.should_log_debug():
-                self.logger.warning(f"DEBUG: ❌ Mapa no encontrado o vacío. Razón: selected_map='{selected_map}', en diccionario={selected_map in map_identifiers if selected_map else False}. Usando por defecto: TheIsland_WP")
+                self.logger.info(f"DEBUG: ❌ Mapa no encontrado o vacío. Razón: selected_map='{selected_map}', en diccionario={selected_map in map_identifiers if selected_map else False}. Usando por defecto: TheIsland_WP")
         
-        # 2. Agregar parámetros básicos en el orden correcto
-        # Port
-        port = self.port_entry.get() or "7777"
-        map_arg += f"?Port={port}"
-        
-        # QueryPort
-        query_port = self.query_port_entry.get() or "27015"
-        map_arg += f"?QueryPort={query_port}"
-        
-        # MultiHome (usar valor del campo o por defecto)
-        multihome = self.multihome_entry.get() or "127.0.0.1"
-        map_arg += f"?MultiHome={multihome}"
-        
-        # 3. Procesar argumentos personalizados antes del final
-        custom_args = self.custom_args_text.get("1.0", "end-1c").strip()
-        if custom_args:
-            for line in custom_args.split('\n'):
-                line = line.strip()
-                if line and not line.startswith('#'):  # Ignorar líneas vacías y comentarios
-                    # Si la línea ya comienza con ?, la agregamos tal como está
-                    if line.startswith('?'):
-                        map_arg += line
-                    else:
-                        # Si no, agregamos el ? al principio
-                        map_arg += f"?{line}"
-        
-        # 4. Agregar argumentos RCON si está habilitado
-        if hasattr(self.main_window, 'rcon_panel') and self.main_window.rcon_panel.get_rcon_enabled():
-            rcon_port = self.main_window.rcon_panel.get_rcon_port()
-            map_arg += f"?EnableRCON=True?RCONPort={rcon_port}"
-        
-        # 5. Obtener mods configurados (buscar por servidor/mapa específico primero)
+        # 2. Obtener mods configurados (buscar por servidor/mapa específico primero)
         # Obtener servidor seleccionado
         selected_server = None
         if hasattr(self.main_window, 'selected_server') and self.main_window.selected_server:
@@ -732,10 +745,46 @@ class PrincipalPanel:
         if not mod_ids:
             mod_ids = self.config_manager.get("server", "mod_ids", "").strip()
         
-        # 6. Construir la lista final con un solo argumento y los flags del servidor
+        # 3. Construir la lista final con argumentos separados
+        # El primer argumento debe ser el mapa con todos sus parámetros concatenados
+        map_arg = map_identifier + "?listen"
+        
+        # Agregar los parámetros de configuración al argumento del mapa
+        # Port
+        port = self.port_entry.get() or "7777"
+        map_arg += f"?Port={port}"
+        
+        # QueryPort
+        query_port = self.query_port_entry.get() or "27015"
+        map_arg += f"?QueryPort={query_port}"
+        
+        # MultiHome
+        multihome = self.multihome_entry.get() or "127.0.0.1"
+        map_arg += f"?MultiHome={multihome}"
+        
+        # Argumentos personalizados
+        custom_args = self.custom_args_text.get("1.0", "end-1c").strip()
+        if custom_args:
+            for line in custom_args.split('\n'):
+                line = line.strip()
+                if line and not line.startswith('#'):  # Ignorar líneas vacías y comentarios
+                    # Si la línea ya comienza con ?, la agregamos tal como está
+                    if line.startswith('?'):
+                        map_arg += line
+                    else:
+                        # Si no, agregamos el ? al principio
+                        map_arg += f"?{line}"
+        
+        # RCON
+        if hasattr(self.main_window, 'rcon_panel') and self.main_window.rcon_panel.get_rcon_enabled():
+            rcon_port = self.main_window.rcon_panel.get_rcon_port()
+            map_arg += "?EnableRCON=True"
+            map_arg += f"?RCONPort={rcon_port}"
+        
+        # Construir la lista final
         args = [map_arg, "-server", "-log"]
         
-        # 7. Agregar mods si existen
+        # 4. Agregar mods si existen
         if mod_ids:
             args.append(f"-mods={mod_ids}")
         

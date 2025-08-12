@@ -1,7 +1,16 @@
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
 import customtkinter as ctk
 import os
-import platform
+import json
+import time
+import threading
+import logging
 from datetime import datetime
+from utils.config_manager import ConfigManager
+from utils.app_settings import AppSettings
+from utils.system_tray import SystemTray
+from utils.server_logger import ServerEventLogger
 from .panels.principal_panel import PrincipalPanel
 from .panels.server_panel import ServerPanel
 from .panels.config_panel import ConfigPanel
@@ -11,37 +20,79 @@ from .panels.players_panel import PlayersPanel
 from .panels.mods_panel import ModsPanel
 from .panels.working_logs_panel import WorkingLogsPanel
 from .panels.rcon_panel import RconPanel
+from .panels.direct_commands_panel import DirectCommandsPanel
+from .panels.console_panel import ConsolePanel
 from .dialogs.advanced_settings_dialog import AdvancedSettingsDialog
 from .dialogs.custom_dialogs import show_info, show_warning, show_error, ask_yes_no, ask_string
-from utils.app_settings import AppSettings
-from utils.system_tray import SystemTray
+from .panels.ini_config_panel import IniConfigPanel
 
 class MainWindow:
 
-    APP_VERSION = "1.0"
+    APP_VERSION = "2.1"
     
     def __init__(self, root, config_manager, logger):
+        """Inicializar la ventana principal"""
         self.root = root
         self.config_manager = config_manager
         self.logger = logger
         
-        # Importar ServerEventLogger aquí para evitar problemas de importación circular
-        from utils.server_logger import ServerEventLogger
-        self.server_event_logger = ServerEventLogger("default")
+        # Configuración de la ventana
+        self.root.title("ARK Server Manager")
+        self.root.geometry("1200x800")
+        self.root.minsize(1000, 600)
         
-        # Variables para el servidor y mapa seleccionados
+        # Variables de estado
         self.selected_server = None
         self.selected_map = None
+        self.console_panel_managing_startup = False
         
-        # Inicializar configuraciones avanzadas
+        # Configuración de la aplicación
         self.app_settings = AppSettings(config_manager, logger)
-        
-        # Inicializar bandeja del sistema
         self.system_tray = SystemTray(self, self.app_settings, logger)
+        self.started_with_windows = False
         
-        # Variables para diálogos
+        # Inicializar logger de eventos del servidor
+        self.server_event_logger = ServerEventLogger("default")
+        
+        # Inicializar componentes
+        self.server_manager = None
+        self.principal_panel = None
+        self.server_panel = None
+        self.console_panel = None
+        self.backup_panel = None
+        self.logs_panel = None
+        self.rcon_panel = None
+        self.direct_commands_panel = None
+        self.mods_panel = None
+        self.monitoring_panel = None
+        self.players_panel = None
+        self.advanced_backup_panel = None
+        self.advanced_restart_panel = None
+        self.dynamic_config_panel = None
+        self.server_config_panel = None
+        self.ini_config_panel = None
         self.settings_dialog = None
         
+        # Configurar la ventana
+        self.setup_window()
+        
+        # Configurar eventos
+        self.setup_window_events()
+        
+        # Aplicar configuraciones de la aplicación
+        self.apply_app_settings()
+        
+        # Cargar última configuración
+        self.load_last_configuration()
+        
+        # Detectar si se inició con Windows
+        self.detect_startup_with_windows()
+        
+        # Configurar auto-inicio si es necesario
+        self.check_auto_start_fallback()
+    
+    def setup_window(self):
+        """Configurar la ventana principal"""
         # Configurar el grid principal
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_rowconfigure(1, weight=1)
@@ -61,20 +112,7 @@ class MainWindow:
         
         # Inicializar bandeja del sistema
         self.start_system_tray()
-        
-        # Cargar última configuración
-        self.load_last_configuration()
-        
-        # Detectar si se inició con Windows
-        self.started_with_windows = self.detect_startup_with_windows()
-        
-        # Debug: Mostrar todas las configuraciones para diagnóstico
-        if hasattr(self.app_settings, 'debug_all_settings'):
-            self.app_settings.debug_all_settings()
-        
-        # Verificar auto-inicio si no hay bandeja disponible
-        self.check_auto_start_fallback()
-        
+    
     def create_top_bar(self):
         """Crear la barra superior con menú, administración y estado del servidor"""
         # Frame principal de la barra superior
@@ -302,6 +340,28 @@ class MainWindow:
         
         # La lista de servidores se inicializará después de crear el server_panel
         
+        # Frame para opciones de consola (fila 4) - MOVIDO A LA PESTAÑA CONSOLA
+        # console_options_frame = ctk.CTkFrame(self.top_bar, fg_color="transparent")
+        # console_options_frame.grid(row=4, column=0, columnspan=3, padx=10, pady=5, sticky="ew")
+        
+        # Switch para mostrar/ocultar consola del servidor - MOVIDO A LA PESTAÑA CONSOLA
+        # self.console_visibility_var = ctk.BooleanVar(value=self.config_manager.get("app", "show_server_console", default="true").lower() == "true")
+        # self.show_console_switch = ctk.CTkSwitch(
+        #     console_options_frame,
+        #     text="Mostrar Consola del Servidor",
+        #     command=self.toggle_server_console_visibility,
+        #     variable=self.console_visibility_var
+        # )
+        # self.show_console_switch.grid(row=0, column=0, padx=(0, 20), pady=2, sticky="w")
+        
+        # Etiqueta explicativa - MOVIDO A LA PESTAÑA CONSOLA
+        # ctk.CTkLabel(
+        #     console_options_frame, 
+        #     text="Controla si la ventana de consola del servidor es visible o se ejecuta en segundo plano",
+        #     font=("Arial", 10),
+        #     text_color=("gray50", "gray70")
+        #     ).grid(row=0, column=1, padx=(0, 20), pady=2, sticky="w")
+        
         
     def create_tabview(self):
         """Crear el sistema de pestañas principal"""
@@ -310,12 +370,15 @@ class MainWindow:
         
         # Crear pestañas
         self.tab_principal_content = self.tabview.add("Principal")
-        self.tab_configuraciones_content = self.tabview.add("Configuraciones")
+        self.tab_ini_config_content = self.tabview.add("Conf. INI")
         self.tab_mods_content = self.tabview.add("Mods")
         self.tab_backup_content = self.tabview.add("Backup")
         self.tab_reinicios_content = self.tabview.add("Reinicios")
         self.tab_rcon_content = self.tabview.add("RCON")
+        self.tab_ark_api_content = self.tabview.add("Comandos Directos")
+        self.tab_console_content = self.tabview.add("Consola")
         self.tab_logs_content = self.tabview.add("Logs")
+        self.tab_configuraciones_content = self.tabview.add("Avanzado")
         
         # Crear paneles
         self.principal_panel = PrincipalPanel(self.tab_principal_content, self.config_manager, self.logger, self)
@@ -326,7 +389,13 @@ class MainWindow:
         self.monitoring_panel = MonitoringPanel(self.tab_reinicios_content, self.config_manager, self.logger, self)
         self.backup_panel = BackupPanel(self.tab_backup_content, self.config_manager, self.logger, self)
         self.rcon_panel = RconPanel(self.tab_rcon_content, self.config_manager, self.logger, self)
+        self.direct_commands_panel = DirectCommandsPanel(self.tab_ark_api_content, self.config_manager, self.logger, self)
+        self.console_panel = ConsolePanel(self.tab_console_content, self.config_manager, self.logger, self)
         self.logs_panel = WorkingLogsPanel(self.tab_logs_content, self.config_manager, self.logger, self)
+        self.ini_config_panel = IniConfigPanel(self.tab_ini_config_content, self.config_manager, self.logger, self)
+        
+        # Configurar el server_manager principal para que apunte al del server_panel
+        self.server_manager = self.server_panel.server_manager
         
         # Configurar callbacks para los botones
         self.setup_button_callbacks()
@@ -396,6 +465,8 @@ class MainWindow:
         ctk.CTkButton(main_frame, text="💾 Realizar Backup", command=self.quick_backup).pack(pady=5, fill="x", padx=20)
         ctk.CTkButton(main_frame, text="🔄 Reiniciar Servidor", command=self.quick_restart).pack(pady=5, fill="x", padx=20)
         ctk.CTkButton(main_frame, text="📊 Monitoreo", command=lambda: self.switch_to_tab("Reinicios")).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="⌨️ Comandos Directos", command=lambda: self.switch_to_tab("Comandos Directos")).pack(pady=5, fill="x", padx=20)
+        ctk.CTkButton(main_frame, text="🖥️ Consola del Servidor", command=lambda: self.switch_to_tab("Consola")).pack(pady=5, fill="x", padx=20)
         ctk.CTkButton(main_frame, text="📝 Ver Logs", command=lambda: self.switch_to_tab("Logs")).pack(pady=5, fill="x", padx=20)
         
         # Separador
@@ -488,9 +559,18 @@ class MainWindow:
     
     def show_configuracion(self):
         """Mostrar configuración avanzada"""
-        if self.settings_dialog is None:
-            self.settings_dialog = AdvancedSettingsDialog(self.root, self.app_settings, self.logger)
-        self.settings_dialog.show()
+        try:
+            if self.settings_dialog is None:
+                self.settings_dialog = AdvancedSettingsDialog(self.root, self.app_settings, self.logger)
+            self.settings_dialog.show()
+        except Exception as e:
+            self.logger.error(f"Error al mostrar configuración: {e}")
+            # Fallback: crear un diálogo simple
+            try:
+                self.settings_dialog = AdvancedSettingsDialog(self.root, self.app_settings, self.logger)
+                self.settings_dialog.show()
+            except Exception as e2:
+                self.logger.error(f"Error en fallback de configuración: {e2}")
     
     def salir_aplicacion(self):
         """Salir de la aplicación con confirmación"""
@@ -509,7 +589,7 @@ class MainWindow:
                 self.app_settings.save_settings()
             
             # Detener bandeja del sistema
-            if hasattr(self, 'system_tray'):
+            if self.system_tray:
                 self.system_tray.stop_tray()
             
             self.add_log_message("🚪 Cerrando aplicación...")
@@ -582,6 +662,7 @@ class MainWindow:
             
             # Detectar tipo de inicio
             self.started_with_windows = self.detect_startup_with_windows()
+            self.logger.info(f"🔍 Resultado de detección de inicio: started_with_windows = {self.started_with_windows}")
             
             # Iniciar bandeja del sistema (que manejará el auto-inicio)
             if self.app_settings.get_setting("minimize_to_tray") or self.app_settings.get_setting("close_to_tray"):
@@ -861,8 +942,27 @@ class MainWindow:
                 text_color=("red", "orange")
             )
     
-    def update_server_status(self, status, color="red"):
-        """Actualizar el estado del servidor"""
+    def update_server_status(self, status, color=None):
+        """Actualizar el estado del servidor con colores automáticos o personalizados"""
+        # Si no se proporciona color, usar colores automáticos según el estado
+        if color is None:
+            if status == "Inactivo":
+                color = "red"
+            elif status == "Iniciando":
+                color = "orange"
+            elif status == "Activo":
+                color = "green"
+            elif status == "Error":
+                color = "red"
+            elif status == "Verificando...":
+                color = "blue"
+            elif status == "Deteniendo...":
+                color = "orange"
+            elif status == "Reiniciando...":
+                color = "orange"
+            else:
+                color = "gray"  # Color por defecto para estados desconocidos
+        
         self.status_label.configure(text=status, fg_color=color)
     
     def update_uptime(self, uptime):
@@ -1150,9 +1250,24 @@ class MainWindow:
             self.logger.error(f"Error al restaurar selección de mapa: {e}")
     
     def start_server(self):
-        """Inicia el servidor"""
+        """Inicia el servidor o abre la consola si ya está activo"""
         if hasattr(self, 'server_panel'):
-            self.server_panel.start_server()
+            # Verificar si el servidor ya está ejecutándose
+            if hasattr(self.server_panel, 'server_manager') and self.server_panel.server_manager.is_server_running():
+                # El servidor ya está activo, mostrar la consola
+                self.add_log_message("ℹ️ El servidor ya está ejecutándose. Abriendo consola...")
+                try:
+                    success = self.server_panel.server_manager.show_server_console()
+                    if success:
+                        self.add_log_message("✅ Consola del servidor abierta")
+                    else:
+                        self.add_log_message("⚠️ No se pudo abrir la consola del servidor")
+                except Exception as e:
+                    self.add_log_message(f"❌ Error al abrir la consola: {e}")
+                    self.logger.error(f"Error al abrir consola del servidor: {e}")
+            else:
+                # El servidor no está activo, iniciarlo normalmente
+                self.server_panel.start_server()
     
     def stop_server(self):
         """Detener servidor con confirmación y saveworld"""
@@ -1777,6 +1892,28 @@ Versión de la app: {self.APP_VERSION}
     def auto_start_server(self):
         """Auto-iniciar el servidor al iniciar la aplicación"""
         try:
+            # PRIMERA VERIFICACIÓN: Comprobar si el auto-inicio está habilitado
+            should_auto_start = False
+            
+            # Verificar configuración de auto-inicio
+            if hasattr(self, 'app_settings'):
+                # Verificar si se inició con Windows o manualmente
+                if hasattr(self, 'started_with_windows') and self.started_with_windows:
+                    # Se inició con Windows - usar configuración específica
+                    should_auto_start = self.app_settings.get_setting("auto_start_server_with_windows")
+                    self.logger.info(f"🔍 MainWindow.auto_start_server: Inicio con Windows detectado, auto_start_server_with_windows = {should_auto_start}")
+                else:
+                    # Se inició manualmente - usar configuración normal
+                    should_auto_start = self.app_settings.get_setting("auto_start_server")
+                    self.logger.info(f"🔍 MainWindow.auto_start_server: Inicio manual detectado, auto_start_server = {should_auto_start}")
+            
+            # Si auto-inicio está deshabilitado, salir inmediatamente
+            if not should_auto_start:
+                self.logger.info("⏸️ MainWindow.auto_start_server: Auto-inicio del servidor desactivado por configuración")
+                self.add_log_message("⏸️ Auto-inicio del servidor desactivado por configuración")
+                return
+            
+            self.logger.info("🚀 MainWindow.auto_start_server: Auto-inicio del servidor habilitado, continuando...")
             self.logger.info("Iniciando auto-inicio del servidor...")
             
             # Verificar que tengamos servidor y mapa seleccionados
@@ -1811,7 +1948,7 @@ Versión de la app: {self.APP_VERSION}
                     return
             
             # Iniciar el servidor
-            self.add_log_message(f"🚀 Auto-iniciando servidor: {self.selected_server} con mapa: {self.selected_map}")
+            self.add_log_message(f"🚀 Auto-inicio del servidor: {self.selected_server} con mapa: {self.selected_map}")
             
             if hasattr(self, 'principal_panel'):
                 # Usar el método de inicio completo con configuraciones
@@ -1845,71 +1982,38 @@ Versión de la app: {self.APP_VERSION}
             # Solo hacer fallback si la bandeja no está disponible Y auto_start está activado
             should_auto_start = False
             
+            # Log detallado para diagnóstico
+            self.logger.info(f"🔍 Diagnóstico fallback auto-inicio:")
+            self.logger.info(f"   - started_with_windows: {getattr(self, 'started_with_windows', 'No definido')}")
+            
+            
+            self.logger.info(f"   - system_tray disponible: {hasattr(self, 'system_tray') and self.system_tray.is_available()}")
+            
             if hasattr(self, 'started_with_windows') and self.started_with_windows:
                 # Se inició con Windows - usar configuración específica
                 should_auto_start = self.app_settings.get_setting("auto_start_server_with_windows")
+                self.logger.info(f"   - Configuración Windows: {should_auto_start}")
             else:
                 # Se inició manualmente - usar configuración normal
                 should_auto_start = self.app_settings.get_setting("auto_start_server")
+                
             
             if (not hasattr(self, 'system_tray') or 
                 not self.system_tray.is_available()) and should_auto_start:
                 
-                self.logger.info("Bandeja no disponible, usando fallback para auto-inicio")
+                self.logger.info("🚀 Bandeja no disponible, usando fallback para auto-inicio")
                 # Programar auto-inicio con un retraso similar
                 self.root.after(2000, self.auto_start_server_if_configured)
+            else:
+                if should_auto_start:
+                    self.logger.info("⏸️ Auto-inicio desactivado: bandeja disponible o configuración desactivada")
+                else:
+                    self.logger.info("⏸️ Auto-inicio desactivado: configuración desactivada")
                 
         except Exception as e:
             self.logger.error(f"Error en check_auto_start_fallback: {e}")
     
-    def detect_startup_with_windows(self):
-        """Detectar si la aplicación fue iniciada por Windows"""
-        try:
-            import sys
-            import time
-            import psutil
-            
-            # Criterio 1: Argumento --windows-startup (más confiable)
-            if "--windows-startup" in sys.argv:
-                self.logger.info("✅ Detección: argumento --windows-startup encontrado")
-                return True
-            
-            # Criterio 2: Verificar proceso padre + tiempo de arranque
-            try:
-                current_process = psutil.Process()
-                parent_process = current_process.parent()
-                
-                if parent_process:
-                    parent_name = parent_process.name().lower()
-                    self.logger.info(f"🔍 Proceso padre: {parent_name}")
-                    
-                    # Verificar si el proceso padre es del sistema Windows
-                    system_processes = ['explorer.exe', 'winlogon.exe', 'userinit.exe']
-                    is_system_parent = parent_name in system_processes
-                    
-                    # Verificar tiempo de arranque reciente (menos de 10 minutos)
-                    boot_time = psutil.boot_time()
-                    current_time = time.time()
-                    uptime_minutes = (current_time - boot_time) / 60
-                    recent_boot = uptime_minutes < 10
-                    
-                    self.logger.info(f"🔍 Proceso padre del sistema: {is_system_parent}")
-                    self.logger.info(f"🔍 Arranque reciente ({uptime_minutes:.1f} min): {recent_boot}")
-                    
-                    # Ambos criterios deben cumplirse para detectar inicio con Windows
-                    if is_system_parent and recent_boot:
-                        self.logger.info("✅ Detección: inicio con Windows por proceso padre + arranque reciente")
-                        return True
-                
-            except Exception as e:
-                self.logger.warning(f"Error al verificar proceso padre: {e}")
-            
-            self.logger.info("❌ No se detectó inicio desde Windows")
-            return False
-            
-        except Exception as e:
-            self.logger.error(f"Error en detect_startup_with_windows: {e}")
-            return False
+
     
     def load_last_configuration(self):
         """Cargar la última configuración de servidor y mapa"""
@@ -1919,14 +2023,14 @@ Versión de la app: {self.APP_VERSION}
             # Verificar configuraciones de auto-inicio
             auto_start_manual = self.app_settings.get_setting("auto_start_server")
             auto_start_windows = self.app_settings.get_setting("auto_start_server_with_windows")
-            self.logger.info(f"📋 Auto-inicio manual: {auto_start_manual}")
-            self.logger.info(f"🖥️ Auto-inicio con Windows: {auto_start_windows}")
+            # self.logger.info(f"📋 Auto-inicio manual: {auto_start_manual}")  # Optimizado: reducir ruido
+            # self.logger.info(f"🖥️ Auto-inicio con Windows: {auto_start_windows}")  # Optimizado: reducir ruido
             
             # Cargar último servidor
             last_server = self.config_manager.get("app", "last_server", "")
             if last_server:
                 self.selected_server = last_server
-                self.logger.info(f"🖥️ Último servidor cargado: {last_server}")
+                # self.logger.info(f"🖥️ Último servidor cargado: {last_server}")  # Optimizado: reducir ruido
             else:
                 self.logger.warning("⚠️ No hay servidor guardado en configuración")
             
@@ -1934,7 +2038,7 @@ Versión de la app: {self.APP_VERSION}
             last_map = self.config_manager.get("app", "last_map", "")
             if last_map:
                 self.selected_map = last_map
-                self.logger.info(f"🗺️ Último mapa cargado: {last_map}")
+                # self.logger.info(f"🗺️ Último mapa cargado: {last_map}")  # Optimizado: reducir ruido
             else:
                 self.logger.warning("⚠️ No hay mapa guardado en configuración")
             
@@ -1966,72 +2070,76 @@ Versión de la app: {self.APP_VERSION}
             self.logger.error(f"Error al actualizar paneles: {e}")
     
     def auto_start_server_if_configured(self):
-        """Auto-iniciar servidor si hay configuración válida"""
+        """Auto-iniciar el servidor si está configurado para hacerlo"""
         try:
-            # Evitar ejecuciones duplicadas
-            if hasattr(self, 'auto_start_attempted') and self.auto_start_attempted:
-                return False
-            self.auto_start_attempted = True
+            # PRIMERA VERIFICACIÓN: Comprobar si el auto-inicio está habilitado
+            should_auto_start = False
             
-            import os
-            
-            # Verificar configuración de último servidor y mapa (sin logs innecesarios)
-            last_server = self.config_manager.get("app", "last_server", "")
-            last_map = self.config_manager.get("app", "last_map", "")
-            
-            if not last_server:
-                self.add_log_message("⚠️ Auto-inicio cancelado: No hay servidor configurado")
-                return False
-            
-            if not last_map:
-                self.add_log_message("⚠️ Auto-inicio cancelado: No hay mapa configurado")
-                return False
-            
-            # Verificar que el servidor existe
-            server_executable = self.config_manager.get("server", f"executable_path_{last_server.lower()}", "")
-            if not server_executable or not os.path.exists(server_executable):
-                self.add_log_message(f"⚠️ Auto-inicio cancelado: Servidor '{last_server}' no encontrado")
-                return False
-            
-            # Mensaje único importante para el usuario
-            self.logger.info(f"Auto-iniciando servidor '{last_server}' con mapa '{last_map}'")
-            self.add_log_message(f"🚀 Auto-iniciando servidor '{last_server}' con mapa '{last_map}'...")
-            
-            # Actualizar paneles con la configuración
-            if hasattr(self, 'server_panel'):
-                # Configurar paneles silenciosamente
-                if hasattr(self.server_panel, 'server_combo'):
-                    try:
-                        self.server_panel.server_combo.set(last_server)
-                        self.server_panel.on_server_selected()
-                    except Exception:
-                        pass  # Error silencioso para no ralentizar
-                
-                if hasattr(self.server_panel, 'map_combo'):
-                    try:
-                        self.server_panel.map_combo.set(last_map)
-                    except Exception:
-                        pass  # Error silencioso para no ralentizar
-                
-                # Iniciar servidor
-                if hasattr(self.server_panel, 'start_server'):
-                    try:
-                        # Programar inicio con un pequeño retraso
-                        self.root.after(1000, self.server_panel.start_server)
-                        return True
-                    except Exception as e:
-                        self.add_log_message(f"❌ Error en auto-inicio: {e}")
+            # Verificar configuración de auto-inicio
+            if hasattr(self, 'app_settings'):
+                # Verificar si se inició con Windows o manualmente
+                if hasattr(self, 'started_with_windows') and self.started_with_windows:
+                    # Se inició con Windows - usar configuración específica
+                    should_auto_start = self.app_settings.get_setting("auto_start_server_with_windows")
+                    # self.logger.info(f"🔍 MainWindow: Inicio con Windows detectado, auto_start_server_with_windows = {should_auto_start}")  # Optimizado
                 else:
-                    self.add_log_message("❌ Auto-inicio falló: Método no disponible")
+                    # Se inició manualmente - usar configuración normal
+                    should_auto_start = self.app_settings.get_setting("auto_start_server")
+                    # self.logger.info(f"🔍 MainWindow: Inicio manual detectado, auto_start_server = {should_auto_start}")  # Optimizado
+            
+            # Si auto-inicio está deshabilitado, salir inmediatamente
+            if not should_auto_start:
+                self.logger.info("⏸️ MainWindow: Auto-inicio del servidor desactivado por configuración")
+                self.add_log_message("⏸️ Auto-inicio del servidor desactivado por configuración")
+                return
+            
+            # self.logger.info("🚀 MainWindow: Auto-inicio del servidor habilitado, continuando...")  # Optimizado
+            
+            # Verificar si server_manager está inicializado
+            if not hasattr(self, 'server_manager') or self.server_manager is None:
+                self.logger.warning("ServerManager no está inicializado, omitiendo auto-inicio")
+                return
+                
+            # Verificar si ya hay un servidor ejecutándose
+            if self.server_manager.is_server_running():
+                self.logger.info("El servidor ya está ejecutándose, omitiendo auto-inicio")
+                self.add_log_message("ℹ️ Servidor ya está ejecutándose")
+                return
+            
+            # Verificar si ConsolePanel ya está manejando el inicio del servidor
+            if hasattr(self, 'console_panel_managing_startup') and self.console_panel_managing_startup:
+                self.logger.info("ConsolePanel ya está manejando el inicio del servidor, omitiendo auto-inicio desde MainWindow")
+                self.add_log_message("ℹ️ ConsolePanel ya está iniciando el servidor")
+                return
+            
+            # Iniciar el servidor
+            self.add_log_message(f"🚀 Auto-iniciando servidor: {self.selected_server} con mapa: {self.selected_map}")
+            
+            if hasattr(self, 'principal_panel'):
+                # Usar el método de inicio completo con configuraciones
+                self.principal_panel.start_server_with_config()
+                self.add_log_message("✅ Auto-inicio del servidor completado")
+                
+                # Notificar en la bandeja si está disponible
+                if hasattr(self, 'system_tray') and self.system_tray.is_available():
+                    self.system_tray.show_notification(
+                        "ARK Server Manager",
+                        f"Servidor '{self.selected_server}' iniciado automáticamente"
+                    )
             else:
-                self.add_log_message("❌ Auto-inicio falló: Panel no disponible")
-            
-            return False
-            
+                self.logger.error("Panel principal no disponible para auto-inicio")
+                self.add_log_message("❌ Error: Panel principal no disponible")
+                
         except Exception as e:
-            self.logger.error(f"❌ Error crítico en auto-inicio: {e}")
+            self.logger.error(f"Error en auto-inicio del servidor: {e}")
             self.add_log_message(f"❌ Error en auto-inicio: {e}")
-            return False
+            
+            # Notificar error en la bandeja si está disponible
+            if hasattr(self, 'system_tray') and self.system_tray.is_available():
+                self.system_tray.show_notification(
+                    "ARK Server Manager - Error",
+                    "Error al auto-iniciar el servidor"
+                )
     
     def detect_startup_with_windows(self):
         """Detectar si la aplicación se inició automáticamente con Windows"""
@@ -2040,60 +2148,57 @@ Versión de la app: {self.APP_VERSION}
             import psutil
             import time
             
-            # Método 1: Verificar argumentos de línea de comandos (más rápido y confiable)
+            # Método 1: Verificar argumentos de línea de comandos (más confiable)
             if len(sys.argv) > 1:
                 for arg in sys.argv[1:]:
                     if arg.lower() in ['--startup', '--autostart', '--windows-startup']:
-                        # Solo log importante: detectado exitosamente
-                        self.logger.info("Auto-iniciando servidor desde Windows")
+                        self.logger.info("✅ Inicio automático detectado: argumentos de línea de comandos")
                         return True
             
-            # Método 2: Verificar proceso padre (solo si es necesario)
+            # Método 2: Verificar proceso padre del sistema (más estricto)
             try:
                 current_process = psutil.Process()
                 parent_process = current_process.parent()
                 
                 if not parent_process:
+                    self.logger.info("ℹ️ No se pudo determinar proceso padre")
                     return False
                 
                 parent_name = parent_process.name().lower()
                 
-                if parent_name in ['explorer.exe', 'winlogon.exe']:
-                    # Verificar tiempo de arranque (simplificado)
+                # Solo considerar procesos del sistema que realmente indican inicio automático
+                # winlogon.exe: proceso de inicio de sesión de Windows
+                # userinit.exe: proceso de inicialización de usuario
+                # explorer.exe: NO es confiable (se ejecuta siempre que hay sesión activa)
+                system_processes = ['winlogon.exe', 'userinit.exe']
+                
+                if parent_name in system_processes:
+                    # Verificar tiempo de arranque del sistema
                     boot_time = psutil.boot_time()
                     process_start_time = current_process.create_time()
                     time_since_boot = process_start_time - boot_time
                     
-                    # Si el proceso se creó dentro de los primeros 2 minutos del inicio
-                    if time_since_boot < 120:  # 120 segundos = 2 minutos
-                        self.logger.info("Auto-iniciando servidor desde Windows")
+                    # Solo considerar inicio automático si se creó en los primeros 30 segundos del arranque
+                    if time_since_boot < 30:  # 30 segundos = muy estricto
+                        self.logger.info(f"✅ Inicio automático detectado: proceso padre {parent_name} en {time_since_boot:.1f}s desde arranque")
                         return True
+                    else:
+                        self.logger.info(f"ℹ️ Proceso padre del sistema pero tiempo de arranque: {time_since_boot:.1f}s (no es inicio automático)")
                         
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                # Error silencioso para no ralentizar el inicio
+            except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                self.logger.debug(f"ℹ️ No se pudo verificar proceso padre: {e}")
                 pass
             
-            # Método 3: Verificar tiempo de arranque del sistema (simplificado)
-            try:
-                boot_time = psutil.boot_time()
-                current_time = time.time()
-                time_since_boot = current_time - boot_time
-                
-                # Si el sistema arrancó hace menos de 5 minutos
-                if time_since_boot < 300:  # 300 segundos = 5 minutos
-                    self.logger.info("Auto-iniciando servidor desde Windows")
-                    return True
-                    
-            except Exception:
-                # Error silencioso para no ralentizar
-                pass
+            # Método 3: Verificar si hay indicadores de inicio automático en el registro
+            # Este método se puede implementar en el futuro si es necesario
             
-            # Por defecto: inicio manual (sin log para ser más rápido)
+            # Por defecto: inicio manual
+            self.logger.info("ℹ️ Inicio manual detectado (por defecto)")
             return False
             
         except Exception as e:
-            # Solo registrar errores críticos
-            self.logger.error(f"Error crítico en detección de inicio: {e}")
+            self.logger.error(f"❌ Error crítico en detección de inicio: {e}")
+            # En caso de error, asumir inicio manual para evitar auto-inicio no deseado
             return False
     
     # ═══════════════════════════════════════════════════════════════
@@ -2104,6 +2209,10 @@ Versión de la app: {self.APP_VERSION}
         """Configurar callbacks de botones"""
         # Este método puede expandirse en el futuro para callbacks específicos
         pass
+    
+    # Los métodos de control de consola se han movido a ConsolePanel
+    # def toggle_server_console_visibility(self): - MOVIDO A CONSOLEPANEL
+    # def refresh_console_visibility_switch(self): - MOVIDO A CONSOLEPANEL
     
     def setup_window_events(self):
         """Configurar eventos de la ventana principal"""
@@ -2128,7 +2237,7 @@ Versión de la app: {self.APP_VERSION}
                 self.logger.info("Sistema de bandeja ya está inicializado")
                 return
             
-            if hasattr(self, 'system_tray') and self.system_tray.is_available():
+            if self.system_tray and self.system_tray.is_available():
                 # Iniciar la bandeja del sistema
                 if self.system_tray.start_tray():
                     self._tray_initialized = True
@@ -2141,19 +2250,32 @@ Versión de la app: {self.APP_VERSION}
                     # Verificar si debe auto-iniciar el servidor
                     should_auto_start = False
                     
+                    # Log detallado para diagnóstico
+                    self.logger.info(f"🔍 Diagnóstico auto-inicio:")
+                    self.logger.info(f"   - started_with_windows: {getattr(self, 'started_with_windows', 'No definido')}")
+                    
+                    
+                    
                     if hasattr(self, 'started_with_windows') and self.started_with_windows:
                         # Se inició con Windows - usar configuración específica
                         should_auto_start = self.app_settings.get_setting("auto_start_server_with_windows")
                         if should_auto_start:
                             self.logger.info("✅ Auto-inicio activado: iniciado con Windows")
+                        else:
+                            self.logger.info("❌ Auto-inicio desactivado: iniciado con Windows pero configuración desactivada")
                     else:
                         # Se inició manualmente - usar configuración normal
                         should_auto_start = self.app_settings.get_setting("auto_start_server")
                         if should_auto_start:
                             self.logger.info("✅ Auto-inicio activado: iniciado manualmente")
+                        else:
+                            self.logger.info("❌ Auto-inicio desactivado: iniciado manualmente y configuración desactivada")
                     
                     if should_auto_start:
+                        self.logger.info("🚀 Programando auto-inicio del servidor en 2 segundos...")
                         self.root.after(2000, self.auto_start_server_if_configured)  # Esperar 2 segundos para que se cargue todo
+                    else:
+                        self.logger.info("⏸️ Auto-inicio del servidor desactivado por configuración")
                 else:
                     self.logger.warning("No se pudo iniciar el sistema de bandeja")
             else:
@@ -2166,9 +2288,9 @@ Versión de la app: {self.APP_VERSION}
         """Manejar el cierre de la ventana"""
         try:
             # Verificar configuración de minimizar a bandeja al cerrar
-            if (hasattr(self, 'app_settings') and 
+            if (self.app_settings and 
                 self.app_settings.get_setting("close_to_tray") and 
-                hasattr(self, 'system_tray') and 
+                self.system_tray and 
                 self.system_tray.is_available()):
                 
                 # Minimizar a bandeja en lugar de cerrar
@@ -2188,9 +2310,9 @@ Versión de la app: {self.APP_VERSION}
             # Solo actuar si el evento es de la ventana principal
             if event.widget == self.root:
                 # Verificar si debe minimizar a bandeja
-                if (hasattr(self, 'app_settings') and 
+                if (self.app_settings and 
                     self.app_settings.get_setting("minimize_to_tray") and 
-                    hasattr(self, 'system_tray') and 
+                    self.system_tray and 
                     self.system_tray.is_available() and
                     not self.system_tray.is_hidden):
                     
@@ -2206,7 +2328,7 @@ Versión de la app: {self.APP_VERSION}
         try:
             # Solo actuar si el evento es de la ventana principal
             if event.widget == self.root:
-                if hasattr(self, 'system_tray'):
+                if self.system_tray:
                     self.system_tray.is_hidden = False
                     
         except Exception as e:
@@ -2215,7 +2337,7 @@ Versión de la app: {self.APP_VERSION}
     def minimize_to_tray(self):
         """Minimizar la aplicación a la bandeja del sistema"""
         try:
-            if (hasattr(self, 'system_tray') and 
+            if (self.system_tray and 
                 self.system_tray.is_available() and 
                 self.system_tray.tray_icon):
                 
@@ -2230,33 +2352,9 @@ Versión de la app: {self.APP_VERSION}
     def restore_from_tray(self):
         """Restaurar la aplicación desde la bandeja del sistema"""
         try:
-            if hasattr(self, 'system_tray'):
+            if self.system_tray:
                 self.system_tray.show_window()
                 self.logger.info("Aplicación restaurada desde la bandeja del sistema")
                 
         except Exception as e:
             self.logger.error(f"Error al restaurar desde bandeja: {e}")
-    
-    def salir_aplicacion(self):
-        """Salir completamente de la aplicación"""
-        try:
-            self.logger.info("Cerrando aplicación...")
-            
-            # Detener bandeja del sistema
-            if hasattr(self, 'system_tray'):
-                self.system_tray.stop_tray()
-                self.logger.info("Bandeja del sistema detenida")
-            
-            # Guardar configuraciones
-            if hasattr(self, 'config_manager'):
-                self.config_manager.save()
-                
-            # Cerrar ventana principal
-            self.root.quit()
-            self.root.destroy()
-            
-        except Exception as e:
-            self.logger.error(f"Error al cerrar aplicación: {e}")
-            # Forzar cierre
-            import sys
-            sys.exit(0)

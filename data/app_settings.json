@@ -1,20 +1,30 @@
 {
+<<<<<<< HEAD
   "startup_with_windows": true,
   "auto_start_server": true,
   "auto_start_server_with_windows": true,
+=======
+  "startup_with_windows": false,
+  "auto_start_server": false,
+  "auto_start_server_with_windows": false,
+>>>>>>> Prod
   "minimize_to_tray": false,
   "always_on_top": false,
   "minimize_on_start": false,
   "close_to_tray": false,
+<<<<<<< HEAD
   "auto_check_updates": true,
+=======
+  "auto_check_updates": false,
+>>>>>>> Prod
   "start_minimized": false,
-  "remember_window_position": true,
-  "auto_backup_on_start": true,
+  "remember_window_position": false,
+  "auto_backup_on_start": false,
   "confirm_exit": true,
   "hide_console": false,
   "theme_mode": "dark",
-  "auto_save_config": true,
-  "notification_sound": true,
+  "auto_save_config": false,
+  "notification_sound": false,
   "window_x": 78,
   "window_y": 78,
   "window_width": 1200,

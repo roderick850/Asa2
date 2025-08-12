@@ -32,12 +32,15 @@ class RconPanel(ctk.CTkFrame):
         
     def create_widgets(self):
         """Crear todos los widgets del panel RCON"""
-        # Configurar el grid principal
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(3, weight=1)  # El área de resultados se expande
+        # Crear un frame scrollable principal
+        self.main_scrollable_frame = ctk.CTkScrollableFrame(self)
+        self.main_scrollable_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # Configurar el grid del frame scrollable
+        self.main_scrollable_frame.grid_columnconfigure(0, weight=1)
         
         # === CONFIGURACIÓN RCON ===
-        config_frame = ctk.CTkFrame(self)
+        config_frame = ctk.CTkFrame(self.main_scrollable_frame)
         config_frame.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
         config_frame.grid_columnconfigure((1, 3, 5), weight=1)
         
@@ -97,7 +100,7 @@ class RconPanel(ctk.CTkFrame):
         self.status_label.pack(side="left", padx=(20, 5))
         
         # === COMANDOS RÁPIDOS ===
-        commands_frame = ctk.CTkFrame(self)
+        commands_frame = ctk.CTkFrame(self.main_scrollable_frame)
         commands_frame.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
         commands_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
         
@@ -151,7 +154,7 @@ class RconPanel(ctk.CTkFrame):
         self.restart_btn.grid(row=2, column=3, padx=5, pady=(5, 10), sticky="ew")
         
         # === COMANDO PERSONALIZADO ===
-        custom_frame = ctk.CTkFrame(self)
+        custom_frame = ctk.CTkFrame(self.main_scrollable_frame)
         custom_frame.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
         custom_frame.grid_columnconfigure(1, weight=1)
         
@@ -172,8 +175,8 @@ class RconPanel(ctk.CTkFrame):
         self.execute_custom_btn.grid(row=1, column=2, padx=(5, 10), pady=5)
         
         # === ÁREA DE RESULTADOS ===
-        results_frame = ctk.CTkFrame(self)
-        results_frame.grid(row=3, column=0, sticky="nsew", padx=5, pady=5)
+        results_frame = ctk.CTkFrame(self.main_scrollable_frame)
+        results_frame.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
         results_frame.grid_columnconfigure(0, weight=1)
         results_frame.grid_rowconfigure(1, weight=1)
         
@@ -550,7 +553,7 @@ class RconPanel(ctk.CTkFrame):
         # Crear ventana de confirmación personalizada
         dialog = ctk.CTkToplevel(self)
         dialog.title("Confirmar Reinicio")
-        dialog.geometry("350x200")
+        dialog.geometry("350x240")
         dialog.transient(self)
         dialog.grab_set()
         
