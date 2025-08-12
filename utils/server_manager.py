@@ -17,6 +17,9 @@ class ServerManager:
         self.config_manager = config_manager
         self.server_process = None
         self.server_console_hwnd = None
+        self.server_pid = None
+        self.uptime_start = None
+        self.server_running = False
         self.logger = logging.getLogger(__name__)
         
         # Cargar APIs de Windows para controlar ventanas
@@ -156,23 +159,35 @@ class ServerManager:
         return f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
     
     def get_server_stats(self):
-        """Obtiene estadísticas del servidor"""
-        if not self.server_pid or not psutil.pid_exists(self.server_pid):
-            return {"cpu": 0, "memory": 0, "memory_mb": 0}
-        
+        """Obtener estadísticas del servidor (CPU, memoria)"""
         try:
+            if not self.server_pid or not psutil.pid_exists(self.server_pid):
+                return {"cpu_percent": 0, "memory_mb": 0}
+            
             process = psutil.Process(self.server_pid)
             cpu_percent = process.cpu_percent()
             memory_info = process.memory_info()
-            memory_mb = memory_info.rss / 1024 / 1024
+            memory_mb = round(memory_info.rss / 1024 / 1024, 1)
             
             return {
-                "cpu": cpu_percent,
-                "memory": 0,  # Porcentaje de memoria del sistema
+                "cpu_percent": cpu_percent,
                 "memory_mb": memory_mb
             }
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            return {"cpu": 0, "memory": 0, "memory_mb": 0}
+        except Exception as e:
+            self.logger.error(f"Error obteniendo estadísticas del servidor: {e}")
+            return {"cpu_percent": 0, "memory_mb": 0}
+    
+    def is_server_running(self):
+        """Verificar si el servidor está ejecutándose"""
+        try:
+            if self.server_process and self.server_process.poll() is None:
+                return True
+            elif self.server_pid and psutil.pid_exists(self.server_pid):
+                return True
+            return False
+        except Exception as e:
+            self.logger.error(f"Error verificando estado del servidor: {e}")
+            return False
     
     def get_server_path(self, server_name=None):
         """Obtiene la ruta del directorio del servidor"""

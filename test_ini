@@ -1,0 +1,5 @@
+2025-08-11 18:31:36 - ArkServerManager - INFO - GameUserSettings.ini encontrado en: D:\ASA\Prueba\ShooterGame\Saved\Config\WindowsServer\GameUserSettings.ini
+2025-08-11 18:31:36 - ArkServerManager - INFO - Game.ini encontrado en: D:\ASA\Prueba\ShooterGame\Saved\Config\WindowsServer\Game.ini
+2025-08-11 18:31:36 - ArkServerManager - INFO - Rutas INI cargadas - GUS: D:\ASA\Prueba\ShooterGame\Saved\Config\WindowsServer\GameUserSettings.ini, Game: D:\ASA\Prueba\ShooterGame\Saved\Config\WindowsServer\Game.ini
+2025-08-11 18:31:36 - ArkServerManager - ERROR - Error al cargar GameUserSettings: While reading from 'D:\\ASA\\Prueba\\ShooterGame\\Saved\\Config\\WindowsServer\\GameUserSettings.ini' [line 239]: option 'lastjoinedsessionpercategory' in section '/Script/ShooterGame.ShooterGameUserSettings' already exists
+2025-08-11 18:31:36 - ArkServerManager - INFO - Archivos INI cargados correctamente

@@ -444,23 +444,23 @@ class ServerPanel:
                         self.uptime_label.configure(text=uptime)
                     
                     if hasattr(self, 'cpu_label') and self.cpu_label and self.cpu_label.winfo_exists():
-                        self.cpu_label.configure(text=f"{stats['cpu']:.1f}%")
+                        self.cpu_label.configure(text=f"{stats['cpu_percent']:.1f}%")
                     
                     if hasattr(self, 'memory_label') and self.memory_label and self.memory_label.winfo_exists():
                         self.memory_label.configure(text=f"{stats['memory_mb']:.1f} MB")
                     
                     # Actualizar en la ventana principal si está disponible
                     if hasattr(self.main_window, 'update_server_status'):
-                        self.main_window.update_server_status(status, status_color)
+                        self.main_window.update_server_status(status, color=status_color)
                 except Exception as e:
                     # Silenciar errores de UI para evitar spam en logs
                     pass
             
             # Programar la actualización en el hilo principal
-            if self.main_window and hasattr(self.main_window, 'after') and hasattr(self.main_window, 'winfo_exists'):
+            if self.main_window and hasattr(self.main_window, 'root') and hasattr(self.main_window.root, 'after') and hasattr(self.main_window.root, 'winfo_exists'):
                 try:
-                    if self.main_window.winfo_exists():
-                        self.main_window.after(0, update_ui)
+                    if self.main_window.root.winfo_exists():
+                        self.main_window.root.after(0, update_ui)
                 except Exception:
                     # Ventana ya no existe, parar el monitoreo
                     pass
@@ -469,7 +469,7 @@ class ServerPanel:
                 self.main_window.update_uptime(uptime)
             
             if hasattr(self.main_window, 'update_cpu_usage'):
-                self.main_window.update_cpu_usage(stats['cpu'])
+                self.main_window.update_cpu_usage(stats['cpu_percent'])
             
             if hasattr(self.main_window, 'update_memory_usage'):
                 self.main_window.update_memory_usage(stats['memory_mb'])
@@ -582,11 +582,11 @@ class ServerPanel:
             
             # Iniciar servidor con configuración del panel principal
             self.update_server_status("Iniciando...", "orange")
-            self.main_window.principal_panel.start_server_with_config(capture_console=True)
+            self.main_window.principal_panel.start_server_with_config()
         else:
             # Fallback al método antiguo si no hay panel principal
             self.update_server_status("Iniciando...", "orange")
-            self.server_manager.start_server(self.add_status_message, self.selected_server, self.selected_map, capture_console=True)
+            self.server_manager.start_server(self.add_status_message, self.selected_server, self.selected_map)
     
     def stop_server(self):
         """Detiene el servidor"""
@@ -725,10 +725,10 @@ class ServerPanel:
             self.main_window.principal_panel.selected_map = self.selected_map
             
             # Reiniciar servidor con configuración del panel principal
-            self.main_window.principal_panel.restart_server_with_config(capture_console=True)
+            self.main_window.principal_panel.restart_server_with_config()
         else:
             # Fallback al método antiguo si no hay panel principal
-            self.server_manager.restart_server(self.add_status_message, self.selected_server, self.selected_map, capture_console=True)
+            self.server_manager.restart_server(self.add_status_message, self.selected_server, self.selected_map)
     
     def show_progress(self, message="", progress=0):
         """Muestra la barra de progreso con un mensaje y porcentaje"""

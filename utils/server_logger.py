@@ -22,6 +22,26 @@ class ServerEventLogger:
         # Nombre del archivo con fecha
         today = datetime.now().strftime("%Y-%m-%d")
         log_file = logs_dir / f"server_events_{today}.log"
+        
+        # Configurar logger
+        self.logger = logging.getLogger(f"ServerEvents_{self.server_name}")
+        self.logger.setLevel(logging.INFO)
+        
+        # Remover handlers existentes para evitar duplicados
+        for handler in self.logger.handlers[:]:
+            self.logger.removeHandler(handler)
+        
+        # Handler para archivo
+        file_handler = logging.FileHandler(log_file, encoding='utf-8')
+        file_formatter = logging.Formatter(
+            '%(asctime)s | %(levelname)s | %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        file_handler.setFormatter(file_formatter)
+        self.logger.addHandler(file_handler)
+        
+        # No propagar al logger padre para evitar duplicados
+        self.logger.propagate = False
     
     def _get_safe_logs_dir(self):
         """Obtener directorio seguro para logs de servidor"""
@@ -49,26 +69,6 @@ class ServerEventLogger:
                 sys_temp = Path(tempfile.gettempdir()) / "arkserver_logs"
                 sys_temp.mkdir(parents=True, exist_ok=True)
                 return sys_temp
-        
-        # Configurar logger
-        self.logger = logging.getLogger(f"ServerEvents_{self.server_name}")
-        self.logger.setLevel(logging.INFO)
-        
-        # Remover handlers existentes para evitar duplicados
-        for handler in self.logger.handlers[:]:
-            self.logger.removeHandler(handler)
-        
-        # Handler para archivo
-        file_handler = logging.FileHandler(log_file, encoding='utf-8')
-        file_formatter = logging.Formatter(
-            '%(asctime)s | %(levelname)s | %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-        file_handler.setFormatter(file_formatter)
-        self.logger.addHandler(file_handler)
-        
-        # No propagar al logger padre para evitar duplicados
-        self.logger.propagate = False
     
     def log_server_start(self, server_path, map_name, additional_info=""):
         """Registrar inicio del servidor"""

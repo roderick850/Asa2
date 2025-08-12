@@ -57,7 +57,7 @@ class CustomMessageBox:
             
         self.dialog = ctk.CTkToplevel(self.parent)
         self.dialog.title(self.title)
-        self.dialog.geometry("400x200")
+        self.dialog.geometry("400x250")
         self.dialog.transient(self.parent)
         self.dialog.grab_set()
         _set_dialog_icon(self.dialog)

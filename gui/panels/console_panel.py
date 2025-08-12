@@ -2,6 +2,7 @@ import customtkinter as ctk
 import threading
 import time
 import os
+import psutil
 from datetime import datetime
 
 
@@ -222,13 +223,29 @@ class ConsolePanel:
         self.start_console()
         
         # Auto-iniciar el servidor después de un pequeño retraso
-        # Solo si no hay un servidor ejecutándose ya
-        if not (hasattr(self.server_manager, 'server_process') and 
+        # SOLO si está configurado para auto-inicio Y no hay un servidor ejecutándose ya
+        should_auto_start = False
+        
+        # Verificar configuración de auto-inicio
+        if hasattr(self.main_window, 'app_settings'):
+            # Verificar si se inició con Windows o manualmente
+            if hasattr(self.main_window, 'started_with_windows') and self.main_window.started_with_windows:
+                # Se inició con Windows - usar configuración específica
+                should_auto_start = self.main_window.app_settings.get_setting("auto_start_server_with_windows")
+            else:
+                # Se inició manualmente - usar configuración normal
+                should_auto_start = self.main_window.app_settings.get_setting("auto_start_server")
+        
+        if should_auto_start and not (hasattr(self.server_manager, 'server_process') and 
                 self.server_manager.server_process and 
                 self.server_manager.server_process.poll() is None):
             self.parent.after(2000, self.auto_start_server)
+            self.add_console_message("🚀 Auto-inicio del servidor configurado, iniciando en 2 segundos...")
         else:
-            self.add_console_message("✅ Servidor ya está ejecutándose, monitoreando...")
+            if should_auto_start:
+                self.add_console_message("✅ Servidor ya está ejecutándose, monitoreando...")
+            else:
+                self.add_console_message("⏸️ Auto-inicio del servidor desactivado por configuración")
             # Verificar si ya está activo
             if hasattr(self.main_window, 'update_server_status'):
                 self.main_window.update_server_status("Verificando...")
@@ -236,6 +253,10 @@ class ConsolePanel:
     def auto_start_server(self):
         """Iniciar el servidor automáticamente"""
         self.add_console_message("🔄 Iniciando servidor automáticamente...")
+        
+        # Log adicional para diagnóstico
+        if hasattr(self.main_window, 'logger'):
+            self.main_window.logger.info("🚀 ConsolePanel: Auto-inicio del servidor iniciado")
         
         # Notificar al MainWindow que el servidor está iniciando
         if hasattr(self.main_window, 'update_server_status'):
@@ -250,16 +271,14 @@ class ConsolePanel:
                     callback=self.on_server_status_change,
                     server_name=self.main_window.selected_server,
                     map_name=self.main_window.selected_map,
-                    custom_args=server_args,
-                    capture_console=True
+                    custom_args=server_args
                 )
             else:
                 # Fallback si no hay panel principal
                 self.server_manager.start_server_with_args(
                     callback=self.on_server_status_change,
                     server_name="Prueba",
-                    map_name="The Center",
-                    capture_console=True
+                    map_name="The Center"
                 )
             
             self.add_console_message("✅ Servidor iniciado automáticamente en modo de captura de consola")
@@ -282,38 +301,65 @@ class ConsolePanel:
         self.console_running = True
         self.status_label.configure(text="Estado: Activada", text_color="green")
         
-        # Verificar si el servidor está ejecutándose
-        if (hasattr(self.server_manager, 'server_process') and 
-            self.server_manager.server_process and 
-            self.server_manager.server_process.poll() is None):
+        # Verificar si el servidor está ejecutándose (usando detección mejorada)
+        server_running = self._is_server_running_comprehensive()
+        if server_running:
             
             # El servidor ya está ejecutándose, verificar si está en modo de captura
             self.add_console_message("✅ Servidor ya ejecutándose, verificando modo de captura...")
             
-            # Solo reiniciar si no está en modo de captura
-            if not hasattr(self.server_manager.server_process, 'stdout') or not self.server_manager.server_process.stdout:
-                self.add_console_message("🔄 Servidor no está en modo de captura, reiniciando...")
+            # Solo reiniciar si no está en modo de captura Y si el auto-inicio está habilitado
+            if not self._is_server_in_capture_mode():
+                # VERIFICAR CONFIGURACIÓN DE AUTO-INICIO ANTES DE REINICIAR
+                should_auto_start = False
+                if hasattr(self.main_window, 'app_settings'):
+                    if hasattr(self.main_window, 'started_with_windows') and self.main_window.started_with_windows:
+                        should_auto_start = self.main_window.app_settings.get_setting("auto_start_server_with_windows")
+                    else:
+                        should_auto_start = self.main_window.app_settings.get_setting("auto_start_server")
+                
+                # En lugar de reiniciar, intentar reconectar al proceso existente
+                self.add_console_message("🔄 Servidor detectado pero no en modo de captura, intentando reconectar...")
                 try:
-                    # Detener el servidor actual
-                    self.server_manager.stop_server()
-                    time.sleep(2)
-                    
-                    # Reiniciar en modo de captura
-                    self._start_server_in_capture_mode()
-                    self.add_console_message("✅ Servidor reiniciado en modo de captura de consola")
+                    # Intentar reconectar al proceso existente sin reiniciarlo
+                    if self._try_reconnect_to_existing_server():
+                        self.add_console_message("✅ Reconectado al servidor existente para monitoreo")
+                    else:
+                        # Solo si falla la reconexión Y auto-inicio está habilitado, reiniciar
+                        if should_auto_start:
+                            self.add_console_message("⚠️ No se pudo reconectar, reiniciando servidor...")
+                            # Detener el servidor actual
+                            self.server_manager.stop_server()
+                            time.sleep(2)
+                            
+                            # Reiniciar en modo de captura
+                            self._start_server_in_capture_mode()
+                            self.add_console_message("✅ Servidor reiniciado en modo de captura de consola")
+                        else:
+                            self.add_console_message("⏸️ No se pudo reconectar y auto-inicio desactivado - monitoreo limitado")
                 except Exception as e:
-                    self.add_console_message(f"❌ Error reiniciando servidor: {e}")
-                    self.logger.error(f"Error reiniciando servidor para captura: {e}")
+                    self.add_console_message(f"❌ Error en reconexión: {e}")
             else:
                 self.add_console_message("✅ Servidor ya está en modo de captura de consola")
         else:
-            # El servidor no está ejecutándose, iniciarlo en modo de captura
-            try:
-                self._start_server_in_capture_mode()
-                self.add_console_message("🚀 Servidor iniciado en modo de captura de consola")
-            except Exception as e:
-                self.add_console_message(f"❌ Error iniciando servidor: {e}")
-                self.logger.error(f"Error iniciando servidor: {e}")
+            # El servidor no está ejecutándose - verificar si debe iniciarse
+            should_auto_start = False
+            if hasattr(self.main_window, 'app_settings'):
+                if hasattr(self.main_window, 'started_with_windows') and self.main_window.started_with_windows:
+                    should_auto_start = self.main_window.app_settings.get_setting("auto_start_server_with_windows")
+                else:
+                    should_auto_start = self.main_window.app_settings.get_setting("auto_start_server")
+            
+            if should_auto_start:
+                self.add_console_message("🚀 No hay servidor ejecutándose, iniciando servidor en modo de captura...")
+                try:
+                    self._start_server_in_capture_mode()
+                    self.add_console_message("🚀 Servidor iniciado en modo de captura de consola")
+                except Exception as e:
+                    self.add_console_message(f"❌ Error iniciando servidor: {e}")
+                    self.logger.error(f"Error iniciando servidor: {e}")
+            else:
+                self.add_console_message("⏸️ No hay servidor ejecutándose y auto-inicio desactivado - monitoreo en espera")
         
         # Iniciar el thread de monitoreo
         self.console_thread = threading.Thread(target=self.console_monitor, daemon=True)
@@ -337,8 +383,7 @@ class ConsolePanel:
                 callback=self.on_server_status_change,
                 server_name=self.main_window.selected_server,
                 map_name=self.main_window.selected_map,
-                custom_args=server_args,
-                capture_console=True
+                custom_args=server_args
             )
         else:
             # Fallback si no hay panel principal
@@ -346,8 +391,7 @@ class ConsolePanel:
                 callback=self.on_server_status_change,
                 server_name="Prueba",
                 map_name="The Center",
-                custom_args=[],
-                capture_console=True
+                custom_args=[]
             )
         
         self.add_console_message("🟢 Consola activada - Capturando salida del servidor...")
@@ -466,6 +510,83 @@ class ConsolePanel:
                         # El proceso terminó
                         exit_code = self.server_manager.server_process.poll()
                         self.add_console_message(f"🔴 Proceso del servidor terminado (código: {exit_code})")
+                        break
+                elif hasattr(self.server_manager, 'server_pid') and self.server_manager.server_pid:
+                    # Servidor reconectado - verificar si sigue ejecutándose por PID
+                    if psutil.pid_exists(self.server_manager.server_pid):
+                        # Intentar leer desde archivo de log (mismo código que arriba)
+                        game_log_path = self._get_latest_game_log()
+                        if game_log_path and os.path.exists(game_log_path):
+                            try:
+                                # Leer el archivo de log del juego en tiempo real
+                                with open(game_log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                    # Usar la misma lógica de lectura que el servidor directo
+                                    if (not hasattr(self, '_last_file_position') or 
+                                        self._last_file_position is None or
+                                        not hasattr(self, '_current_log_file') or
+                                        self._current_log_file != game_log_path or
+                                        not hasattr(self, '_content_loaded') or
+                                        not self._content_loaded):
+                                        
+                                        # Leer todo el contenido existente primero (solo las últimas 50 líneas)
+                                        f.seek(0, 0)
+                                        all_lines = f.readlines()
+                                        if len(all_lines) > 50:
+                                            lines_to_show = all_lines[-50:]
+                                        else:
+                                            lines_to_show = all_lines
+                                        
+                                        for line in lines_to_show:
+                                            line = line.strip()
+                                            if line:
+                                                timestamp = datetime.now().strftime("%H:%M:%S")
+                                                formatted_line = f"[{timestamp}] {line}"
+                                                self.add_console_message(formatted_line)
+                                        
+                                        # Ahora posicionarse al final para futuras lecturas
+                                        f.seek(0, 2)
+                                        self._last_file_position = f.tell()
+                                        self._current_log_file = game_log_path
+                                        self._content_loaded = True
+                                    else:
+                                        # Ir a la posición donde nos quedamos
+                                        f.seek(self._last_file_position)
+                                    
+                                    # Leer nuevas líneas
+                                    lines_read = 0
+                                    while True:
+                                        line = f.readline()
+                                        if line:
+                                            consecutive_empty_reads = 0
+                                            lines_read += 1
+                                            
+                                            line = line.strip()
+                                            if line:
+                                                timestamp = datetime.now().strftime("%H:%M:%S")
+                                                formatted_line = f"[{timestamp}] {line}"
+                                                self.add_console_message(formatted_line)
+                                                
+                                                if "Server has completed startup and is now advertising for join" in line:
+                                                    self._notify_server_active()
+                                        
+                                        current_position = f.tell()
+                                        if current_position > self._last_file_position:
+                                            self._last_file_position = current_position
+                                        
+                                        if lines_read >= 10 or not line:
+                                            break
+                                    
+                                    consecutive_empty_reads = 0
+                            except Exception as e:
+                                self.logger.error(f"Error leyendo archivo de log (servidor reconectado): {e}")
+                                time.sleep(0.5)
+                        else:
+                            time.sleep(1.0)
+                    else:
+                        # El proceso reconectado terminó
+                        self.add_console_message(f"🔴 Proceso del servidor reconectado terminado (PID: {self.server_manager.server_pid})")
+                        self.server_manager.server_pid = None
+                        self.server_manager.server_running = False
                         break
                 else:
                     # No hay proceso del servidor
@@ -757,3 +878,119 @@ class ConsolePanel:
                             self.console_visibility_var.set(is_visible)
         except Exception as e:
             self.logger.debug(f"Error al actualizar switch de visibilidad: {e}")
+    
+    def _is_server_running_comprehensive(self):
+        """Verificación comprehensiva si el servidor está ejecutándose"""
+        try:
+            # Método 1: Verificar proceso guardado
+            if (hasattr(self.server_manager, 'server_process') and 
+                self.server_manager.server_process and 
+                self.server_manager.server_process.poll() is None):
+                self.add_console_message("🔍 Servidor detectado por referencia de proceso guardada")
+                return True
+                
+            # Método 2: Verificar PID guardado
+            if (hasattr(self.server_manager, 'server_pid') and 
+                self.server_manager.server_pid and 
+                psutil.pid_exists(self.server_manager.server_pid)):
+                self.add_console_message("🔍 Servidor detectado por PID guardado")
+                return True
+                
+            # Método 3: Buscar procesos por nombre (como hace server_manager.get_server_status)
+            for proc in psutil.process_iter(['pid', 'name']):
+                try:
+                    if proc.info['name'] and 'ArkAscendedServer.exe' in proc.info['name']:
+                        # Encontrado proceso ARK, actualizar PID en server_manager
+                        self.server_manager.server_pid = proc.info['pid']
+                        self.server_manager.server_running = True
+                        self.add_console_message(f"🔍 Servidor detectado por búsqueda de nombre - PID: {proc.info['pid']}")
+                        return True
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+                    
+            # No se encontró servidor ejecutándose
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"Error en detección comprehensiva del servidor: {e}")
+            return False
+    
+    def _is_server_in_capture_mode(self):
+        """Verificar si el servidor está en modo de captura de consola"""
+        try:
+            if (hasattr(self.server_manager, 'server_process') and 
+                self.server_manager.server_process and 
+                self.server_manager.server_process.poll() is None):
+                # Verificar si tiene stdout disponible
+                if hasattr(self.server_manager.server_process, 'stdout') and self.server_manager.server_process.stdout:
+                    self.add_console_message("🔍 Servidor detectado en modo de captura")
+                    return True
+                else:
+                    self.add_console_message("🔍 Servidor detectado pero NO en modo de captura")
+                    return False
+            else:
+                # Si no hay referencia de proceso, asumir que NO está en modo de captura
+                self.add_console_message("🔍 No hay referencia de proceso - servidor NO en modo de captura")
+                return False
+        except Exception as e:
+            self.logger.error(f"Error verificando modo de captura: {e}")
+            return False
+    
+    def _try_reconnect_to_existing_server(self):
+        """Intentar reconectar al servidor existente sin reiniciarlo"""
+        try:
+            # Buscar proceso del servidor por nombre
+            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                try:
+                    if proc.info['name'] and 'ArkAscendedServer.exe' in proc.info['name']:
+                        # Encontrado proceso del servidor
+                        self.add_console_message(f"🔍 Encontrado proceso del servidor - PID: {proc.info['pid']}")
+                        
+                        # Actualizar referencia en server_manager
+                        self.server_manager.server_pid = proc.info['pid']
+                        self.server_manager.server_running = True
+                        
+                        # Intentar obtener el objeto proceso
+                        try:
+                            server_process = psutil.Process(proc.info['pid'])
+                            
+                            # NO podemos conectarnos directamente al stdout de un proceso existente
+                            # Pero podemos monitorearlo de otras formas
+                            self.add_console_message("📡 Configurando monitoreo del servidor existente...")
+                            
+                            # Limpiar referencias previas para permitir monitoreo basado en archivos
+                            self.server_manager.server_process = None  # No tenemos acceso directo al proceso
+                            
+                            # Limpiar estado de archivos para forzar nueva lectura
+                            if hasattr(self, '_last_file_position'):
+                                self._last_file_position = None
+                            if hasattr(self, '_current_log_file'):
+                                self._current_log_file = None
+                            if hasattr(self, '_content_loaded'):
+                                self._content_loaded = False
+                            
+                            # Actualizar estado en MainWindow
+                            if hasattr(self.main_window, 'update_server_status'):
+                                self.main_window.update_server_status("Activo (Monitoreando)")
+                            
+                            self.add_console_message("📋 Monitoreo configurado para leer logs del servidor existente")
+                            return True
+                            
+                        except psutil.NoSuchProcess:
+                            self.add_console_message("⚠️ El proceso desapareció durante la reconexión")
+                            continue
+                        except psutil.AccessDenied:
+                            self.add_console_message("⚠️ Sin permisos para acceder al proceso")
+                            continue
+                            
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+                    
+            # No se encontró servidor
+            self.add_console_message("❌ No se encontró proceso del servidor para reconectar")
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"Error en reconexión al servidor: {e}")
+            self.add_console_message(f"❌ Error en reconexión: {e}")
+            return False

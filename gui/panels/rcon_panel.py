@@ -553,7 +553,7 @@ class RconPanel(ctk.CTkFrame):
         # Crear ventana de confirmación personalizada
         dialog = ctk.CTkToplevel(self)
         dialog.title("Confirmar Reinicio")
-        dialog.geometry("350x200")
+        dialog.geometry("350x240")
         dialog.transient(self)
         dialog.grab_set()
         
