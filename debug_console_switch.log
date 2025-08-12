@@ -1,0 +1,233 @@
+2025-08-12 16:03:49,904 - INFO - 🔍 INICIANDO DEPURACIÓN DEL SWITCH DE CONSOLA
+2025-08-12 16:03:49,904 - INFO - ============================================================
+2025-08-12 16:03:49,904 - INFO - === ANÁLISIS DE CONFIGURACIÓN ===
+2025-08-12 16:03:49,905 - INFO - Archivo de configuración: C:\Users\roder\OneDrive\Desktop\Nuevacarpeta\Asa2\config.ini
+2025-08-12 16:03:49,905 - INFO - Archivo existe: True
+2025-08-12 16:03:49,905 - INFO - Tamaño del archivo: 1321 bytes
+2025-08-12 16:03:49,906 - INFO - Contenido del archivo:
+[server]
+path=
+port=7777
+max_players=20
+name=Mi Servidor Ark
+root_path=D:/ASA
+install_path=C:/Users/roder/OneDrive/Desktop/Nuevacarpeta\servers
+steamcmd_path=D:/ASA\SteamCMD\steamcmd.exe
+executable_path_prueba=D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+session_name=Jugando Ando
+server_password=4r3p3r4
+admin_password=c4rd4n4l
+message=¡Bienvenido al servidor!
+duration=10
+pve_mode=True
+query_port=27015
+custom_args=
+executable_path_ark_server=C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/ARK_Server\ARK_Server\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+executable_path_prueba2=D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+multihome=roderick850.tplinkdns.com
+mod_ids=940975,928793,929420
+mod_ids_prueba_the center=940975,928793,929420
+
+[game]
+xp_multiplier=1.0
+harvest_multiplier=1.0
+taming_multiplier=1.0
+day_night_speed=1.0
+
+[advanced]
+data_path=
+logs_path=
+additional_params=
+
+[backup]
+source_path=
+destination_path=
+frequency_hours=24
+retain_backups=7
+
+[logs]
+logs_path=
+max_log_size_mb=100
+retain_logs_days=30
+
+[app]
+theme=dark
+language=es
+auto_start_monitoring=false
+auto_start_backup=false
+last_server=Prueba
+last_map=The Center
+show_server_console=1
+
+[rcon]
+ip=127.0.0.12
+port=27030
+enable_startup_args=True
+
+
+2025-08-12 16:03:49,906 - INFO - show_server_console: 1 (tipo: <class 'str'>)
+2025-08-12 16:03:49,906 - INFO - Secciones disponibles: ['server', 'game', 'advanced', 'backup', 'logs', 'app', 'rcon']
+2025-08-12 16:03:49,907 - INFO - Sección [server]: {'path': '', 'port': '7777', 'max_players': '20', 'name': 'Mi Servidor Ark', 'root_path': 'D:/ASA', 'install_path': 'C:/Users/roder/OneDrive/Desktop/Nuevacarpeta\\servers', 'steamcmd_path': 'D:/ASA\\SteamCMD\\steamcmd.exe', 'executable_path_prueba': 'D:/ASA\\Prueba\\ShooterGame\\Binaries\\Win64\\ArkAscendedServer.exe', 'session_name': 'Jugando Ando', 'server_password': '4r3p3r4', 'admin_password': 'c4rd4n4l', 'message': '¡Bienvenido al servidor!', 'duration': '10', 'pve_mode': 'True', 'query_port': '27015', 'custom_args': '', 'executable_path_ark_server': 'C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/ARK_Server\\ARK_Server\\ShooterGame\\Binaries\\Win64\\ArkAscendedServer.exe', 'executable_path_prueba2': 'D:/ASA\\Prueba2\\ShooterGame\\Binaries\\Win64\\ArkAscendedServer.exe', 'multihome': 'roderick850.tplinkdns.com', 'mod_ids': '940975,928793,929420', 'mod_ids_prueba_the center': '940975,928793,929420'}
+2025-08-12 16:03:49,907 - INFO - Sección [game]: {'xp_multiplier': '1.0', 'harvest_multiplier': '1.0', 'taming_multiplier': '1.0', 'day_night_speed': '1.0'}
+2025-08-12 16:03:49,907 - INFO - Sección [advanced]: {'data_path': '', 'logs_path': '', 'additional_params': ''}
+2025-08-12 16:03:49,907 - INFO - Sección [backup]: {'source_path': '', 'destination_path': '', 'frequency_hours': '24', 'retain_backups': '7'}
+2025-08-12 16:03:49,907 - INFO - Sección [logs]: {'logs_path': '', 'max_log_size_mb': '100', 'retain_logs_days': '30'}
+2025-08-12 16:03:49,907 - INFO - Sección [app]: {'theme': 'dark', 'language': 'es', 'auto_start_monitoring': 'false', 'auto_start_backup': 'false', 'last_server': 'Prueba', 'last_map': 'The Center', 'show_server_console': '1'}
+2025-08-12 16:03:49,907 - INFO - Sección [rcon]: {'ip': '127.0.0.12', 'port': '27030', 'enable_startup_args': 'True'}
+2025-08-12 16:03:49,907 - INFO - === BÚSQUEDA DE PROCESOS ARK ===
+2025-08-12 16:03:52,024 - INFO - Proceso ARK encontrado: PID=39036, Nombre=ArkServerManager.exe
+2025-08-12 16:03:52,042 - INFO - Proceso ARK encontrado: PID=47024, Nombre=ArkServerManager.exe
+2025-08-12 16:03:52,042 - INFO - Total procesos ARK encontrados: 2
+2025-08-12 16:03:52,042 - INFO - === ANÁLISIS DE VENTANAS ===
+2025-08-12 16:03:52,043 - INFO - Posible consola: HWND=2587064, Título='main.spec - Asa2 - Trae', Clase='Chrome_WidgetWin_1', PID=27568, Visible=1
+2025-08-12 16:03:52,043 - INFO - Ventana ARK: HWND=1198538, Título='EmbeddedMenuWindow', Clase='EmbeddedMenuWindowClass', Visible=0
+2025-08-12 16:03:52,043 - INFO - Ventana ARK: HWND=2501190, Título='MenuWindow', Clase='MenuWindowClass', Visible=0
+2025-08-12 16:03:52,044 - INFO - Ventana ARK: HWND=2061360, Título='', Clase='ArkServerManager2603135693696SystemTrayIcon', Visible=0
+2025-08-12 16:03:52,044 - INFO - Ventana ARK: HWND=1990542, Título='', Clase='ArkServerManager2603135693696SystemTrayIcon', Visible=0
+2025-08-12 16:03:52,044 - INFO - Ventana ARK: HWND=2382124, Título='ARK Server Manager', Clase='TkTopLevel', Visible=0
+2025-08-12 16:03:52,044 - INFO - Posible consola: HWND=2382124, Título='ARK Server Manager', Clase='TkTopLevel', PID=47024, Visible=0
+2025-08-12 16:03:52,044 - INFO - Ventana ARK: HWND=4403826, Título='TtkMonitorWindow', Clase='TtkMonitorClass', Visible=0
+2025-08-12 16:03:52,044 - INFO - Ventana ARK: HWND=2386670, Título='PyInstaller Onefile Hidden Window', Clase='PyInstallerOnefileHiddenWindow', Visible=0
+2025-08-12 16:03:52,044 - INFO - Posible consola: HWND=68228, Título='Server configuration - ARK Official Community Wiki y 5 páginas más - Personal: Microsoft​ Edge', Clase='Chrome_WidgetWin_1', PID=28268, Visible=1
+2025-08-12 16:03:52,044 - INFO - Posible consola: HWND=280010, Título='WindowsServer - Explorador de archivos', Clase='CabinetWClass', PID=6652, Visible=1
+2025-08-12 16:03:52,045 - INFO - Posible consola: HWND=2439366, Título='GameUserSettings.ini - Asa2 - Python - Visual Studio Code', Clase='Chrome_WidgetWin_1', PID=31116, Visible=1
+2025-08-12 16:03:52,045 - INFO - Posible consola: HWND=2165240, Título='ini_config_panel.py - Asa2 - Cursor', Clase='Chrome_WidgetWin_1', PID=33100, Visible=1
+2025-08-12 16:03:52,045 - INFO - Posible consola: HWND=396180, Título='DDE Server Window', Clase='OleDdeWndClass', PID=32276, Visible=0
+2025-08-12 16:03:52,046 - INFO - Posible consola: HWND=67004, Título='DDE Server Window', Clase='OleDdeWndClass', PID=19084, Visible=0
+2025-08-12 16:03:52,047 - INFO - Posible consola: HWND=66286, Título='DDE Server Window', Clase='OleDdeWndClass', PID=6652, Visible=0
+2025-08-12 16:03:52,047 - INFO - Ventana ARK: HWND=2568480, Título='MSCTFIME UI', Clase='MSCTFIME UI', Visible=0
+2025-08-12 16:03:52,047 - INFO - Ventana ARK: HWND=3150570, Título='Default IME', Clase='IME', Visible=0
+2025-08-12 16:03:52,047 - INFO - Ventana ARK: HWND=1987410, Título='Default IME', Clase='IME', Visible=0
+2025-08-12 16:03:52,048 - INFO - Ventana ARK: HWND=3685558, Título='Default IME', Clase='IME', Visible=0
+2025-08-12 16:03:52,049 - INFO - Total ventanas encontradas: 539
+2025-08-12 16:03:52,049 - INFO - Ventanas ARK encontradas: 11
+2025-08-12 16:03:52,050 - INFO - Ventanas relevantes visibles: 4
+2025-08-12 16:03:52,050 - INFO -   - HWND=2587064, Título='main.spec - Asa2 - Trae', PID=27568
+2025-08-12 16:03:52,050 - INFO -   - HWND=68228, Título='Server configuration - ARK Official Community Wiki y 5 páginas más - Personal: Microsoft​ Edge', PID=28268
+2025-08-12 16:03:52,050 - INFO -   - HWND=2439366, Título='GameUserSettings.ini - Asa2 - Python - Visual Studio Code', PID=31116
+2025-08-12 16:03:52,050 - INFO -   - HWND=2165240, Título='ini_config_panel.py - Asa2 - Cursor', PID=33100
+2025-08-12 16:03:52,050 - INFO - === PRUEBA DE SERVER MANAGER ===
+2025-08-12 16:03:52,051 - ERROR - Error probando ServerManager: 'ServerManager' object has no attribute 'is_server_active'
+2025-08-12 16:03:52,055 - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\Users\roder\OneDrive\Desktop\Nuevacarpeta\Asa2\debug_console_switch.py", line 187, in test_server_manager
+    is_active = server_manager.is_server_active()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ServerManager' object has no attribute 'is_server_active'. Did you mean: 'is_server_running'?
+
+2025-08-12 16:03:52,055 - INFO - ============================================================
+2025-08-12 16:03:52,055 - INFO - ✅ DEPURACIÓN COMPLETADA
+2025-08-12 16:03:52,055 - INFO - 📋 Log guardado en: debug_console_switch.log
+2025-08-12 16:04:17,483 - INFO - 🔍 INICIANDO DEPURACIÓN DEL SWITCH DE CONSOLA
+2025-08-12 16:04:17,483 - INFO - ============================================================
+2025-08-12 16:04:17,483 - INFO - === ANÁLISIS DE CONFIGURACIÓN ===
+2025-08-12 16:04:17,484 - INFO - Archivo de configuración: C:\Users\roder\OneDrive\Desktop\Nuevacarpeta\Asa2\config.ini
+2025-08-12 16:04:17,484 - INFO - Archivo existe: True
+2025-08-12 16:04:17,485 - INFO - Tamaño del archivo: 1321 bytes
+2025-08-12 16:04:17,485 - INFO - Contenido del archivo:
+[server]
+path=
+port=7777
+max_players=20
+name=Mi Servidor Ark
+root_path=D:/ASA
+install_path=C:/Users/roder/OneDrive/Desktop/Nuevacarpeta\servers
+steamcmd_path=D:/ASA\SteamCMD\steamcmd.exe
+executable_path_prueba=D:/ASA\Prueba\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+session_name=Jugando Ando
+server_password=4r3p3r4
+admin_password=c4rd4n4l
+message=¡Bienvenido al servidor!
+duration=10
+pve_mode=True
+query_port=27015
+custom_args=
+executable_path_ark_server=C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/ARK_Server\ARK_Server\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+executable_path_prueba2=D:/ASA\Prueba2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe
+multihome=roderick850.tplinkdns.com
+mod_ids=940975,928793,929420
+mod_ids_prueba_the center=940975,928793,929420
+
+[game]
+xp_multiplier=1.0
+harvest_multiplier=1.0
+taming_multiplier=1.0
+day_night_speed=1.0
+
+[advanced]
+data_path=
+logs_path=
+additional_params=
+
+[backup]
+source_path=
+destination_path=
+frequency_hours=24
+retain_backups=7
+
+[logs]
+logs_path=
+max_log_size_mb=100
+retain_logs_days=30
+
+[app]
+theme=dark
+language=es
+auto_start_monitoring=false
+auto_start_backup=false
+last_server=Prueba
+last_map=The Center
+show_server_console=1
+
+[rcon]
+ip=127.0.0.12
+port=27030
+enable_startup_args=True
+
+
+2025-08-12 16:04:17,485 - INFO - show_server_console: 1 (tipo: <class 'str'>)
+2025-08-12 16:04:17,485 - INFO - Secciones disponibles: ['server', 'game', 'advanced', 'backup', 'logs', 'app', 'rcon']
+2025-08-12 16:04:17,485 - INFO - Sección [server]: {'path': '', 'port': '7777', 'max_players': '20', 'name': 'Mi Servidor Ark', 'root_path': 'D:/ASA', 'install_path': 'C:/Users/roder/OneDrive/Desktop/Nuevacarpeta\\servers', 'steamcmd_path': 'D:/ASA\\SteamCMD\\steamcmd.exe', 'executable_path_prueba': 'D:/ASA\\Prueba\\ShooterGame\\Binaries\\Win64\\ArkAscendedServer.exe', 'session_name': 'Jugando Ando', 'server_password': '4r3p3r4', 'admin_password': 'c4rd4n4l', 'message': '¡Bienvenido al servidor!', 'duration': '10', 'pve_mode': 'True', 'query_port': '27015', 'custom_args': '', 'executable_path_ark_server': 'C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/ARK_Server\\ARK_Server\\ShooterGame\\Binaries\\Win64\\ArkAscendedServer.exe', 'executable_path_prueba2': 'D:/ASA\\Prueba2\\ShooterGame\\Binaries\\Win64\\ArkAscendedServer.exe', 'multihome': 'roderick850.tplinkdns.com', 'mod_ids': '940975,928793,929420', 'mod_ids_prueba_the center': '940975,928793,929420'}
+2025-08-12 16:04:17,486 - INFO - Sección [game]: {'xp_multiplier': '1.0', 'harvest_multiplier': '1.0', 'taming_multiplier': '1.0', 'day_night_speed': '1.0'}
+2025-08-12 16:04:17,486 - INFO - Sección [advanced]: {'data_path': '', 'logs_path': '', 'additional_params': ''}
+2025-08-12 16:04:17,486 - INFO - Sección [backup]: {'source_path': '', 'destination_path': '', 'frequency_hours': '24', 'retain_backups': '7'}
+2025-08-12 16:04:17,486 - INFO - Sección [logs]: {'logs_path': '', 'max_log_size_mb': '100', 'retain_logs_days': '30'}
+2025-08-12 16:04:17,486 - INFO - Sección [app]: {'theme': 'dark', 'language': 'es', 'auto_start_monitoring': 'false', 'auto_start_backup': 'false', 'last_server': 'Prueba', 'last_map': 'The Center', 'show_server_console': '1'}
+2025-08-12 16:04:17,486 - INFO - Sección [rcon]: {'ip': '127.0.0.12', 'port': '27030', 'enable_startup_args': 'True'}
+2025-08-12 16:04:17,486 - INFO - === BÚSQUEDA DE PROCESOS ARK ===
+2025-08-12 16:04:19,383 - INFO - Total procesos ARK encontrados: 0
+2025-08-12 16:04:19,383 - INFO - === ANÁLISIS DE VENTANAS ===
+2025-08-12 16:04:19,384 - INFO - Posible consola: HWND=2587064, Título='main.spec - Asa2 - Trae', Clase='Chrome_WidgetWin_1', PID=27568, Visible=1
+2025-08-12 16:04:19,384 - INFO - Posible consola: HWND=68228, Título='Server configuration - ARK Official Community Wiki y 5 páginas más - Personal: Microsoft​ Edge', Clase='Chrome_WidgetWin_1', PID=28268, Visible=1
+2025-08-12 16:04:19,385 - INFO - Posible consola: HWND=280010, Título='WindowsServer - Explorador de archivos', Clase='CabinetWClass', PID=6652, Visible=1
+2025-08-12 16:04:19,385 - INFO - Posible consola: HWND=2439366, Título='GameUserSettings.ini - Asa2 - Python - Visual Studio Code', Clase='Chrome_WidgetWin_1', PID=31116, Visible=1
+2025-08-12 16:04:19,385 - INFO - Posible consola: HWND=2165240, Título='ini_config_panel.py - Asa2 - Cursor', Clase='Chrome_WidgetWin_1', PID=33100, Visible=1
+2025-08-12 16:04:19,385 - INFO - Posible consola: HWND=396180, Título='DDE Server Window', Clase='OleDdeWndClass', PID=32276, Visible=0
+2025-08-12 16:04:19,386 - INFO - Posible consola: HWND=67004, Título='DDE Server Window', Clase='OleDdeWndClass', PID=19084, Visible=0
+2025-08-12 16:04:19,386 - INFO - Posible consola: HWND=66286, Título='DDE Server Window', Clase='OleDdeWndClass', PID=6652, Visible=0
+2025-08-12 16:04:19,388 - INFO - Total ventanas encontradas: 529
+2025-08-12 16:04:19,388 - INFO - Ventanas ARK encontradas: 0
+2025-08-12 16:04:19,388 - INFO - Ventanas relevantes visibles: 4
+2025-08-12 16:04:19,388 - INFO -   - HWND=2587064, Título='main.spec - Asa2 - Trae', PID=27568
+2025-08-12 16:04:19,388 - INFO -   - HWND=68228, Título='Server configuration - ARK Official Community Wiki y 5 páginas más - Personal: Microsoft​ Edge', PID=28268
+2025-08-12 16:04:19,388 - INFO -   - HWND=2439366, Título='GameUserSettings.ini - Asa2 - Python - Visual Studio Code', PID=31116
+2025-08-12 16:04:19,388 - INFO -   - HWND=2165240, Título='ini_config_panel.py - Asa2 - Cursor', PID=33100
+2025-08-12 16:04:19,389 - INFO - === PRUEBA DE SERVER MANAGER ===
+2025-08-12 16:04:19,389 - INFO - Servidor ejecutándose: False
+2025-08-12 16:04:19,390 - INFO - Probando _find_server_console_window...
+2025-08-12 16:04:19,390 - DEBUG - No hay proceso del servidor activo
+2025-08-12 16:04:19,390 - INFO - HWND de consola encontrado: None
+2025-08-12 16:04:19,390 - INFO - Probando show_server_console...
+2025-08-12 16:04:19,390 - DEBUG - Intentando mostrar consola del servidor
+2025-08-12 16:04:19,390 - DEBUG - No hay handle de ventana, buscando...
+2025-08-12 16:04:19,390 - DEBUG - No hay proceso del servidor activo
+2025-08-12 16:04:19,390 - WARNING - No se pudo encontrar la ventana de consola del servidor
+2025-08-12 16:04:19,390 - INFO - Resultado show_server_console: False
+2025-08-12 16:04:19,390 - INFO - Probando hide_server_console...
+2025-08-12 16:04:19,390 - DEBUG - Intentando ocultar consola del servidor
+2025-08-12 16:04:19,391 - DEBUG - No hay handle de ventana, buscando...
+2025-08-12 16:04:19,391 - DEBUG - No hay proceso del servidor activo
+2025-08-12 16:04:19,391 - WARNING - No se pudo encontrar la ventana de consola del servidor
+2025-08-12 16:04:19,391 - INFO - Resultado hide_server_console: False
+2025-08-12 16:04:19,391 - INFO - ============================================================
+2025-08-12 16:04:19,391 - INFO - ✅ DEPURACIÓN COMPLETADA
+2025-08-12 16:04:19,391 - INFO - 📋 Log guardado en: debug_console_switch.log

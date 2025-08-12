@@ -236,9 +236,7 @@ class ConsolePanel:
                 # Se inició manualmente - usar configuración normal
                 should_auto_start = self.main_window.app_settings.get_setting("auto_start_server")
         
-        if should_auto_start and not (hasattr(self.server_manager, 'server_process') and 
-                self.server_manager.server_process and 
-                self.server_manager.server_process.poll() is None):
+        if should_auto_start and not self.server_manager.is_server_running():
             self.parent.after(2000, self.auto_start_server)
             self.add_console_message("🚀 Auto-inicio del servidor configurado, iniciando en 2 segundos...")
         else:
@@ -416,48 +414,46 @@ class ConsolePanel:
         
         while self.console_active and self.console_running:
             try:
-                # Verificar si el servidor está ejecutándose
-                if hasattr(self.server_manager, 'server_process') and self.server_manager.server_process:
-                    # Verificar si el proceso sigue vivo
-                    if self.server_manager.server_process.poll() is None:
-                        # Intentar leer la salida del proceso desde el archivo de log del juego
-                        game_log_path = self._get_latest_game_log()
-                        if game_log_path and os.path.exists(game_log_path):
-                            try:
-                                # Leer el archivo de log del juego en tiempo real
-                                with open(game_log_path, 'r', encoding='utf-8', errors='ignore') as f:
-                                    # Si es la primera vez que leemos este archivo o si cambió el archivo, leer todo el contenido existente
-                                    # También forzar la lectura si no hemos cargado contenido aún
-                                    if (not hasattr(self, '_last_file_position') or 
-                                        self._last_file_position is None or
-                                        not hasattr(self, '_current_log_file') or
-                                        self._current_log_file != game_log_path or
-                                        not hasattr(self, '_content_loaded') or
-                                        not self._content_loaded):
-                                        
-                                        # Leer todo el contenido existente primero
-                                        f.seek(0, 0)  # Ir al inicio del archivo
-                                        existing_content = f.read()
-                                        if existing_content:
-                                            # Dividir en líneas y agregar cada una
-                                            lines = existing_content.split('\n')
-                                            lines_added = 0
-                                            for line in lines:
-                                                line = line.strip()
-                                                if line:
-                                                    timestamp = datetime.now().strftime("%H:%M:%S")
-                                                    formatted_line = f"[{timestamp}] {line}"
-                                                    self.add_console_message(formatted_line)
-                                                    lines_added += 1
-                                        
-                                        # Ahora posicionarse al final para futuras lecturas
-                                        f.seek(0, 2)
-                                        self._last_file_position = f.tell()
-                                        self._current_log_file = game_log_path
-                                        self._content_loaded = True
-                                    else:
-                                        # Ir a la posición donde nos quedamos
-                                        f.seek(self._last_file_position)
+                # Verificar si el servidor está ejecutándose usando detección mejorada
+                if self.server_manager.is_server_running():
+                    # Intentar leer la salida del proceso desde el archivo de log del juego
+                    game_log_path = self._get_latest_game_log()
+                    if game_log_path and os.path.exists(game_log_path):
+                        try:
+                            # Leer el archivo de log del juego en tiempo real
+                            with open(game_log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                # Si es la primera vez que leemos este archivo o si cambió el archivo, leer todo el contenido existente
+                                # También forzar la lectura si no hemos cargado contenido aún
+                                if (not hasattr(self, '_last_file_position') or 
+                                    self._last_file_position is None or
+                                    not hasattr(self, '_current_log_file') or
+                                    self._current_log_file != game_log_path or
+                                    not hasattr(self, '_content_loaded') or
+                                    not self._content_loaded):
+                                    
+                                    # Leer todo el contenido existente primero
+                                    f.seek(0, 0)  # Ir al inicio del archivo
+                                    existing_content = f.read()
+                                    if existing_content:
+                                        # Dividir en líneas y agregar cada una
+                                        lines = existing_content.split('\n')
+                                        lines_added = 0
+                                        for line in lines:
+                                            line = line.strip()
+                                            if line:
+                                                timestamp = datetime.now().strftime("%H:%M:%S")
+                                                formatted_line = f"[{timestamp}] {line}"
+                                                self.add_console_message(formatted_line)
+                                                lines_added += 1
+                                    
+                                    # Ahora posicionarse al final para futuras lecturas
+                                    f.seek(0, 2)
+                                    self._last_file_position = f.tell()
+                                    self._current_log_file = game_log_path
+                                    self._content_loaded = True
+                                else:
+                                    # Ir a la posición donde nos quedamos
+                                    f.seek(self._last_file_position)
                                     
                                     # Leer nuevas líneas
                                     lines_read = 0
@@ -501,9 +497,9 @@ class ConsolePanel:
                                     else:
                                         consecutive_empty_reads = 0
                                         
-                            except Exception as e:
-                                self.logger.error(f"Error leyendo archivo de log del juego: {e}")
-                                time.sleep(0.5)
+                        except Exception as e:
+                            self.logger.error(f"Error leyendo archivo de log del juego: {e}")
+                            time.sleep(0.5)
                         else:
                             time.sleep(1.0)
                     else:
@@ -697,10 +693,10 @@ class ConsolePanel:
             return
             
         try:
-            # Verificar si el servidor está ejecutándose
-            if (hasattr(self.server_manager, 'server_process') and 
-                self.server_manager.server_process and 
-                self.server_manager.server_process.poll() is None):
+            # Verificar si el servidor está ejecutándose usando detección mejorada
+            if (self.server_manager.is_server_running() and 
+                hasattr(self.server_manager, 'server_process') and 
+                self.server_manager.server_process):
                 
                 # Enviar comando al servidor
                 if self.server_manager.server_process.stdin:
@@ -822,47 +818,90 @@ class ConsolePanel:
         try:
             # Obtener el estado actual del switch
             show_console = self.show_console_switch.get()
+            action = "mostrar" if show_console else "ocultar"
+            
+            self.logger.info(f"Usuario solicitó {action} la consola del servidor")
             
             # Guardar la configuración
             self.config_manager.set("app", "show_server_console", str(show_console).lower())
             self.config_manager.save()
+            self.logger.debug(f"Configuración guardada: show_server_console = {show_console}")
             
-            # Aplicar el cambio en tiempo real si el servidor está corriendo
-            if self.server_manager and self.server_manager.server_process:
-                if self.server_manager.server_process.poll() is None:  # Servidor activo
-                    if show_console:
-                        if self.server_manager.show_server_console():
-                            if self.main_window:
-                                self.main_window.add_log_message("✅ Consola del servidor: VISIBLE")
-                        else:
-                            if self.main_window:
-                                self.main_window.add_log_message("⚠️ No se pudo mostrar la consola del servidor")
-                    else:
-                        if self.server_manager.hide_server_console():
-                            if self.main_window:
-                                self.main_window.add_log_message("✅ Consola del servidor: OCULTA")
-                        else:
-                            if self.main_window:
-                                self.main_window.add_log_message("⚠️ No se pudo ocultar la consola del servidor")
+            # Verificar si hay servidor ejecutándose usando detección mejorada
+            if not self.server_manager:
+                if self.main_window:
+                    self.main_window.add_log_message("⚠️ ServerManager no disponible")
+                self.logger.warning("ServerManager no disponible")
+                return
+            
+            # Usar el método mejorado de detección de servidor
+            server_running = self.server_manager.is_server_running()
+            if not server_running:
+                if self.main_window:
+                    self.main_window.add_log_message("ℹ️ No hay servidor ejecutándose. El cambio se aplicará al iniciar el servidor")
+                self.logger.info("No hay servidor ejecutándose (detección mejorada)")
+                return
+            
+            # El servidor está ejecutándose, aplicar el cambio
+            self.logger.info(f"Aplicando cambio de visibilidad: {action} consola")
+            
+            if show_console:
+                # Mostrar consola
+                if self.main_window:
+                    self.main_window.add_log_message("🔄 Mostrando consola del servidor...")
+                
+                success = self.server_manager.show_server_console()
+                
+                if success:
+                    if self.main_window:
+                        self.main_window.add_log_message("✅ Consola del servidor: VISIBLE")
+                    self.add_console_message("👁️ Consola del servidor mostrada")
                 else:
                     if self.main_window:
-                        self.main_window.add_log_message("ℹ️ El cambio se aplicará cuando se inicie el servidor")
+                        self.main_window.add_log_message("⚠️ No se pudo mostrar la consola del servidor")
+                    self.add_console_message("❌ Error al mostrar la consola del servidor")
+                    # Revertir el switch si falló
+                    self.console_visibility_var.set(False)
             else:
+                # Ocultar consola
                 if self.main_window:
-                    self.main_window.add_log_message("ℹ️ El cambio se aplicará cuando se inicie el servidor")
+                    self.main_window.add_log_message("🔄 Ocultando consola del servidor...")
+                
+                success = self.server_manager.hide_server_console()
+                
+                if success:
+                    if self.main_window:
+                        self.main_window.add_log_message("✅ Consola del servidor: OCULTA")
+                    self.add_console_message("🙈 Consola del servidor ocultada")
+                else:
+                    if self.main_window:
+                        self.main_window.add_log_message("⚠️ No se pudo ocultar la consola del servidor")
+                    self.add_console_message("❌ Error al ocultar la consola del servidor")
+                    # Revertir el switch si falló
+                    self.console_visibility_var.set(True)
             
             self.logger.info(f"Configuración de consola del servidor cambiada a: {'visible' if show_console else 'oculta'}")
             
         except Exception as e:
             self.logger.error(f"Error al cambiar configuración de consola del servidor: {e}")
+            import traceback
+            self.logger.error(f"Traceback completo: {traceback.format_exc()}")
+            
             if self.main_window:
                 self.main_window.add_log_message(f"❌ Error al cambiar configuración: {str(e)}")
+            self.add_console_message(f"❌ Error en switch de consola: {str(e)}")
+            
+            # Revertir el switch en caso de error
+            try:
+                current_config = self.config_manager.get("app", "show_server_console", default="true").lower() == "true"
+                self.console_visibility_var.set(current_config)
+            except:
+                pass
     
     def refresh_console_visibility_switch(self):
         """Actualizar el estado del switch de visibilidad de consola"""
         try:
-            if self.server_manager and self.server_manager.server_process:
-                if self.server_manager.server_process.poll() is None:  # Servidor activo
+            if self.server_manager and self.server_manager.is_server_running():
                     # Verificar si la consola está visible
                     if self.server_manager.server_console_hwnd:
                         # La consola existe, verificar si está visible
@@ -882,19 +921,14 @@ class ConsolePanel:
     def _is_server_running_comprehensive(self):
         """Verificación comprehensiva si el servidor está ejecutándose"""
         try:
-            # Método 1: Verificar proceso guardado
-            if (hasattr(self.server_manager, 'server_process') and 
-                self.server_manager.server_process and 
-                self.server_manager.server_process.poll() is None):
-                self.add_console_message("🔍 Servidor detectado por referencia de proceso guardada")
+            # Usar el método mejorado de detección de servidor
+            server_running = self.server_manager.is_server_running()
+            if server_running:
+                self.add_console_message("🔍 Servidor detectado usando detección mejorada")
                 return True
-                
-            # Método 2: Verificar PID guardado
-            if (hasattr(self.server_manager, 'server_pid') and 
-                self.server_manager.server_pid and 
-                psutil.pid_exists(self.server_manager.server_pid)):
-                self.add_console_message("🔍 Servidor detectado por PID guardado")
-                return True
+            else:
+                 self.add_console_message("❌ No se detectó servidor ejecutándose")
+                 return False
                 
             # Método 3: Buscar procesos por nombre (como hace server_manager.get_server_status)
             for proc in psutil.process_iter(['pid', 'name']):
@@ -918,9 +952,9 @@ class ConsolePanel:
     def _is_server_in_capture_mode(self):
         """Verificar si el servidor está en modo de captura de consola"""
         try:
-            if (hasattr(self.server_manager, 'server_process') and 
-                self.server_manager.server_process and 
-                self.server_manager.server_process.poll() is None):
+            if (self.server_manager.is_server_running() and 
+                hasattr(self.server_manager, 'server_process') and 
+                self.server_manager.server_process):
                 # Verificar si tiene stdout disponible
                 if hasattr(self.server_manager.server_process, 'stdout') and self.server_manager.server_process.stdout:
                     self.add_console_message("🔍 Servidor detectado en modo de captura")

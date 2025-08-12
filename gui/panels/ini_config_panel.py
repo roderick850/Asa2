@@ -297,10 +297,12 @@ class IniConfigPanel(ctk.CTkFrame):
         self.pack(fill="both", expand=True)
         
         self.create_widgets()
+        # Cargar rutas pero NO cargar archivos automáticamente
         self.load_ini_paths()
-        self.load_ini_files()
-        # Poblar los campos después de que se hayan creado todos los widgets
-        self.populate_form_fields()
+        
+        # NO cargar archivos automáticamente - el usuario debe usar el botón "Recargar Archivos"
+        # self.load_ini_files()
+        # self.populate_form_fields()
         
         # Configurar auto-recarga cuando cambie el servidor
         self.setup_auto_reload()

@@ -28,7 +28,7 @@ from .panels.ini_config_panel import IniConfigPanel
 
 class MainWindow:
 
-    APP_VERSION = "1.0"
+    APP_VERSION = "2.1"
     
     def __init__(self, root, config_manager, logger):
         """Inicializar la ventana principal"""
@@ -1247,9 +1247,24 @@ class MainWindow:
             self.logger.error(f"Error al restaurar selección de mapa: {e}")
     
     def start_server(self):
-        """Inicia el servidor"""
+        """Inicia el servidor o abre la consola si ya está activo"""
         if hasattr(self, 'server_panel'):
-            self.server_panel.start_server()
+            # Verificar si el servidor ya está ejecutándose
+            if hasattr(self.server_panel, 'server_manager') and self.server_panel.server_manager.is_server_running():
+                # El servidor ya está activo, mostrar la consola
+                self.add_log_message("ℹ️ El servidor ya está ejecutándose. Abriendo consola...")
+                try:
+                    success = self.server_panel.server_manager.show_server_console()
+                    if success:
+                        self.add_log_message("✅ Consola del servidor abierta")
+                    else:
+                        self.add_log_message("⚠️ No se pudo abrir la consola del servidor")
+                except Exception as e:
+                    self.add_log_message(f"❌ Error al abrir la consola: {e}")
+                    self.logger.error(f"Error al abrir consola del servidor: {e}")
+            else:
+                # El servidor no está activo, iniciarlo normalmente
+                self.server_panel.start_server()
     
     def stop_server(self):
         """Detener servidor con confirmación y saveworld"""

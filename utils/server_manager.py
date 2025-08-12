@@ -37,12 +37,33 @@ class ServerManager:
         
     def _find_server_console_window(self):
         """Encontrar la ventana de la consola del servidor"""
-        if not self.server_process or self.server_process.poll() is not None:
-            return None
-            
         try:
-            # Obtener el PID del proceso del servidor
-            pid = self.server_process.pid
+            # Buscar proceso del servidor por nombre si no tenemos referencia directa
+            server_pid = None
+            
+            if self.server_process and self.server_process.poll() is None:
+                server_pid = self.server_process.pid
+                self.logger.debug(f"Usando PID del proceso guardado: {server_pid}")
+            else:
+                # Buscar proceso por nombre
+                for proc in psutil.process_iter(['pid', 'name']):
+                    try:
+                        if proc.info['name'] and 'ArkAscendedServer.exe' in proc.info['name']:
+                            server_pid = proc.info['pid']
+                            self.logger.debug(f"Proceso del servidor encontrado por nombre - PID: {server_pid}")
+                            break
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        continue
+                        
+            if not server_pid:
+                self.logger.debug("No se encontró proceso del servidor activo")
+                return None
+                
+            self.logger.debug(f"Buscando ventana de consola para PID: {server_pid}")
+            
+            # Reset del handle de ventana
+            self.server_console_hwnd = None
+            windows_found = []
             
             # Enumerar todas las ventanas para encontrar la del servidor
             def enum_windows_callback(hwnd, lparam):
@@ -51,52 +72,168 @@ class ServerManager:
                     window_pid = ctypes.c_ulong()
                     self.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(window_pid))
                     
-                    if window_pid.value == pid:
-                        # Verificar si es una ventana de consola
+                    if window_pid.value == server_pid:
+                        # Obtener información de la ventana
                         window_text = ctypes.create_unicode_buffer(256)
                         self.user32.GetWindowTextW(hwnd, window_text, 256)
                         
-                        # Buscar ventanas que contengan "ShooterGame" o "Ark"
-                        if any(keyword in window_text.value.lower() for keyword in ['shootergame', 'ark', 'asa']):
+                        class_name = ctypes.create_unicode_buffer(256)
+                        self.user32.GetClassNameW(hwnd, class_name, 256)
+                        
+                        is_visible = ctypes.windll.user32.IsWindowVisible(hwnd)
+                        
+                        window_info = {
+                            'hwnd': hwnd,
+                            'title': window_text.value,
+                            'class': class_name.value,
+                            'visible': is_visible
+                        }
+                        windows_found.append(window_info)
+                        
+                        self.logger.debug(f"Ventana encontrada: HWND={hwnd}, Título='{window_text.value}', Clase='{class_name.value}', Visible={is_visible}")
+                        
+                        # Buscar ventanas que contengan palabras clave del servidor
+                        title_lower = window_text.value.lower()
+                        class_lower = class_name.value.lower()
+                        
+                        # Ampliar criterios de búsqueda
+                        keywords = ['shootergame', 'ark', 'asa', 'ascended', 'server', 'console']
+                        console_classes = ['consolewindowclass', 'cmd']
+                        
+                        # Verificar por título
+                        title_match = any(keyword in title_lower for keyword in keywords)
+                        # Verificar por clase de ventana (consolas)
+                        class_match = any(cls in class_lower for cls in console_classes)
+                        
+                        if title_match or (class_match and is_visible):
                             self.server_console_hwnd = hwnd
-                            self.logger.info(f"Ventana de consola del servidor encontrada: {window_text.value}")
+                            self.logger.info(f"Ventana de consola del servidor encontrada: '{window_text.value}' (Clase: {class_name.value})")
                             return False  # Detener enumeración
+                            
                 except Exception as e:
-                    self.logger.debug(f"Error al procesar ventana: {e}")
+                    self.logger.debug(f"Error al procesar ventana {hwnd}: {e}")
                 return True  # Continuar enumeración
             
             # Enumerar ventanas
             self.user32.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)(enum_windows_callback), 0)
             
-            return self.server_console_hwnd is not None
+            # Log de debug con todas las ventanas encontradas
+            if windows_found:
+                self.logger.debug(f"Total de ventanas encontradas para PID {pid}: {len(windows_found)}")
+                for window in windows_found:
+                    self.logger.debug(f"  - {window}")
+            else:
+                self.logger.warning(f"No se encontraron ventanas para PID {pid}")
+            
+            # Si no se encontró por criterios específicos, usar la primera ventana visible como fallback
+            if not self.server_console_hwnd and windows_found:
+                for window in windows_found:
+                    if window['visible']:
+                        self.server_console_hwnd = window['hwnd']
+                        self.logger.info(f"Usando ventana visible como fallback: '{window['title']}' (Clase: {window['class']})")
+                        break
+            
+            success = self.server_console_hwnd is not None
+            self.logger.debug(f"Búsqueda de ventana completada. Éxito: {success}")
+            return success
             
         except Exception as e:
             self.logger.error(f"Error al buscar ventana de consola: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             return False
     
     def show_server_console(self):
         """Mostrar la consola del servidor"""
         try:
-            if self._find_server_console_window():
-                self.user32.ShowWindow(self.server_console_hwnd, self.SW_SHOW)
-                self.user32.SetForegroundWindow(self.server_console_hwnd)
-                self.logger.info("Consola del servidor mostrada")
+            self.logger.debug("Intentando mostrar consola del servidor")
+            
+            # Verificar si ya tenemos el handle de la ventana
+            if not self.server_console_hwnd:
+                self.logger.debug("No hay handle de ventana, buscando...")
+                if not self._find_server_console_window():
+                    self.logger.warning("No se pudo encontrar la ventana de consola del servidor")
+                    return False
+            
+            # Verificar que el handle sigue siendo válido
+            if not ctypes.windll.user32.IsWindow(self.server_console_hwnd):
+                self.logger.warning("Handle de ventana inválido, buscando nuevamente...")
+                self.server_console_hwnd = None
+                if not self._find_server_console_window():
+                    self.logger.warning("No se pudo encontrar la ventana de consola del servidor")
+                    return False
+            
+            # Verificar estado actual
+            is_visible_before = ctypes.windll.user32.IsWindowVisible(self.server_console_hwnd)
+            self.logger.debug(f"Estado antes de mostrar: visible={is_visible_before}")
+            
+            # Mostrar la ventana
+            result = self.user32.ShowWindow(self.server_console_hwnd, self.SW_SHOW)
+            self.logger.debug(f"ShowWindow devolvió: {result}")
+            
+            # Traer al frente
+            self.user32.SetForegroundWindow(self.server_console_hwnd)
+            
+            # Verificar que se mostró correctamente
+            is_visible_after = ctypes.windll.user32.IsWindowVisible(self.server_console_hwnd)
+            self.logger.debug(f"Estado después de mostrar: visible={is_visible_after}")
+            
+            if is_visible_after:
+                self.logger.info("Consola del servidor mostrada exitosamente")
                 return True
-            return False
+            else:
+                self.logger.warning("La consola no se mostró correctamente")
+                return False
+                
         except Exception as e:
             self.logger.error(f"Error al mostrar consola: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             return False
     
     def hide_server_console(self):
         """Ocultar la consola del servidor"""
         try:
-            if self._find_server_console_window():
-                self.user32.ShowWindow(self.server_console_hwnd, self.SW_HIDE)
-                self.logger.info("Consola del servidor oculta")
+            self.logger.debug("Intentando ocultar consola del servidor")
+            
+            # Verificar si ya tenemos el handle de la ventana
+            if not self.server_console_hwnd:
+                self.logger.debug("No hay handle de ventana, buscando...")
+                if not self._find_server_console_window():
+                    self.logger.warning("No se pudo encontrar la ventana de consola del servidor")
+                    return False
+            
+            # Verificar que el handle sigue siendo válido
+            if not ctypes.windll.user32.IsWindow(self.server_console_hwnd):
+                self.logger.warning("Handle de ventana inválido, buscando nuevamente...")
+                self.server_console_hwnd = None
+                if not self._find_server_console_window():
+                    self.logger.warning("No se pudo encontrar la ventana de consola del servidor")
+                    return False
+            
+            # Verificar estado actual
+            is_visible_before = ctypes.windll.user32.IsWindowVisible(self.server_console_hwnd)
+            self.logger.debug(f"Estado antes de ocultar: visible={is_visible_before}")
+            
+            # Ocultar la ventana
+            result = self.user32.ShowWindow(self.server_console_hwnd, self.SW_HIDE)
+            self.logger.debug(f"ShowWindow devolvió: {result}")
+            
+            # Verificar que se ocultó correctamente
+            is_visible_after = ctypes.windll.user32.IsWindowVisible(self.server_console_hwnd)
+            self.logger.debug(f"Estado después de ocultar: visible={is_visible_after}")
+            
+            if not is_visible_after:
+                self.logger.info("Consola del servidor ocultada exitosamente")
                 return True
-            return False
+            else:
+                self.logger.warning("La consola no se ocultó correctamente")
+                return False
+                
         except Exception as e:
             self.logger.error(f"Error al ocultar consola: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             return False
     
     def minimize_server_console(self):
@@ -178,13 +315,33 @@ class ServerManager:
             return {"cpu_percent": 0, "memory_mb": 0}
     
     def is_server_running(self):
-        """Verificar si el servidor está ejecutándose"""
+        """Verificar si el servidor está ejecutándose - Detecta por nombre de proceso"""
         try:
+            # Método 1: Verificar proceso guardado
             if self.server_process and self.server_process.poll() is None:
                 return True
-            elif self.server_pid and psutil.pid_exists(self.server_pid):
+                
+            # Método 2: Buscar procesos por nombre (método principal)
+            for proc in psutil.process_iter(['pid', 'name']):
+                try:
+                    if proc.info['name'] and 'ArkAscendedServer.exe' in proc.info['name']:
+                        # Encontrado proceso ARK, actualizar PID
+                        self.server_pid = proc.info['pid']
+                        self.server_running = True
+                        self.logger.debug(f"Servidor detectado por nombre - PID: {proc.info['pid']}")
+                        return True
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+                    
+            # Método 3: Verificar PID guardado (fallback)
+            if self.server_pid and psutil.pid_exists(self.server_pid):
                 return True
+                
+            # No se encontró servidor ejecutándose
+            self.server_running = False
+            self.server_pid = None
             return False
+            
         except Exception as e:
             self.logger.error(f"Error verificando estado del servidor: {e}")
             return False
