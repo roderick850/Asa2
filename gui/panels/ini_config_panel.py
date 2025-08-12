@@ -1690,7 +1690,9 @@ class IniConfigPanel(ctk.CTkFrame):
         except Exception as e:
             self.logger.error(f"Error en carga manual de {file_type}: {e}")
             # Crear config vacío como fallback
-            return configparser.RawConfigParser()
+            fallback_config = configparser.RawConfigParser()
+            fallback_config.optionxform = str  # Preservar mayúsculas/minúsculas en las claves
+            return fallback_config
             
     def populate_form_fields(self):
         """Poblar los campos del formulario con valores actuales"""

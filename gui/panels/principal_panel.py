@@ -132,6 +132,16 @@ class PrincipalPanel:
         self.admin_password_entry = ctk.CTkEntry(col3_frame, placeholder_text="Contraseña de admin", show="*", width=200, height=28)
         self.admin_password_entry.pack(fill="x", pady=(0, 6))
         
+        # Message (MessageOfTheDay)
+        ctk.CTkLabel(col3_frame, text="Message:", font=("Arial", 11, "bold")).pack(anchor="w", pady=(0, 2))
+        self.message_entry = ctk.CTkEntry(col3_frame, placeholder_text="Mensaje del día", width=200, height=28)
+        self.message_entry.pack(fill="x", pady=(0, 6))
+        
+        # Duration (MessageOfTheDay)
+        ctk.CTkLabel(col3_frame, text="Duration:", font=("Arial", 11, "bold")).pack(anchor="w", pady=(0, 2))
+        self.duration_entry = ctk.CTkEntry(col3_frame, placeholder_text="60", width=200, height=28)
+        self.duration_entry.pack(fill="x", pady=(0, 6))
+        
         # Frame para argumentos personalizados
         custom_frame = ctk.CTkFrame(main_frame)
         custom_frame.pack(fill="x", padx=5, pady=5)
@@ -197,6 +207,8 @@ class PrincipalPanel:
             self.query_port_entry.insert(0, self.config_manager.get("server", "query_port", "27015"))
             self.port_entry.insert(0, self.config_manager.get("server", "port", "7777"))
             self.multihome_entry.insert(0, self.config_manager.get("server", "multihome", "127.0.0.1"))
+            self.message_entry.insert(0, self.config_manager.get("server", "message", ""))
+            self.duration_entry.insert(0, self.config_manager.get("server", "duration", "60"))
             
             # Cargar argumentos personalizados
             custom_args = self.config_manager.get("server", "custom_args", "")
@@ -217,6 +229,8 @@ class PrincipalPanel:
             self.config_manager.set("server", "query_port", self.query_port_entry.get())
             self.config_manager.set("server", "port", self.port_entry.get())
             self.config_manager.set("server", "multihome", self.multihome_entry.get())
+            self.config_manager.set("server", "message", self.message_entry.get())
+            self.config_manager.set("server", "duration", self.duration_entry.get())
             
             # Guardar argumentos personalizados
             custom_args = self.custom_args_text.get("1.0", "end-1c")
@@ -273,6 +287,8 @@ class PrincipalPanel:
             admin_password = self.admin_password_entry.get()
             session_name = self.session_name_entry.get()
             max_players = self.max_players_entry.get()
+            message = self.message_entry.get()
+            duration = self.duration_entry.get()
             
             # Usar método personalizado para preservar el archivo existente
             self._update_ini_file_preserving_content(
@@ -287,6 +303,10 @@ class PrincipalPanel:
                     },
                     '/Script/Engine.GameSession': {
                         'MaxPlayers': max_players if max_players else None
+                    },
+                    'MessageOfTheDay': {
+                        'Message': message if message else None,
+                        'Duration': duration if duration else None
                     }
                 }
             )
@@ -484,6 +504,17 @@ class PrincipalPanel:
                     self.max_players_entry.delete(0, "end")
                     self.max_players_entry.insert(0, config.get('/Script/Engine.GameSession', 'MaxPlayers'))
             
+            if config.has_section('MessageOfTheDay'):
+                # Message
+                if config.has_option('MessageOfTheDay', 'Message'):
+                    self.message_entry.delete(0, "end")
+                    self.message_entry.insert(0, config.get('MessageOfTheDay', 'Message'))
+                
+                # Duration
+                if config.has_option('MessageOfTheDay', 'Duration'):
+                    self.duration_entry.delete(0, "end")
+                    self.duration_entry.insert(0, config.get('MessageOfTheDay', 'Duration'))
+            
             if self.logger:
                 self.logger.info(f"Configuración cargada desde GameUserSettings.ini: {gameusersettings_path}")
                 
@@ -502,6 +533,8 @@ class PrincipalPanel:
             self.query_port_entry.delete(0, "end")
             self.port_entry.delete(0, "end")
             self.multihome_entry.delete(0, "end")
+            self.message_entry.delete(0, "end")
+            self.duration_entry.delete(0, "end")
             self.custom_args_text.delete("1.0", "end")
             
             # Cargar valores

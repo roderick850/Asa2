@@ -35,11 +35,8 @@ class DynamicConfigPanel(ctk.CTkFrame):
         self.create_widgets()
         self.pack(fill="both", expand=True)
         
-        # Agregar contenido de prueba para asegurar que se ve
-        self.show_test_content()
-        
-        # Usar after para ejecutar scan después de que la UI esté lista
-        self.after(100, self.scan_for_config_files)
+        # Mostrar mensaje inicial sin cargar automáticamente
+        self.show_initial_message()
         
     def create_widgets(self):
         """Crear la estructura básica del panel"""
@@ -58,28 +55,39 @@ class DynamicConfigPanel(ctk.CTkFrame):
         # Frame de control superior
         control_frame = ctk.CTkFrame(self)
         control_frame.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
-        control_frame.grid_columnconfigure(1, weight=1)
+        control_frame.grid_columnconfigure(2, weight=1)
         
-        # Botón para buscar archivos de configuración
+        # Botón para cargar campos dinámicos
+        load_button = ctk.CTkButton(
+            control_frame,
+            text="📋 Cargar Campos Dinámicos",
+            command=self.load_dynamic_fields,
+            width=180,
+            fg_color="#1f538d",
+            hover_color="#14375e"
+        )
+        load_button.grid(row=0, column=0, padx=5, pady=5)
+        
+        # Botón para buscar archivos manualmente
         scan_button = ctk.CTkButton(
             control_frame,
             text="🔍 Buscar Configs",
             command=self.scan_for_config_files,
             width=120
         )
-        scan_button.grid(row=0, column=0, padx=5, pady=5)
+        scan_button.grid(row=0, column=1, padx=5, pady=5)
         
         # Label de estado
         self.status_label = ctk.CTkLabel(
             control_frame,
-            text="Buscando archivos de configuración...",
+            text="Presiona 'Cargar Campos Dinámicos' para comenzar",
             font=ctk.CTkFont(size=11)
         )
-        self.status_label.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+        self.status_label.grid(row=0, column=2, padx=10, pady=5, sticky="w")
         
         # Botones de acción
         action_frame = ctk.CTkFrame(control_frame, fg_color="transparent")
-        action_frame.grid(row=0, column=2, padx=5, pady=5)
+        action_frame.grid(row=0, column=3, padx=5, pady=5)
         
         save_button = ctk.CTkButton(
             action_frame,
@@ -104,18 +112,24 @@ class DynamicConfigPanel(ctk.CTkFrame):
         self.main_scroll.grid(row=2, column=0, padx=10, pady=5, sticky="nsew")
         self.main_scroll.grid_columnconfigure(0, weight=1)
     
-    def show_test_content(self):
-        """Mostrar contenido de prueba para verificar que el panel funciona"""
-        test_frame = ctk.CTkFrame(self.main_scroll)
-        test_frame.grid(row=0, column=0, padx=5, pady=10, sticky="ew")
-        test_frame.grid_columnconfigure(0, weight=1)
+    def show_initial_message(self):
+        """Mostrar mensaje inicial antes de cargar los campos dinámicos"""
+        initial_frame = ctk.CTkFrame(self.main_scroll)
+        initial_frame.grid(row=0, column=0, padx=5, pady=10, sticky="ew")
+        initial_frame.grid_columnconfigure(0, weight=1)
         
-        test_label = ctk.CTkLabel(
-            test_frame,
-            text="🎮 Panel de Configuración Dinámica\n\nBuscando archivos de configuración...",
-            font=ctk.CTkFont(size=14)
+        initial_label = ctk.CTkLabel(
+            initial_frame,
+            text="🎮 Panel de Configuración Dinámica\n\n📋 Presiona 'Cargar Campos Dinámicos' para cargar automáticamente\nlos archivos GameUserSettings.ini y Game.ini\n\n🔍 O usa 'Buscar Configs' para seleccionar archivos manualmente",
+            font=ctk.CTkFont(size=14),
+            justify="center"
         )
-        test_label.grid(row=0, column=0, pady=20)
+        initial_label.grid(row=0, column=0, pady=30)
+        
+    def load_dynamic_fields(self):
+        """Cargar campos dinámicos automáticamente"""
+        self.status_label.configure(text="🔍 Cargando campos dinámicos...")
+        self.scan_for_config_files()
         
     def scan_for_config_files(self):
         """Buscar archivos de configuración de ARK en las rutas del servidor"""
@@ -298,6 +312,7 @@ class DynamicConfigPanel(ctk.CTkFrame):
                 strict=False,
                 interpolation=None
             )
+            config.optionxform = str  # Preservar mayúsculas/minúsculas en las claves
             config.read(config_file, encoding='utf-8')
             
             self.config_data[config_file] = config
@@ -396,6 +411,7 @@ class DynamicConfigPanel(ctk.CTkFrame):
             
             # Crear un objeto configparser simulado para compatibilidad
             config = configparser.ConfigParser(allow_no_value=True)
+            config.optionxform = str  # Preservar mayúsculas/minúsculas en las claves
             for section_name, section_data in config_data.items():
                 if section_name and section_data:
                     config.add_section(section_name)
