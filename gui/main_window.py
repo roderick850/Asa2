@@ -1982,8 +1982,8 @@ Versión de la app: {self.APP_VERSION}
             # Log detallado para diagnóstico
             self.logger.info(f"🔍 Diagnóstico fallback auto-inicio:")
             self.logger.info(f"   - started_with_windows: {getattr(self, 'started_with_windows', 'No definido')}")
-            self.logger.info(f"   - auto_start_server: {self.app_settings.get_setting('auto_start_server')}")
-            self.logger.info(f"   - auto_start_server_with_windows: {self.app_settings.get_setting('auto_start_server_with_windows')}")
+            
+            
             self.logger.info(f"   - system_tray disponible: {hasattr(self, 'system_tray') and self.system_tray.is_available()}")
             
             if hasattr(self, 'started_with_windows') and self.started_with_windows:
@@ -1993,7 +1993,7 @@ Versión de la app: {self.APP_VERSION}
             else:
                 # Se inició manualmente - usar configuración normal
                 should_auto_start = self.app_settings.get_setting("auto_start_server")
-                self.logger.info(f"   - Configuración manual: {should_auto_start}")
+                
             
             if (not hasattr(self, 'system_tray') or 
                 not self.system_tray.is_available()) and should_auto_start:
@@ -2020,14 +2020,14 @@ Versión de la app: {self.APP_VERSION}
             # Verificar configuraciones de auto-inicio
             auto_start_manual = self.app_settings.get_setting("auto_start_server")
             auto_start_windows = self.app_settings.get_setting("auto_start_server_with_windows")
-            self.logger.info(f"📋 Auto-inicio manual: {auto_start_manual}")
-            self.logger.info(f"🖥️ Auto-inicio con Windows: {auto_start_windows}")
+            # self.logger.info(f"📋 Auto-inicio manual: {auto_start_manual}")  # Optimizado: reducir ruido
+            # self.logger.info(f"🖥️ Auto-inicio con Windows: {auto_start_windows}")  # Optimizado: reducir ruido
             
             # Cargar último servidor
             last_server = self.config_manager.get("app", "last_server", "")
             if last_server:
                 self.selected_server = last_server
-                self.logger.info(f"🖥️ Último servidor cargado: {last_server}")
+                # self.logger.info(f"🖥️ Último servidor cargado: {last_server}")  # Optimizado: reducir ruido
             else:
                 self.logger.warning("⚠️ No hay servidor guardado en configuración")
             
@@ -2035,7 +2035,7 @@ Versión de la app: {self.APP_VERSION}
             last_map = self.config_manager.get("app", "last_map", "")
             if last_map:
                 self.selected_map = last_map
-                self.logger.info(f"🗺️ Último mapa cargado: {last_map}")
+                # self.logger.info(f"🗺️ Último mapa cargado: {last_map}")  # Optimizado: reducir ruido
             else:
                 self.logger.warning("⚠️ No hay mapa guardado en configuración")
             
@@ -2078,11 +2078,11 @@ Versión de la app: {self.APP_VERSION}
                 if hasattr(self, 'started_with_windows') and self.started_with_windows:
                     # Se inició con Windows - usar configuración específica
                     should_auto_start = self.app_settings.get_setting("auto_start_server_with_windows")
-                    self.logger.info(f"🔍 MainWindow: Inicio con Windows detectado, auto_start_server_with_windows = {should_auto_start}")
+                    # self.logger.info(f"🔍 MainWindow: Inicio con Windows detectado, auto_start_server_with_windows = {should_auto_start}")  # Optimizado
                 else:
                     # Se inició manualmente - usar configuración normal
                     should_auto_start = self.app_settings.get_setting("auto_start_server")
-                    self.logger.info(f"🔍 MainWindow: Inicio manual detectado, auto_start_server = {should_auto_start}")
+                    # self.logger.info(f"🔍 MainWindow: Inicio manual detectado, auto_start_server = {should_auto_start}")  # Optimizado
             
             # Si auto-inicio está deshabilitado, salir inmediatamente
             if not should_auto_start:
@@ -2090,7 +2090,7 @@ Versión de la app: {self.APP_VERSION}
                 self.add_log_message("⏸️ Auto-inicio del servidor desactivado por configuración")
                 return
             
-            self.logger.info("🚀 MainWindow: Auto-inicio del servidor habilitado, continuando...")
+            # self.logger.info("🚀 MainWindow: Auto-inicio del servidor habilitado, continuando...")  # Optimizado
             
             # Verificar si server_manager está inicializado
             if not hasattr(self, 'server_manager') or self.server_manager is None:
@@ -2250,8 +2250,8 @@ Versión de la app: {self.APP_VERSION}
                     # Log detallado para diagnóstico
                     self.logger.info(f"🔍 Diagnóstico auto-inicio:")
                     self.logger.info(f"   - started_with_windows: {getattr(self, 'started_with_windows', 'No definido')}")
-                    self.logger.info(f"   - auto_start_server: {self.app_settings.get_setting('auto_start_server')}")
-                    self.logger.info(f"   - auto_start_server_with_windows: {self.app_settings.get_setting('auto_start_server_with_windows')}")
+                    
+                    
                     
                     if hasattr(self, 'started_with_windows') and self.started_with_windows:
                         # Se inició con Windows - usar configuración específica

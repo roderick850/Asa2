@@ -105,14 +105,29 @@ class Logger:
     
     def info(self, message):
         """Registrar mensaje informativo"""
-        # En ejecutable, filtrar mensajes: solo los importantes
+        # En ejecutable, filtrar mensajes: solo los críticos para el usuario
         if is_compiled():
             # Solo mostrar mensajes críticos del usuario (no debug técnico)
             critical_keywords = [
                 "Auto-iniciando servidor", "Servidor iniciado", "Servidor detenido",
                 "Error en auto-inicio", "Auto-inicio cancelado", "Conectado", "Desconectado",
-                "Backup completado", "Error crítico", "Instalación completada"
+                "Backup completado", "Error crítico", "Instalación completada",
+                "✅ Aplicación iniciada", "❌ Error crítico"
             ]
+            
+            # Filtrar mensajes de inicio verbosos
+            startup_noise = [
+                "Sistema de configuración inicializado", "Configuraciones de aplicación aplicadas",
+                "Cargando última configuración", "Auto-inicio manual:", "Auto-inicio con Windows:",
+                "Último servidor cargado:", "Último mapa cargado:", "Panel de", "inicializado",
+                "Diagnóstico fallback", "started_with_windows:", "system_tray disponible:",
+                "Configuración manual:", "Inicio manual detectado", "Ruta de backup configurada:",
+                "No se encontró archivo de mods", "Iniciando hilo de bandeja"
+            ]
+            
+            # Si es ruido de inicio, omitir completamente
+            if any(noise in message for noise in startup_noise):
+                return
             
             # Verificar si es un mensaje importante para el usuario
             if any(keyword in message for keyword in critical_keywords):
