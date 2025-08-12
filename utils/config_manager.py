@@ -19,7 +19,10 @@ class ConfigManager:
         else:
             self.config_file = config_file
             
-        self.config = configparser.ConfigParser()
+        self.config = configparser.RawConfigParser()
+        # Preservar el caso original de las claves
+        self.config.optionxform = str
+        self.original_file_content = []
         self.base_dir = self._get_base_dir()
         self.load_config()
     
@@ -39,9 +42,16 @@ class ConfigManager:
         return os.path.join(data_dir, filename)
         
     def load_config(self):
-        """Cargar configuración desde archivo"""
+        """Cargar configuración desde archivo preservando formato original"""
         try:
             if os.path.exists(self.config_file):
+                # Leer el contenido original del archivo
+                with open(self.config_file, 'r', encoding='utf-8') as f:
+                    self.original_file_content = f.readlines()
+                
+                # Parsear con configparser preservando caso
+                # IMPORTANTE: Limpiar config antes de leer para evitar conflictos
+                self.config.clear()
                 self.config.read(self.config_file, encoding='utf-8')
             else:
                 self.create_default_config()
@@ -81,7 +91,7 @@ class ConfigManager:
         # Configuración de backups
         self.config['backup'] = {
             'source_path': '',
-            'backup_path': '',
+            'destination_path': '',
             'frequency_hours': '24',
             'retain_backups': '7'
         }
@@ -101,10 +111,112 @@ class ConfigManager:
             'auto_start_backup': 'false'
         }
         
-        self.save()
+        # Crear contenido original para preservar formato
+        self.original_file_content = []
+        for section_name in self.config.sections():
+            self.original_file_content.append(f"[{section_name}]\n")
+            for key, value in self.config[section_name].items():
+                self.original_file_content.append(f"{key}={value}\n")
+            self.original_file_content.append("\n")  # Línea en blanco entre secciones
+        
+        # NO llamar a save() aquí para evitar recursión
+        # Solo escribir directamente el archivo
+        try:
+            with open(self.config_file, 'w', encoding='utf-8') as f:
+                f.writelines(self.original_file_content)
+        except Exception as e:
+            print(f"Error creando configuración por defecto: {e}")
     
     def save(self):
-        """Guardar configuración en archivo sin espacios alrededor del ="""
+        """Guardar configuración preservando formato original del archivo"""
+        try:
+            if self.original_file_content:
+                # Guardar preservando formato original
+                self._save_preserving_format()
+            else:
+                # Fallback: guardar con formato estándar
+                self._save_standard_format()
+        except Exception as e:
+            print(f"Error al guardar configuración: {e}")
+            # Intentar guardar estándar como fallback
+            self._save_standard_format()
+    
+    def _save_preserving_format(self):
+        """Guardar preservando el formato original del archivo"""
+        try:
+            print(f"🔍 DEBUG: Iniciando preservación de formato para {self.config_file}")
+            print(f"🔍 DEBUG: Contenido original tiene {len(self.original_file_content)} líneas")
+            
+            modified_lines = []
+            current_section = None
+            
+            for i, line in enumerate(self.original_file_content):
+                original_line = line
+                stripped_line = line.strip()
+                
+                # Líneas de sección
+                if stripped_line.startswith('[') and stripped_line.endswith(']'):
+                    current_section = stripped_line[1:-1]
+                    modified_lines.append(original_line)
+                    print(f"🔍 DEBUG: Línea {i+1}: Sección [{current_section}]")
+                    continue
+                
+                # Líneas vacías o comentarios
+                if not stripped_line or stripped_line.startswith(';') or stripped_line.startswith('#'):
+                    modified_lines.append(original_line)
+                    continue
+                
+                # Líneas key=value
+                if '=' in stripped_line and current_section:
+                    key_part, value_part = stripped_line.split('=', 1)
+                    original_key = key_part.strip()
+                    
+                    print(f"🔍 DEBUG: Línea {i+1}: Clave '{original_key}' en sección '{current_section}'")
+                    
+                    # Buscar si este valor ha sido modificado
+                    # Usar búsqueda case-insensitive para encontrar la clave
+                    found_key = None
+                    found_value = None
+                    
+                    if self.config.has_section(current_section):
+                        # Buscar la clave exacta primero
+                        if self.config.has_option(current_section, original_key):
+                            found_key = original_key
+                            found_value = self.config.get(current_section, original_key)
+                        else:
+                            # Buscar case-insensitive
+                            for config_key in self.config.options(current_section):
+                                if config_key.lower() == original_key.lower():
+                                    found_key = config_key
+                                    found_value = self.config.get(current_section, config_key)
+                                    break
+                    
+                    if found_key and found_value is not None:
+                        # Preservar el formato original (espacios, etc.)
+                        prefix = line[:line.find('=') + 1]
+                        suffix = '\n' if line.endswith('\n') else ''
+                        modified_line = f"{prefix}{found_value}{suffix}"
+                        modified_lines.append(modified_line)
+                        print(f"🔍 DEBUG: Línea {i+1}: Modificada '{original_key}={found_value}'")
+                    else:
+                        modified_lines.append(original_line)
+                else:
+                    modified_lines.append(original_line)
+            
+            # Escribir el archivo modificado
+            print(f"🔍 DEBUG: Escribiendo archivo con {len(modified_lines)} líneas")
+            with open(self.config_file, 'w', encoding='utf-8') as f:
+                f.writelines(modified_lines)
+                
+            print("✅ DEBUG: Archivo guardado preservando formato exitosamente")
+                
+        except Exception as e:
+            print(f"❌ Error preservando formato: {e}")
+            # Fallback a formato estándar
+            self._save_standard_format()
+    
+    def _save_standard_format(self):
+        """Guardar con formato estándar (fallback)"""
         try:
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 # Escribir manualmente para evitar espacios alrededor del =
@@ -114,7 +226,7 @@ class ConfigManager:
                         f.write(f"{key}={value}\n")
                     f.write("\n")  # Línea en blanco entre secciones
         except Exception as e:
-            print(f"Error al guardar configuración: {e}")
+            print(f"Error al guardar configuración estándar: {e}")
     
     def get(self, section, key, default=None):
         """Obtener valor de configuración"""
@@ -128,9 +240,53 @@ class ConfigManager:
         try:
             if not self.config.has_section(section):
                 self.config.add_section(section)
-            self.config.set(section, key, str(value))
+            
+            # Verificar si el valor realmente cambió
+            old_value = self.config.get(section, key) if self.config.has_option(section, key) else None
+            new_value = str(value)
+            
+            if old_value != new_value:
+                self.config.set(section, key, new_value)
+                
+                # Actualizar el contenido original si existe
+                if self.original_file_content:
+                    self._update_original_content(section, key, new_value)
+                    
         except Exception as e:
             print(f"Error al establecer configuración: {e}")
+    
+    def _update_original_content(self, section, key, new_value):
+        """Actualizar el contenido original con el nuevo valor"""
+        try:
+            modified_lines = []
+            current_section = None
+            
+            for i, line in enumerate(self.original_file_content):
+                original_line = line
+                stripped_line = line.strip()
+                
+                # Líneas de sección
+                if stripped_line.startswith('[') and stripped_line.endswith(']'):
+                    current_section = stripped_line[1:-1]
+                    modified_lines.append(original_line)
+                    continue
+                
+                # Líneas key=value en la sección correcta
+                if ('=' in stripped_line and current_section == section and 
+                    stripped_line.split('=')[0].strip() == key):
+                    # Reemplazar solo el valor, preservando el formato
+                    prefix = line[:line.find('=') + 1]
+                    suffix = '\n' if line.endswith('\n') else ''
+                    modified_line = f"{prefix}{new_value}{suffix}"
+                    modified_lines.append(modified_line)
+                else:
+                    modified_lines.append(original_line)
+            
+            # Actualizar el contenido original
+            self.original_file_content = modified_lines
+            
+        except Exception as e:
+            print(f"❌ Error actualizando contenido original: {e}")
     
     def get_section(self, section):
         """Obtener toda una sección de configuración"""
@@ -147,6 +303,12 @@ class ConfigManager:
             
             for key, value in data.items():
                 self.config.set(section, key, str(value))
+                
+            # Actualizar el contenido original si existe
+            if self.original_file_content:
+                for key, value in data.items():
+                    self._update_original_content(section, key, str(value))
+                    
         except Exception as e:
             print(f"Error al establecer sección de configuración: {e}")
     
@@ -235,3 +397,21 @@ class ConfigManager:
                 errors.append(f"El multiplicador {multiplier} debe ser un número válido")
         
         return errors
+
+    def reload_config(self):
+        """Recargar configuración desde archivo y actualizar contenido original"""
+        try:
+            if os.path.exists(self.config_file):
+                # Leer el contenido original del archivo
+                with open(self.config_file, 'r', encoding='utf-8') as f:
+                    self.original_file_content = f.readlines()
+                
+                # Limpiar y recargar config
+                self.config.clear()
+                self.config.read(self.config_file, encoding='utf-8')
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(f"Error al recargar configuración: {e}")
+            return False

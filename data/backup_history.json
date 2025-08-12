@@ -1,14 +1,5 @@
 [
   {
-    "name": "Prueba_20250809_081211",
-    "server": "Prueba",
-    "path": "D:\\ASA\\Backup\\Prueba_20250809_081211.zip",
-    "date": "2025-08-09T08:12:11.758590",
-    "size": 21530,
-    "compressed": true,
-    "type": "autom\u00e1tico"
-  },
-  {
     "name": "Prueba_20250811_140833",
     "server": "Prueba",
     "path": "D:\\ASA\\Backup\\Prueba_20250811_140833.zip",
@@ -86,6 +77,15 @@
     "path": "D:\\ASA\\Backup\\Prueba_20250812_103015.zip",
     "date": "2025-08-12T10:30:24.143405",
     "size": 103350288,
+    "compressed": true,
+    "type": "autom\u00e1tico"
+  },
+  {
+    "name": "Prueba_20250812_130128",
+    "server": "Prueba",
+    "path": "D:\\ASA\\Backup\\Prueba_20250812_130128.zip",
+    "date": "2025-08-12T13:01:36.702006",
+    "size": 103357897,
     "compressed": true,
     "type": "autom\u00e1tico"
   }

@@ -370,7 +370,7 @@ class MainWindow:
         
         # Crear pestañas
         self.tab_principal_content = self.tabview.add("Principal")
-        self.tab_configuraciones_content = self.tabview.add("Configuraciones")
+        self.tab_ini_config_content = self.tabview.add("Conf. INI")
         self.tab_mods_content = self.tabview.add("Mods")
         self.tab_backup_content = self.tabview.add("Backup")
         self.tab_reinicios_content = self.tabview.add("Reinicios")
@@ -378,7 +378,7 @@ class MainWindow:
         self.tab_ark_api_content = self.tabview.add("Comandos Directos")
         self.tab_console_content = self.tabview.add("Consola")
         self.tab_logs_content = self.tabview.add("Logs")
-        self.tab_ini_config_content = self.tabview.add("Conf. INI")
+        self.tab_configuraciones_content = self.tabview.add("Avanzado")
         
         # Crear paneles
         self.principal_panel = PrincipalPanel(self.tab_principal_content, self.config_manager, self.logger, self)

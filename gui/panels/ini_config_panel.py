@@ -111,15 +111,187 @@ class IniConfigPanel(ctk.CTkFrame):
         self.game_user_settings_path = None
         self.game_ini_path = None
         
-        # Datos de configuración
+        # Mapeo directo de campos del formulario a claves del archivo INI
+        self.field_to_ini_mapping = {
+            # PlayersAndTribes
+            "MaxNumbersofPlayersInTribe": "maxnumbersofplayersintribe",
+            "MaxAlliancesPerTribe": "maxalliancespertribe",
+            "MaxTribeLogs": "maxtribelogs",
+            "PreventTribeAlliances": "preventtribealliances",
+            "TribeNameChangeCooldown": "tribenamechangecooldown",
+            "AllowAnyoneBabyImprintCuddle": "allowanyonebabyimprintcuddle",
+            "PreventMateBoost": "preventmateboost",
+            "MaxTamedDinos": "maxtameddinos",
+            "MaxTamedDinos_SoftTameLimit": "maxtameddinos_softtamelimit",
+            "MaxTamedDinos_SoftTameLimit_CountdownForDeletionDuration": "maxtameddinos_softtamelimit_countdownfordeletionduration",
+            "MaxPersonalTamedDinos": "maxpersonaltameddinos",
+            
+            # DifficultyAndProgression
+            "DifficultyOffset": "difficultyoffset",
+            "OverrideOfficialDifficulty": "overrideofficialdifficulty",
+            "XPMultiplier": "xpmultiplier",
+            "TamingSpeedMultiplier": "tamingspeedmultiplier",
+            "DinoCountMultiplier": "dinocountmultiplier",
+            "OverrideSecondsUntilBuriedTreasureAutoReveals": "overridesecondsuntilburiedtreasureautoreveals",
+            "ServerHardcore": "serverhardcore",
+            
+            # NotificationsAndHUD
+            "ServerCrosshair": "servercrosshair",
+            "ShowMapPlayerLocation": "showmapplayerlocation",
+            "serverForceNoHud": "serverforcenohud",
+            "ShowFloatingDamageText": "showfloatingdamagetext",
+            "AllowHideDamageSourceFromLogs": "allowhidedamagesourcefromlogs",
+            "AllowHitMarkers": "allowhitmarkers",
+            "bShowStatusNotificationMessages": "bshowstatusnotificationmessages",
+            "bShowChatBox": "bshowchatbox",
+            "bShowInfoButtons": "bshowinfobuttons",
+            
+            # DayNightAndClimate
+            "DayCycleSpeedScale": "daycyclespeedscale",
+            "NightTimeSpeedScale": "nighttimespeedscale",
+            "DayTimeSpeedScale": "daytimespeedscale",
+            "BaseTemperatureMultiplier": "basetemperaturemultiplier",
+            "DisableWeatherFog": "disableweatherfog",
+            "EnablePVEGamma": "enablepvegamma",
+            
+            # HarvestingAndResources
+            "HarvestAmountMultiplier": "harvestamountmultiplier",
+            "HarvestHealthMultiplier": "harvesthealthmultiplier",
+            "PlayerHarvestingDamageMultiplier": "playerharvestingdamagemultiplier",
+            "DinoHarvestingDamageMultiplier": "dinoharvestingdamagemultiplier",
+            "ResourcesRespawnPeriodMultiplier": "resourcesrespawnperiodmultiplier",
+            "ResourceNoReplenishRadiusPlayers": "resourcenoreplenishradiusplayers",
+            "ResourceNoReplenishRadiusStructures": "resourcenoreplenishradiusstructures",
+            "StructurePreventResourceRadiusMultiplier": "structurepreventresourceradiusmultiplier",
+            "UseOptimizedHarvestingHealth": "useoptimizedharvestinghealth",
+            "ClampResourceHarvestDamage": "clampresourceharvestdamage",
+            "CropGrowthSpeedMultiplier": "cropgrowthspeedmultiplier",
+            "CropDecaySpeedMultiplier": "cropdecayspeedmultiplier",
+            "PoopIntervalMultiplier": "poopintervalmultiplier",
+            "HairGrowthSpeedMultiplier": "hairgrowthspeedmultiplier",
+            
+            # BreedingAndReproduction
+            "BabyImprintingStatScaleMultiplier": "babyimprintingstatscalemultiplier",
+            "BabyImprintAmountMultiplier": "babyimprintamountmultiplier",
+            "MatingIntervalMultiplier": "matingintervalmultiplier",
+            "MatingSpeedMultiplier": "matingspeedmultiplier",
+            "LayEggIntervalMultiplier": "layeggintervalmultiplier",
+            "EggHatchSpeedMultiplier": "egghatchspeedmultiplier",
+            "BabyMatureSpeedMultiplier": "babymaturespeedmultiplier",
+            "BabyCuddleIntervalMultiplier": "babycuddleintervalmultiplier",
+            "BabyCuddleGracePeriodMultiplier": "babycuddlegraceperiodmultiplier",
+            "BabyCuddleLoseImprintQualitySpeedMultiplier": "babycuddleloseimprintqualityspeedmultiplier",
+            "BabyFoodConsumptionSpeedMultiplier": "babyfoodconsumptionspeedmultiplier",
+            "DisableImprintDinoBuff": "disableimprintdinobuff",
+            
+            # TamingAndDinos
+            "PassiveTameIntervalMultiplier": "passivetameintervalmultiplier",
+            "bAllowTamedDinoRiding": "ballowtameddinoriding",
+            "bDisableDinoRiding": "bdisabledinoriding",
+            "bDisableDinoTaming": "bdisabledinotaming",
+            "bUseTameLimitForStructuresOnly": "busetamelimitforstructuresonly",
+            "bForceCanRideFliers": "bforcecanridefliers",
+            "ForceAllowCaveFlyers": "forceallowcaveflyers",
+            "AllowFlyingStaminaRecovery": "allowflyingstaminarecovery",
+            "bAllowFlyerCarryPvE": "ballowflyercarrypve",
+            "bFlyerPlatformAllowUnalignedDinoBasing": "bflyerplatformallowunaligneddinobasing",
+            "TamedDinoCharacterFoodDrainMultiplier": "tameddinocharacterfooddrainmultiplier",
+            "TamedDinoTorporDrainMultiplier": "tameddinotorpordrainmultiplier",
+            "WildDinoCharacterFoodDrainMultiplier": "wilddinocharacterfooddrainmultiplier",
+            "WildDinoTorporDrainMultiplier": "wilddinotorpordrainmultiplier",
+            "DinoCharacterFoodDrainMultiplier": "dinocharacterfooddrainmultiplier",
+            "DinoCharacterStaminaDrainMultiplier": "dinocharacterstaminadrainmultiplier",
+            "DinoCharacterHealthRecoveryMultiplier": "dinocharacterhealthrecoverymultiplier",
+            "PlayerCharacterWaterDrainMultiplier": "playercharacterwaterdrainmultiplier",
+            "PlayerCharacterFoodDrainMultiplier": "playercharacterfooddrainmultiplier",
+            "PlayerCharacterStaminaDrainMultiplier": "playercharacterstaminadrainmultiplier",
+            "PlayerCharacterHealthRecoveryMultiplier": "playercharacterhealthrecoverymultiplier",
+            
+            # StructuresAndBuilding
+            "MaxStructuresInRange": "maxstructuresinrange",
+            "TheMaxStructuresInRange": "themaxstructuresinrange",
+            "StructureDamageRepairCooldown": "structuredamagerepaircooldown",
+            "bForceAllStructureLocking": "bforceallstructurelocking",
+            "bDisableStructurePlacementCollision": "bdisablestructureplacementcollision",
+            "bAllowPlatformsaddleMultifloors": "ballowplatformsaddlemultifloors",
+            "DestroyUnconnectedWaterPipes": "destroyunconnectedwaterpipes",
+            "OverrideStructurePlatformPrevention": "overridestructureplatformprevention",
+            "EnableExtraStructurePreventionVolumes": "enableextrastructurepreventionvolumes",
+            "bIgnoreStructuresPreventionVolumes": "bignorestructurespreventionvolumes",
+            "bGenesisUseStructuresPreventionVolumes": "bgenesisusestructurespreventionvolumes",
+            "MaxPlatformsaddleStructureLimit": "maxplatformsaddlestructurelimit",
+            "PersonalTamedDinosSaddleStructureCost": "personaltameddinossaddlestructurecost",
+            "PlatformsaddleBuildAreaBoundsMultiplier": "platformsaddlebuildareaboundsmultiplier",
+            "bFlyerPlatformAllowUnalignedDinoBasing": "bflyerplatformallowunaligneddinobasing",
+            "AlwaysAllowStructurePickup": "alwaysallowstructurepickup",
+            "StructurePickupTimeAfterPlacement": "structurepickuptimeafterplacement",
+            "StructurePickupHoldDuration": "structurepickupholdduration",
+            "AllowIntegratedSPlusStructures": "allowintegratedsplusstructures",
+            "bPassiveDefensesDamageRiderlessDinos": "bpassivedefensesdamageriderlessdinos",
+            
+            # DefensesAndTurrets
+            "bLimitTurretsInRange": "blimitturretsinrange",
+            "LimitTurretsRange": "limitturretsrange",
+            "LimitTurretsNum": "limitturretsnum",
+            "bHardLimitTurretsInRange": "bhardlimitturretsinrange",
+            
+            # LootAndQuality
+            "SupplyCrateLootQualityMultiplier": "supplycratelootqualitymultiplier",
+            "FishingLootQualityMultiplier": "fishinglootqualitymultiplier",
+            "CraftingSkillBonusMultiplier": "craftingskillbonusmultiplier",
+            
+            # ItemsAndCrafting
+            "PerPlatformMaxStructuresMultiplier": "perplatformmaxstructuresmultiplier",
+            "DinoTurretDamageMultiplier": "dinoturretdamagemultiplier",
+            "RaidDinoCharacterFoodDrainMultiplier": "raiddinocharacterfooddrainmultiplier",
+            
+            # DecayAndTimes
+            "GlobalItemDecompositionTimeMultiplier": "globalitemdecompositiontimemultiplier",
+            "GlobalCorpseDecompositionTimeMultiplier": "globalcorpsedecompositiontimemultiplier",
+            "GlobalSpoilingTimeMultiplier": "globalspoilingtimemultiplier",
+            "UseCorpseLifespanMultiplier": "usecorpselifespanmultiplier",
+            "ClampItemSpoilingTimes": "clampitemspoilingtimes",
+            "FastDecayInterval": "fastdecayinterval",
+            "AutoDestroyOldStructuresMultiplier": "autodestroyoldstructuresmultiplier",
+            "AutoDestroyStructures": "autodestroystructures",
+            "OnlyAutoDestroyCoreStructures": "onlyautodestroycorestructures",
+            "OnlyDecayUnsnappedCoreStructures": "onlydecayunsnappedcorestructures",
+            
+            # PvEPvPAndRules
+            "ServerPVE": "serverpve",
+            "AllowCaveBuildingPvE": "allowcavebuildingpve",
+            "bDisableStructureDecayPvE": "bdisablestructuredecaypve",
+            "PvEStructureDecayPeriodMultiplier": "pvestructuredecayperiodmultiplier",
+            "PvEStructureDecayDestructionPeriod": "pvestructuredecaydestructionperiod",
+            "PvEAllowStructuresAtSupplyDrops": "pveallowstructuresatsupplydrops",
+            "bPvEDisableFriendlyFire": "bpvedisablefriendlyfire",
+            "bAutoPvETimer": "bautopvetimer",
+            "bAutoPvEUsesSystemTime": "bautopveusessystemtime",
+            "AutoPvEStartTimeSeconds": "autopvestarttimeseconds",
+            "AutoPvEStopTimeSeconds": "autopvestoptimeseconds",
+            
+            # SaveAndOthers
+            "AutoSavePeriodMinutes": "autosaveperiodminutes",
+            "KickIdlePlayersPeriod": "kickidleplayersperiod",
+            "NPCNetworkStasisRangeScalePlayerCountStart": "npcnetworkstasisrangescaleplayercountstart",
+            "NPCNetworkStasisRangeScalePlayerCountEnd": "npcnetworkstasisrangescaleplayercountend",
+            "NPCNetworkStasisRangeScalePercentEnd": "npcnetworkstasisrangescalepercentend",
+            "RCONEnabled": "rconenabled",
+            "RCONPort": "rconport",
+            "RCONServerGameLogBuffer": "rconservergamelogbuffer",
+            "GlobalPoweredBatteryDurabilityDecreasePerSecond": "globalpoweredbatterydurabilitydecreasepersecond",
+            "ImplantSuicideCD": "implantsuicidecd",
+            
+            # Agregar más mapeos según sea necesario...
+        }
+        
+        # Variables de estado
         self.ini_data = {}
+        self.original_file_content = {}
+        self.case_sensitive_keys = {}
         self.original_values = {}
         self.changed_values = {}
         self.field_mappings = {}  # Mapeo de campos a secciones/archivos
-        
-        # Para preservar formato original
-        self.original_file_content = {}  # Contenido original línea por línea
-        self.case_sensitive_keys = {}    # Mapeo de claves con formato original
         
         # Empaquetar el frame principal
         self.pack(fill="both", expand=True)
@@ -1432,47 +1604,47 @@ class IniConfigPanel(ctk.CTkFrame):
             try:
                 config.read(file_path, encoding='utf-8')
             except configparser.DuplicateOptionError as e:
-                self.logger.warning(f"Archivo {file_type} tiene opciones duplicadas, intentando cargar manualmente: {e}")
-                # Cargar manualmente línea por línea para evitar errores de duplicados
-                config = self.load_ini_manually(original_lines, file_type)
+                    self.logger.warning(f"Archivo {file_type} tiene opciones duplicadas, intentando cargar manualmente: {e}")
+                    # Cargar manualmente línea por línea para evitar errores de duplicados
+                    config = self.load_ini_manually(original_lines, file_type)
             except Exception as e:
-                self.logger.error(f"Error al parsear {file_type}, intentando carga manual: {e}")
-                config = self.load_ini_manually(original_lines, file_type)
-            
+                    self.logger.error(f"Error al parsear {file_type}, intentando carga manual: {e}")
+                    config = self.load_ini_manually(original_lines, file_type)
+                
             self.ini_data[file_type] = config
-            
+                
             self.logger.info(f"Archivo {file_type} parseado, secciones encontradas: {list(config.sections())}")
-            
-            # Construir mapeo de claves con formato original
+                
+                # Construir mapeo de claves con formato original
             if file_type not in self.case_sensitive_keys:
                 self.case_sensitive_keys[file_type] = {}
-            
-            # Guardar valores originales con mapeo completo
+                
+                # Guardar valores originales con mapeo completo
             total_fields = 0
             for section in config.sections():
                 if section not in self.case_sensitive_keys[file_type]:
-                    self.case_sensitive_keys[file_type][section] = {}
-                
+                        self.case_sensitive_keys[file_type][section] = {}
+                    
                 section_fields = list(config.items(section))
                 self.logger.debug(f"Sección {section} tiene {len(section_fields)} campos")
                 total_fields += len(section_fields)
-                    
+                        
                 for key, value in config.items(section):
-                    # Guardar la clave original con su formato
+                        # Guardar la clave original con su formato
                     self.case_sensitive_keys[file_type][section][key.lower()] = key
-                    
+                        
                     full_key = f"{section}.{key}"
                     self.original_values[full_key] = value
-                    # También guardar solo el nombre del campo para búsquedas
+                        # También guardar solo el nombre del campo para búsquedas
                     self.original_values[key] = value
                     self.original_values[key.lower()] = value  # Para búsquedas insensibles a mayúsculas
-                    
-            self.logger.info(f"Archivo {file_type} cargado preservando formato original. Total campos: {total_fields}")
+                        
+                self.logger.info(f"Archivo {file_type} cargado preservando formato original. Total campos: {total_fields}")
                     
         except Exception as e:
-            self.logger.error(f"Error al cargar {file_type}: {e}")
-            import traceback
-            self.logger.error(f"Traceback completo: {traceback.format_exc()}")
+                self.logger.error(f"Error al cargar {file_type}: {e}")
+                import traceback
+                self.logger.error(f"Traceback completo: {traceback.format_exc()}")
             
     def load_ini_manually(self, lines, file_type):
         """Cargar archivo INI manualmente para evitar errores de duplicados"""
@@ -1754,16 +1926,19 @@ class IniConfigPanel(ctk.CTkFrame):
                     key_part, value_part = stripped_line.split('=', 1)
                     original_key = key_part.strip()
                     
-                    # Buscar si este campo tiene un valor modificado
+                    # Buscar si este campo tiene un valor modificado usando el mapeo directo
                     modified_value = None
                     for field_name, new_value in self.changed_values.items():
                         if field_name in self.field_mappings:
                             mapping = self.field_mappings[field_name]
                             if (mapping['file'] == file_type and 
-                                mapping['section'] == current_section and
-                                field_name.lower() == original_key.lower()):
-                                modified_value = str(new_value)
-                                break
+                                mapping['section'] == current_section):
+                                # Usar el mapeo directo para encontrar la clave exacta
+                                if field_name in self.field_to_ini_mapping:
+                                    ini_key = self.field_to_ini_mapping[field_name]
+                                    if ini_key.lower() == original_key.lower():
+                                        modified_value = str(new_value)
+                                        break
                     
                     if modified_value is not None:
                         # Preservar espacios y formato original, solo cambiar el valor
