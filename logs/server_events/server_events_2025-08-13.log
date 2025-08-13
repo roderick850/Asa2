@@ -29,3 +29,55 @@
 2025-08-13 00:13:02 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba2 | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
 2025-08-13 00:17:37 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
 2025-08-13 00:30:47 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 00:50:21 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 00:55:57 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 01:00:09 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 08:02:41 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 08:17:52 | INFO | 📋 BACKUP AUTOMÁTICO INICIADO | Servidor: Prueba | Iniciando backup del servidor
+2025-08-13 08:17:54 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: saveworld
+2025-08-13 08:32:54 | INFO | 📋 BACKUP AUTOMÁTICO INICIADO | Servidor: Prueba | Iniciando backup del servidor
+2025-08-13 08:32:54 | INFO | 🎮 RCON ✅ EXITOSO | Servidor: Prueba | Comando: saveworld | Resultado: World Saved
+2025-08-13 08:41:10 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 08:44:25 | INFO | 🎮 RCON ✅ EXITOSO | Servidor: Prueba | Comando: saveworld | Resultado: World Saved
+2025-08-13 08:44:28 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:44:28 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:44:28 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:44:29 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:44:29 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:44:32 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:44:32 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:45:03 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: saveworld
+2025-08-13 08:45:07 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:46:55 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 08:54:59 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 08:56:40 | INFO | 🎮 RCON ✅ EXITOSO | Servidor: Prueba | Comando: saveworld | Resultado: World Saved
+2025-08-13 08:56:44 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:56:44 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:56:44 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:56:44 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:56:45 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:56:47 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 08:56:47 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: Prueba | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-13 09:08:55 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 09:16:07 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 09:20:21 | INFO | 🎮 RCON ✅ EXITOSO | Servidor: Prueba | Comando: GetServerInfo | Resultado: Server received, But no response!!
+2025-08-13 09:20:29 | INFO | 🎮 RCON ✅ EXITOSO | Servidor: Prueba | Comando: listPlayers | Resultado: No Players Connected
+2025-08-13 09:21:24 | INFO | 🎮 RCON ✅ EXITOSO | Servidor: Prueba | Comando: broadcast hola | Resultado: Server received, But no response!!
+2025-08-13 09:27:41 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 09:29:38 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: GetServerInfo
+2025-08-13 09:32:20 | INFO | 🎮 RCON ✅ EXITOSO | Servidor: Prueba | Comando: GetServerInfo | Resultado: Server received, But no response!!
+2025-08-13 09:33:09 | INFO | 🎮 RCON ✅ EXITOSO | Servidor: Prueba | Comando: ShowWhitelist | Resultado: Server received, But no response!!
+2025-08-13 09:33:18 | INFO | 🎮 RCON ✅ EXITOSO | Servidor: Prueba | Comando: ShowWorldInfo | Resultado: Server received, But no response!!
+2025-08-13 09:33:28 | INFO | 🎮 RCON ✅ EXITOSO | Servidor: Prueba | Comando: ShowBanList | Resultado: Server received, But no response!!
+2025-08-13 09:34:16 | INFO | 🎮 RCON ✅ EXITOSO | Servidor: Prueba | Comando: GetServerInfo | Resultado: Server received, But no response!!
+2025-08-13 09:36:36 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 09:42:34 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: saveworld
+2025-08-13 09:43:01 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 09:45:23 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: GetServerInfo
+2025-08-13 09:58:12 | INFO | 📋 BACKUP AUTOMÁTICO INICIADO | Servidor: Prueba | Iniciando backup del servidor
+2025-08-13 09:58:14 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: saveworld
+2025-08-13 10:08:03 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 10:23:14 | INFO | 📋 BACKUP AUTOMÁTICO INICIADO | Servidor: Prueba | Iniciando backup del servidor
+2025-08-13 10:23:16 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: saveworld
+2025-08-13 10:38:16 | INFO | 📋 BACKUP AUTOMÁTICO INICIADO | Servidor: Prueba | Iniciando backup del servidor
+2025-08-13 10:38:18 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: saveworld

@@ -4,6 +4,9 @@ import threading
 import os
 import json
 from pathlib import Path
+from datetime import datetime, timedelta
+import schedule
+import time
 
 
 class RconPanel(ctk.CTkFrame):
@@ -21,6 +24,19 @@ class RconPanel(ctk.CTkFrame):
         # Variables del estado
         self.is_connected = False
         self.command_history = []
+        
+        # Variables para programación de tareas
+        self.scheduled_tasks = []
+        self.scheduler_running = False
+        self.scheduler_thread = None
+        
+        # Variables para tareas rápidas personalizables
+        self.quick_tasks = []
+        self.quick_tasks_file = "config/quick_rcon_tasks.json"
+        
+        # Cargar tareas programadas y rápidas
+        self.load_scheduled_tasks()
+        self.load_quick_tasks_config()
         
         # Empaquetar el frame principal
         self.pack(fill="both", expand=True)
@@ -200,6 +216,15 @@ class RconPanel(ctk.CTkFrame):
         self.export_results_btn = ctk.CTkButton(results_buttons_frame, text="💾 Exportar", 
                                                command=self.export_results, width=80)
         self.export_results_btn.pack(side="left", padx=5)
+        
+        # === PROGRAMACIÓN DE TAREAS ===
+        self.create_scheduler_section()
+        
+        # === COMANDOS AVANZADOS ===
+        self.create_advanced_commands_section()
+        
+        # === MONITOREO DEL SERVIDOR ===
+        self.create_monitoring_section()
     
     def load_rcon_config(self):
         """Cargar configuración RCON guardada"""
@@ -297,6 +322,10 @@ class RconPanel(ctk.CTkFrame):
                 return self.rcon_port
         except:
             return self.rcon_port
+    
+    def get_rcon_status(self):
+        """Obtener estado de RCON (si está habilitado)"""
+        return self.get_rcon_enabled()
     
     def save_rcon_config(self):
         """Guardar configuración RCON (sin password, se toma automáticamente)"""
@@ -652,3 +681,1347 @@ class RconPanel(ctk.CTkFrame):
         except Exception as e:
             self.logger.error(f"Error al exportar resultados: {e}")
             self.add_result(f"❌ Error al exportar: {e}")
+    
+    def create_scheduler_section(self):
+        """Crear sección de programación de tareas"""
+        scheduler_frame = ctk.CTkFrame(self.main_scrollable_frame)
+        scheduler_frame.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
+        scheduler_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
+        
+        # Título
+        scheduler_title = ctk.CTkLabel(scheduler_frame, text="⏰ Programación de Tareas RCON", 
+                                      font=ctk.CTkFont(size=14, weight="bold"))
+        scheduler_title.grid(row=0, column=0, columnspan=4, pady=(10, 5))
+        
+        # Estado del programador
+        status_frame = ctk.CTkFrame(scheduler_frame, fg_color="transparent")
+        status_frame.grid(row=1, column=0, columnspan=4, pady=5, sticky="ew")
+        
+        self.scheduler_status_label = ctk.CTkLabel(status_frame, text="⏸️ Programador: Detenido", 
+                                                  fg_color=("lightcoral", "darkred"), 
+                                                  corner_radius=5, padx=10, pady=3)
+        self.scheduler_status_label.pack(side="left", padx=10)
+        
+        self.start_scheduler_btn = ctk.CTkButton(status_frame, text="▶️ Iniciar", 
+                                                command=self.start_scheduler, width=80)
+        self.start_scheduler_btn.pack(side="left", padx=5)
+        
+        self.stop_scheduler_btn = ctk.CTkButton(status_frame, text="⏹️ Detener", 
+                                               command=self.stop_scheduler, width=80)
+        self.stop_scheduler_btn.pack(side="left", padx=5)
+        
+        # Formulario para nueva tarea
+        form_frame = ctk.CTkFrame(scheduler_frame)
+        form_frame.grid(row=2, column=0, columnspan=4, pady=5, padx=10, sticky="ew")
+        form_frame.grid_columnconfigure((1, 3), weight=1)
+        
+        ctk.CTkLabel(form_frame, text="Nueva Tarea Programada:", 
+                    font=ctk.CTkFont(size=12, weight="bold")).grid(row=0, column=0, columnspan=4, pady=5)
+        
+        # Comando
+        ctk.CTkLabel(form_frame, text="Comando:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.task_command_entry = ctk.CTkEntry(form_frame, placeholder_text="Ej: saveworld")
+        self.task_command_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        
+        # Tipo de programación
+        ctk.CTkLabel(form_frame, text="Tipo:").grid(row=1, column=2, padx=5, pady=5, sticky="w")
+        self.task_type_var = ctk.StringVar(value="Cada 5 minutos")
+        self.task_type_combo = ctk.CTkComboBox(form_frame, 
+                                              values=["Cada 5 minutos", "Cada 15 minutos", "Cada 30 minutos", "Cada hora", "Cada 6 horas", "Diario"],
+                                              variable=self.task_type_var,
+                                              width=120)
+        self.task_type_combo.grid(row=1, column=3, padx=5, pady=5, sticky="ew")
+        self.task_type_combo.bind("<<ComboboxSelected>>", self.on_task_type_change)
+        
+        # Configuración de tiempo
+        self.time_config_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
+        self.time_config_frame.grid(row=2, column=0, columnspan=4, pady=5, sticky="ew")
+        
+        # Descripción
+        ctk.CTkLabel(form_frame, text="Descripción:").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.task_description_entry = ctk.CTkEntry(form_frame, placeholder_text="Descripción opcional")
+        self.task_description_entry.grid(row=3, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
+        
+        # Botón agregar
+        self.add_task_btn = ctk.CTkButton(form_frame, text="➕ Agregar Tarea", 
+                                         command=self.add_scheduled_task, width=120)
+        self.add_task_btn.grid(row=3, column=3, padx=5, pady=5)
+        
+        # Separador
+        separator = ctk.CTkFrame(scheduler_frame, height=2)
+        separator.grid(row=3, column=0, columnspan=4, pady=20, padx=10, sticky="ew")
+        
+        # Frame de tareas personalizables (estilo comandos directos)
+        custom_tasks_frame = ctk.CTkFrame(scheduler_frame)
+        custom_tasks_frame.grid(row=4, column=0, columnspan=4, pady=10, padx=10, sticky="ew")
+        custom_tasks_frame.grid_columnconfigure(0, weight=1)
+        
+        ctk.CTkLabel(custom_tasks_frame, text="⚡ Tareas Rápidas Personalizables", 
+                    font=ctk.CTkFont(size=16, weight="bold")).grid(row=0, column=0, pady=10)
+        
+        # Frame para botones de tareas rápidas
+        self.quick_tasks_frame = ctk.CTkFrame(custom_tasks_frame)
+        self.quick_tasks_frame.grid(row=1, column=0, pady=10, padx=10, sticky="ew")
+        
+        # Botones de gestión de tareas personalizables
+        management_frame = ctk.CTkFrame(custom_tasks_frame)
+        management_frame.grid(row=2, column=0, pady=10, padx=10, sticky="ew")
+        
+        ctk.CTkButton(management_frame, text="➕ Nueva Tarea Rápida", 
+                     command=self.add_quick_task, fg_color="green", width=150).pack(side="left", padx=5)
+        
+        ctk.CTkButton(management_frame, text="✏️ Editar Tareas", 
+                     command=self.edit_quick_tasks, fg_color="blue", width=150).pack(side="left", padx=5)
+        
+        ctk.CTkButton(management_frame, text="🗑️ Eliminar Tarea", 
+                     command=self.delete_quick_task, fg_color="red", width=150).pack(side="left", padx=5)
+        
+        # Separador
+        separator2 = ctk.CTkFrame(scheduler_frame, height=2)
+        separator2.grid(row=5, column=0, columnspan=4, pady=20, padx=10, sticky="ew")
+        
+        # Lista de tareas programadas automáticas (estilo comandos directos)
+        auto_tasks_frame = ctk.CTkFrame(scheduler_frame)
+        auto_tasks_frame.grid(row=6, column=0, columnspan=4, pady=10, padx=10, sticky="ew")
+        auto_tasks_frame.grid_columnconfigure(0, weight=1)
+        
+        ctk.CTkLabel(auto_tasks_frame, text="⏰ Tareas Automáticas Programadas", 
+                    font=ctk.CTkFont(size=16, weight="bold")).grid(row=0, column=0, pady=10)
+        
+        # Formulario de nueva tarea programada
+        task_form_frame = ctk.CTkFrame(auto_tasks_frame)
+        task_form_frame.grid(row=1, column=0, pady=10, padx=10, sticky="ew")
+        task_form_frame.grid_columnconfigure(1, weight=1)
+        
+        # Tipo de comando
+        ctk.CTkLabel(task_form_frame, text="Tipo de Comando:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.scheduled_command_type = ctk.CTkOptionMenu(task_form_frame, values=[
+            "broadcast", "saveworld", "listplayers", "kick", "ban", 
+            "unban", "admincheat", "destroywilddinos", "time", "weather", "custom"
+        ])
+        self.scheduled_command_type.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.scheduled_command_type.set("broadcast")
+        
+        # Parámetros del comando
+        ctk.CTkLabel(task_form_frame, text="Parámetros:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.scheduled_command_params = ctk.CTkEntry(task_form_frame, placeholder_text="Parámetros del comando")
+        self.scheduled_command_params.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        
+        # Fecha y hora
+        datetime_frame = ctk.CTkFrame(task_form_frame)
+        datetime_frame.grid(row=2, column=0, columnspan=2, pady=10, padx=5, sticky="ew")
+        datetime_frame.grid_columnconfigure(1, weight=1)
+        datetime_frame.grid_columnconfigure(3, weight=1)
+        
+        ctk.CTkLabel(datetime_frame, text="Fecha:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.scheduled_date_entry = ctk.CTkEntry(datetime_frame, width=120, placeholder_text="YYYY-MM-DD")
+        self.scheduled_date_entry.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+        
+        ctk.CTkLabel(datetime_frame, text="Hora:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        self.scheduled_time_entry = ctk.CTkEntry(datetime_frame, width=100, placeholder_text="HH:MM:SS")
+        self.scheduled_time_entry.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+        
+        # Botones de tiempo rápido
+        quick_time_frame = ctk.CTkFrame(datetime_frame)
+        quick_time_frame.grid(row=1, column=0, columnspan=4, pady=5, sticky="ew")
+        
+        ctk.CTkLabel(quick_time_frame, text="⚡ Tiempo rápido:").pack(side="left", padx=5)
+        ctk.CTkButton(quick_time_frame, text="+1 min", width=60,
+                     command=lambda: self.set_scheduled_quick_time(1)).pack(side="left", padx=2)
+        ctk.CTkButton(quick_time_frame, text="+5 min", width=60,
+                     command=lambda: self.set_scheduled_quick_time(5)).pack(side="left", padx=2)
+        ctk.CTkButton(quick_time_frame, text="+15 min", width=60,
+                     command=lambda: self.set_scheduled_quick_time(15)).pack(side="left", padx=2)
+        ctk.CTkButton(quick_time_frame, text="+1 hora", width=60,
+                     command=lambda: self.set_scheduled_quick_time(60)).pack(side="left", padx=2)
+        
+        # Descripción
+        ctk.CTkLabel(task_form_frame, text="Descripción:").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.scheduled_description_entry = ctk.CTkEntry(task_form_frame, placeholder_text="Descripción opcional")
+        self.scheduled_description_entry.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
+        
+        # Botón crear tarea
+        ctk.CTkButton(task_form_frame, text="✅ Crear Tarea Programada", 
+                     command=self.create_scheduled_task, fg_color="green").grid(row=4, column=0, columnspan=2, pady=10)
+        
+        # Botones de gestión de tareas automáticas
+        auto_buttons_frame = ctk.CTkFrame(auto_tasks_frame)
+        auto_buttons_frame.grid(row=2, column=0, pady=10, sticky="ew")
+        
+        ctk.CTkButton(auto_buttons_frame, text="📋 Ver Tareas", width=120, 
+                     command=self.show_scheduled_tasks_list).pack(side="left", padx=5)
+        ctk.CTkButton(auto_buttons_frame, text="📊 Historial", width=120,
+                     command=self.show_scheduled_history).pack(side="left", padx=5)
+        ctk.CTkButton(auto_buttons_frame, text="🗑️ Limpiar Completadas", width=120,
+                     command=self.clear_completed_tasks).pack(side="left", padx=5)
+        
+        # Frame scrollable para las tareas automáticas
+        self.tasks_scrollable = ctk.CTkScrollableFrame(auto_tasks_frame, height=150)
+        self.tasks_scrollable.grid(row=3, column=0, sticky="ew", padx=10, pady=(5, 10))
+        self.tasks_scrollable.grid_columnconfigure(0, weight=1)
+        
+        # Actualizar configuración de tiempo inicial
+        self.update_time_config()
+        
+        # Inicializar fechas por defecto para tareas programadas
+        self.set_default_datetime()
+        
+        # Cargar y actualizar listas
+        self.load_scheduled_tasks()
+        self.load_scheduled_tasks_display()
+        self.update_tasks_list()
+        self.load_quick_tasks()
+        self.load_scheduled_tasks_display()
+    
+    def create_advanced_commands_section(self):
+        """Crear sección de comandos avanzados"""
+        advanced_frame = ctk.CTkFrame(self.main_scrollable_frame)
+        advanced_frame.grid(row=5, column=0, sticky="ew", padx=5, pady=5)
+        advanced_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
+        
+        # Título
+        advanced_title = ctk.CTkLabel(advanced_frame, text="🔧 Comandos Avanzados", 
+                                     font=ctk.CTkFont(size=14, weight="bold"))
+        advanced_title.grid(row=0, column=0, columnspan=4, pady=(10, 5))
+        
+        # Fila 1 - Gestión de jugadores
+        self.whitelist_btn = ctk.CTkButton(advanced_frame, text="📋 Lista Blanca", 
+                                          command=lambda: self.execute_command("ShowWhitelist"), 
+                                          height=35)
+        self.whitelist_btn.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
+        
+        self.banlist_btn = ctk.CTkButton(advanced_frame, text="🚫 Lista Baneados", 
+                                        command=lambda: self.execute_command("ShowBanList"), 
+                                        height=35)
+        self.banlist_btn.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        
+        self.adminlist_btn = ctk.CTkButton(advanced_frame, text="👑 Lista Admins", 
+                                          command=lambda: self.execute_command("ShowAdminList"), 
+                                          height=35)
+        self.adminlist_btn.grid(row=1, column=2, padx=5, pady=5, sticky="ew")
+        
+        self.player_stats_btn = ctk.CTkButton(advanced_frame, text="📊 Stats Jugadores", 
+                                             command=self.show_player_stats_dialog, 
+                                             height=35)
+        self.player_stats_btn.grid(row=1, column=3, padx=5, pady=5, sticky="ew")
+        
+        # Fila 2 - Gestión del mundo
+        self.world_info_btn = ctk.CTkButton(advanced_frame, text="🌍 Info Mundo", 
+                                           command=lambda: self.execute_command("ShowWorldInfo"), 
+                                           height=35)
+        self.world_info_btn.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
+        
+        self.dino_count_btn = ctk.CTkButton(advanced_frame, text="🦕 Contar Dinos", 
+                                           command=lambda: self.execute_command("GetDinoCount"), 
+                                           height=35)
+        self.dino_count_btn.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
+        
+        self.destroy_wild_btn = ctk.CTkButton(advanced_frame, text="💥 Destruir Salvajes", 
+                                             command=self.show_destroy_wild_dialog, 
+                                             height=35,
+                                             fg_color=("orange", "darkorange"))
+        self.destroy_wild_btn.grid(row=2, column=2, padx=5, pady=5, sticky="ew")
+        
+        self.chat_log_btn = ctk.CTkButton(advanced_frame, text="💬 Log Chat", 
+                                         command=lambda: self.execute_command("GetChatLog"), 
+                                         height=35)
+        self.chat_log_btn.grid(row=2, column=3, padx=5, pady=(5, 10), sticky="ew")
+    
+    def create_monitoring_section(self):
+        """Crear sección de monitoreo del servidor"""
+        monitoring_frame = ctk.CTkFrame(self.main_scrollable_frame)
+        monitoring_frame.grid(row=6, column=0, sticky="ew", padx=5, pady=5)
+        monitoring_frame.grid_columnconfigure((0, 1), weight=1)
+        
+        # Título
+        monitoring_title = ctk.CTkLabel(monitoring_frame, text="📊 Monitoreo del Servidor", 
+                                       font=ctk.CTkFont(size=14, weight="bold"))
+        monitoring_title.grid(row=0, column=0, columnspan=2, pady=(10, 5))
+        
+        # Frame izquierdo - Información en tiempo real
+        info_frame = ctk.CTkFrame(monitoring_frame)
+        info_frame.grid(row=1, column=0, padx=(10, 5), pady=5, sticky="nsew")
+        info_frame.grid_columnconfigure(0, weight=1)
+        
+        ctk.CTkLabel(info_frame, text="📈 Información en Tiempo Real", 
+                    font=ctk.CTkFont(size=12, weight="bold")).grid(row=0, column=0, pady=5)
+        
+        self.server_info_text = ctk.CTkTextbox(info_frame, height=120, state="disabled")
+        self.server_info_text.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
+        
+        # Botones de actualización
+        info_buttons_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
+        info_buttons_frame.grid(row=2, column=0, pady=5)
+        
+        self.refresh_info_btn = ctk.CTkButton(info_buttons_frame, text="🔄 Actualizar", 
+                                             command=self.refresh_server_info, width=100)
+        self.refresh_info_btn.pack(side="left", padx=5)
+        
+        self.auto_refresh_switch = ctk.CTkSwitch(info_buttons_frame, text="Auto (30s)", 
+                                                command=self.toggle_auto_refresh)
+        self.auto_refresh_switch.pack(side="left", padx=10)
+        
+        # Frame derecho - Alertas y notificaciones
+        alerts_frame = ctk.CTkFrame(monitoring_frame)
+        alerts_frame.grid(row=1, column=1, padx=(5, 10), pady=5, sticky="nsew")
+        alerts_frame.grid_columnconfigure(0, weight=1)
+        
+        ctk.CTkLabel(alerts_frame, text="🚨 Alertas y Notificaciones", 
+                    font=ctk.CTkFont(size=12, weight="bold")).grid(row=0, column=0, pady=5)
+        
+        self.alerts_text = ctk.CTkTextbox(alerts_frame, height=120, state="disabled")
+        self.alerts_text.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
+        
+        # Configuración de alertas
+        alerts_config_frame = ctk.CTkFrame(alerts_frame, fg_color="transparent")
+        alerts_config_frame.grid(row=2, column=0, pady=5)
+        
+        self.player_alert_switch = ctk.CTkSwitch(alerts_config_frame, text="Alertas Jugadores")
+        self.player_alert_switch.pack(pady=2)
+        
+        self.performance_alert_switch = ctk.CTkSwitch(alerts_config_frame, text="Alertas Rendimiento")
+        self.performance_alert_switch.pack(pady=2)
+        
+        # Variables para monitoreo automático
+        self.auto_refresh_active = False
+        self.monitoring_thread = None
+        
+        # Configurar grid weights para que se expandan
+        monitoring_frame.grid_rowconfigure(1, weight=1)
+    
+    # Métodos para programación de tareas
+    def start_scheduler(self):
+        """Iniciar el programador de tareas"""
+        if not self.scheduler_running:
+            self.scheduler_running = True
+            self.scheduler_thread = threading.Thread(target=self.run_scheduler, daemon=True)
+            self.scheduler_thread.start()
+            self.scheduler_status_label.configure(text="Estado: ✅ Activo", text_color="green")
+            self.start_scheduler_btn.configure(state="disabled")
+            self.stop_scheduler_btn.configure(state="normal")
+            self.add_result("Programador de tareas iniciado")
+    
+    def stop_scheduler(self):
+        """Detener el programador de tareas"""
+        if self.scheduler_running:
+            self.scheduler_running = False
+            schedule.clear()
+            self.scheduler_status_label.configure(text="Estado: ❌ Inactivo", text_color="red")
+            self.start_scheduler_btn.configure(state="normal")
+            self.stop_scheduler_btn.configure(state="disabled")
+            self.add_result("Programador de tareas detenido")
+    
+    def run_scheduler(self):
+        """Ejecutar el bucle del programador"""
+        while self.scheduler_running:
+            schedule.run_pending()
+            time.sleep(1)
+    
+    def add_scheduled_task(self):
+        """Agregar nueva tarea programada"""
+        command = self.task_command_entry.get().strip()
+        task_type = self.task_type_var.get()
+        description = self.task_description_entry.get().strip()
+        
+        if not command:
+            self.add_result("Error: El comando no puede estar vacío")
+            return
+        
+        if not description:
+            description = f"Tarea {task_type}: {command}"
+        
+        # Crear la tarea según el tipo
+        task_id = f"task_{len(self.scheduled_tasks) + 1}"
+        
+        try:
+            if task_type == "Cada 5 minutos":
+                schedule.every(5).minutes.do(self.execute_scheduled_command, command, task_id)
+            elif task_type == "Cada 15 minutos":
+                schedule.every(15).minutes.do(self.execute_scheduled_command, command, task_id)
+            elif task_type == "Cada 30 minutos":
+                schedule.every(30).minutes.do(self.execute_scheduled_command, command, task_id)
+            elif task_type == "Cada hora":
+                schedule.every().hour.do(self.execute_scheduled_command, command, task_id)
+            elif task_type == "Cada 6 horas":
+                schedule.every(6).hours.do(self.execute_scheduled_command, command, task_id)
+            elif task_type == "Diario":
+                schedule.every().day.at("12:00").do(self.execute_scheduled_command, command, task_id)
+            
+            # Guardar la tarea
+            task = {
+                'id': task_id,
+                'command': command,
+                'type': task_type,
+                'description': description,
+                'created': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+            self.scheduled_tasks.append(task)
+            self.save_scheduled_tasks()
+            self.update_tasks_list()
+            
+            # Limpiar campos
+            self.task_command_entry.delete(0, 'end')
+            self.task_description_entry.delete(0, 'end')
+            
+            self.add_result(f"Tarea programada agregada: {description}")
+            
+        except Exception as e:
+            self.add_result(f"Error al agregar tarea: {str(e)}")
+    
+    def execute_scheduled_command(self, command, task_id):
+        """Ejecutar comando programado"""
+        try:
+            self.add_result(f"[PROGRAMADO] Ejecutando: {command}")
+            self.execute_command(command)
+        except Exception as e:
+            self.add_result(f"Error en tarea programada {task_id}: {str(e)}")
+    
+    def remove_selected_task(self):
+        """Eliminar tarea seleccionada (método legacy)"""
+        self.add_result("Usa el botón 🗑️ junto a cada tarea para eliminarla")
+    
+    def remove_task_by_index(self, index):
+        """Eliminar tarea por índice"""
+        if 0 <= index < len(self.scheduled_tasks):
+            task = self.scheduled_tasks[index]
+            
+            # Eliminar del programador
+            schedule.clear(task['id'])
+            
+            # Eliminar de la lista
+            self.scheduled_tasks.pop(index)
+            self.save_scheduled_tasks()
+            self.update_tasks_list()
+            
+            self.add_result(f"Tarea eliminada: {task['description']}")
+        else:
+            self.add_result("Error: Índice de tarea inválido")
+    
+    def update_tasks_list(self):
+        """Actualizar lista de tareas programadas"""
+        # Limpiar widgets existentes en el scrollable frame
+        for widget in self.tasks_scrollable.winfo_children():
+            widget.destroy()
+        
+        # Crear widgets para cada tarea
+        for i, task in enumerate(self.scheduled_tasks):
+            task_frame = ctk.CTkFrame(self.tasks_scrollable)
+            task_frame.grid(row=i, column=0, sticky="ew", padx=5, pady=2)
+            task_frame.grid_columnconfigure(0, weight=1)
+            
+            # Información de la tarea
+            display_text = f"[{task['type']}] {task['description']} - {task['created']}"
+            task_label = ctk.CTkLabel(task_frame, text=display_text, anchor="w")
+            task_label.grid(row=0, column=0, padx=10, pady=5, sticky="ew")
+            
+            # Botón eliminar
+            delete_btn = ctk.CTkButton(task_frame, text="🗑️", width=30, height=25,
+                                     command=lambda idx=i: self.remove_task_by_index(idx))
+            delete_btn.grid(row=0, column=1, padx=5, pady=5)
+    
+    def save_scheduled_tasks(self):
+        """Guardar tareas programadas en archivo"""
+        try:
+            tasks_file = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'scheduled_rcon_tasks.json')
+            os.makedirs(os.path.dirname(tasks_file), exist_ok=True)
+            
+            with open(tasks_file, 'w', encoding='utf-8') as f:
+                json.dump(self.scheduled_tasks, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            self.add_result(f"Error al guardar tareas: {str(e)}")
+    
+    def load_scheduled_tasks(self):
+        """Cargar tareas programadas desde archivo"""
+        try:
+            tasks_file = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'scheduled_rcon_tasks.json')
+            if os.path.exists(tasks_file):
+                with open(tasks_file, 'r', encoding='utf-8') as f:
+                    self.scheduled_tasks = json.load(f)
+                    
+                # Recargar tareas en el programador
+                for task in self.scheduled_tasks:
+                    task_type = task['type']
+                    command = task['command']
+                    task_id = task['id']
+                    
+                    if task_type == "Cada 5 minutos":
+                        schedule.every(5).minutes.do(self.execute_scheduled_command, command, task_id)
+                    elif task_type == "Cada 15 minutos":
+                        schedule.every(15).minutes.do(self.execute_scheduled_command, command, task_id)
+                    elif task_type == "Cada 30 minutos":
+                        schedule.every(30).minutes.do(self.execute_scheduled_command, command, task_id)
+                    elif task_type == "Cada hora":
+                        schedule.every().hour.do(self.execute_scheduled_command, command, task_id)
+                    elif task_type == "Cada 6 horas":
+                        schedule.every(6).hours.do(self.execute_scheduled_command, command, task_id)
+                    elif task_type == "Diario":
+                        schedule.every().day.at("12:00").do(self.execute_scheduled_command, command, task_id)
+        except Exception as e:
+             self.add_result(f"Error al cargar tareas: {str(e)}")
+             self.scheduled_tasks = []
+    
+    # Métodos para comandos avanzados
+    def show_player_stats_dialog(self):
+        """Mostrar diálogo para estadísticas de jugador"""
+        dialog = ctk.CTkInputDialog(text="Ingresa el nombre del jugador:", title="Estadísticas de Jugador")
+        player_name = dialog.get_input()
+        
+        if player_name:
+            self.execute_command(f"GetPlayerStats {player_name}")
+    
+    def show_destroy_wild_dialog(self):
+        """Mostrar diálogo de confirmación para destruir dinosaurios salvajes"""
+        dialog = ctk.CTkToplevel(self)
+        dialog.title("Confirmar Acción")
+        dialog.geometry("400x200")
+        dialog.transient(self)
+        dialog.grab_set()
+        
+        # Centrar el diálogo
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (400 // 2)
+        y = (dialog.winfo_screenheight() // 2) - (200 // 2)
+        dialog.geometry(f"400x200+{x}+{y}")
+        
+        # Contenido del diálogo
+        warning_label = ctk.CTkLabel(dialog, text="⚠️ ADVERTENCIA", 
+                                    font=ctk.CTkFont(size=16, weight="bold"),
+                                    text_color="orange")
+        warning_label.pack(pady=10)
+        
+        message_label = ctk.CTkLabel(dialog, 
+                                    text="Esta acción eliminará TODOS los dinosaurios salvajes\ndel servidor. Esta acción NO se puede deshacer.",
+                                    font=ctk.CTkFont(size=12))
+        message_label.pack(pady=10)
+        
+        question_label = ctk.CTkLabel(dialog, text="¿Estás seguro de continuar?", 
+                                     font=ctk.CTkFont(size=12, weight="bold"))
+        question_label.pack(pady=10)
+        
+        # Botones
+        buttons_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        buttons_frame.pack(pady=20)
+        
+        def confirm_destroy():
+            self.execute_command("DestroyWildDinos")
+            dialog.destroy()
+        
+        def cancel_destroy():
+            dialog.destroy()
+        
+        cancel_btn = ctk.CTkButton(buttons_frame, text="❌ Cancelar", 
+                                  command=cancel_destroy, width=100)
+        cancel_btn.pack(side="left", padx=10)
+        
+        confirm_btn = ctk.CTkButton(buttons_frame, text="✅ Confirmar", 
+                                   command=confirm_destroy, width=100,
+                                   fg_color=("red", "darkred"))
+        confirm_btn.pack(side="right", padx=10)
+    
+    # Métodos para monitoreo del servidor
+    def refresh_server_info(self):
+        """Actualizar información del servidor"""
+        try:
+            # Obtener información básica del servidor
+            commands_info = [
+                ("ListPlayers", "👥 Jugadores Conectados:"),
+                ("GetGameTime", "⏰ Tiempo del Juego:"),
+                ("ShowWorldInfo", "🌍 Información del Mundo:"),
+                ("GetDinoCount", "🦕 Conteo de Dinosaurios:")
+            ]
+            
+            info_text = f"📊 Actualizado: {datetime.now().strftime('%H:%M:%S')}\n\n"
+            
+            for command, label in commands_info:
+                try:
+                    # Ejecutar comando y capturar resultado
+                    result = self.execute_rcon_command_sync(command)
+                    if result:
+                        info_text += f"{label}\n{result}\n\n"
+                    else:
+                        info_text += f"{label}\nNo disponible\n\n"
+                except Exception as e:
+                    info_text += f"{label}\nError: {str(e)}\n\n"
+            
+            # Actualizar el textbox
+            self.server_info_text.configure(state="normal")
+            self.server_info_text.delete("1.0", "end")
+            self.server_info_text.insert("1.0", info_text)
+            self.server_info_text.configure(state="disabled")
+            
+        except Exception as e:
+            self.add_result(f"Error al actualizar información del servidor: {str(e)}")
+    
+    def execute_rcon_command_sync(self, command):
+        """Ejecutar comando RCON de forma síncrona y retornar resultado"""
+        try:
+            if not self.get_rcon_status():
+                return "RCON no está habilitado"
+            
+            rcon_executable = self.find_rcon_executable()
+            if not rcon_executable:
+                return "Ejecutable RCON no encontrado"
+            
+            rcon_command = [
+                rcon_executable,
+                "-H", self.rcon_ip,
+                "-P", str(self.rcon_port),
+                "-p", self.rcon_password,
+                command
+            ]
+            
+            result = subprocess.run(
+                rcon_command,
+                capture_output=True,
+                text=True,
+                timeout=10,
+                cwd=os.path.dirname(rcon_executable)
+            )
+            
+            if result.returncode == 0:
+                return result.stdout.strip()
+            else:
+                return f"Error: {result.stderr.strip()}"
+                
+        except subprocess.TimeoutExpired:
+            return "Timeout: El comando tardó demasiado"
+        except Exception as e:
+            return f"Error: {str(e)}"
+    
+    def toggle_auto_refresh(self):
+        """Activar/desactivar actualización automática"""
+        if self.auto_refresh_switch.get():
+            self.start_auto_refresh()
+        else:
+            self.stop_auto_refresh()
+    
+    def start_auto_refresh(self):
+        """Iniciar actualización automática"""
+        if not self.auto_refresh_active:
+            self.auto_refresh_active = True
+            self.monitoring_thread = threading.Thread(target=self.auto_refresh_loop, daemon=True)
+            self.monitoring_thread.start()
+            self.add_alert("🔄 Monitoreo automático iniciado")
+    
+    def stop_auto_refresh(self):
+        """Detener actualización automática"""
+        self.auto_refresh_active = False
+        self.add_alert("⏹️ Monitoreo automático detenido")
+    
+    def auto_refresh_loop(self):
+        """Bucle de actualización automática"""
+        while self.auto_refresh_active:
+            try:
+                self.refresh_server_info()
+                self.check_server_alerts()
+                time.sleep(30)  # Actualizar cada 30 segundos
+            except Exception as e:
+                self.add_alert(f"Error en monitoreo automático: {str(e)}")
+                time.sleep(30)
+    
+    def check_server_alerts(self):
+        """Verificar alertas del servidor"""
+        try:
+            current_time = datetime.now()
+            
+            # Verificar alertas de jugadores si está habilitado
+            if self.player_alert_switch.get():
+                players_result = self.execute_rcon_command_sync("ListPlayers")
+                if players_result and "No players" not in players_result:
+                    player_count = len([line for line in players_result.split('\n') if line.strip()])
+                    if player_count > 10:  # Alerta si hay más de 10 jugadores
+                        self.add_alert(f"⚠️ Alto número de jugadores: {player_count}")
+            
+            # Verificar alertas de rendimiento si está habilitado
+            if self.performance_alert_switch.get():
+                dino_result = self.execute_rcon_command_sync("GetDinoCount")
+                if dino_result and dino_result.isdigit():
+                    dino_count = int(dino_result)
+                    if dino_count > 50000:  # Alerta si hay más de 50k dinosaurios
+                        self.add_alert(f"⚠️ Alto número de dinosaurios: {dino_count}")
+                        
+        except Exception as e:
+            self.add_alert(f"Error verificando alertas: {str(e)}")
+    
+    def add_alert(self, message):
+        """Agregar alerta al panel de alertas"""
+        try:
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            alert_message = f"[{timestamp}] {message}\n"
+            
+            self.alerts_text.configure(state="normal")
+            self.alerts_text.insert("end", alert_message)
+            
+            # Mantener solo las últimas 50 líneas
+            lines = self.alerts_text.get("1.0", "end").split('\n')
+            if len(lines) > 50:
+                self.alerts_text.delete("1.0", f"{len(lines) - 50}.0")
+            
+            self.alerts_text.configure(state="disabled")
+            self.alerts_text.see("end")
+            
+        except Exception as e:
+             print(f"Error agregando alerta: {str(e)}")
+    
+    def on_task_type_change(self, event=None):
+        """Manejar cambio en el tipo de tarea"""
+        # Este método se puede usar para actualizar la UI según el tipo de tarea seleccionado
+        pass
+    
+    def update_time_config(self):
+        """Actualizar configuración de tiempo según el tipo de tarea"""
+        # Este método se puede usar para mostrar/ocultar opciones de tiempo específicas
+        pass
+    
+    # Métodos para tareas rápidas personalizables
+    def load_quick_tasks_config(self):
+        """Cargar configuración de tareas rápidas desde archivo"""
+        try:
+            # Asegurar que el directorio config existe
+            os.makedirs("config", exist_ok=True)
+            
+            if os.path.exists(self.quick_tasks_file):
+                with open(self.quick_tasks_file, 'r', encoding='utf-8') as f:
+                    self.quick_tasks = json.load(f)
+            else:
+                # Crear tareas por defecto
+                self.quick_tasks = [
+                    {"name": "📢 Broadcast", "command": "broadcast Mensaje del administrador", "color": "blue"},
+                    {"name": "💾 Guardar Mundo", "command": "saveworld", "color": "green"},
+                    {"name": "📋 Lista Jugadores", "command": "listplayers", "color": "orange"},
+                    {"name": "⏰ Tiempo", "command": "time", "color": "purple"}
+                ]
+                self.save_quick_tasks_config()
+        except Exception as e:
+            self.logger.error(f"Error al cargar tareas rápidas: {e}")
+            self.quick_tasks = []
+    
+    def save_quick_tasks_config(self):
+        """Guardar configuración de tareas rápidas"""
+        try:
+            os.makedirs("config", exist_ok=True)
+            with open(self.quick_tasks_file, 'w', encoding='utf-8') as f:
+                json.dump(self.quick_tasks, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            self.logger.error(f"Error al guardar tareas rápidas: {e}")
+    
+    def load_quick_tasks(self):
+        """Cargar y mostrar botones de tareas rápidas"""
+        # Limpiar botones existentes
+        for widget in self.quick_tasks_frame.winfo_children():
+            widget.destroy()
+        
+        # Crear filas de botones
+        current_row = 0
+        current_col = 0
+        max_cols = 4
+        
+        for task in self.quick_tasks:
+            if current_col == 0:
+                row_frame = ctk.CTkFrame(self.quick_tasks_frame)
+                row_frame.pack(fill="x", pady=5)
+            
+            color = task.get("color", "blue")
+            btn = ctk.CTkButton(row_frame, text=task["name"], 
+                               command=lambda cmd=task["command"]: self.execute_quick_task(cmd),
+                               fg_color=color, width=120, height=35)
+            btn.pack(side="left", padx=5)
+            
+            current_col += 1
+            if current_col >= max_cols:
+                current_col = 0
+                current_row += 1
+    
+    def execute_quick_task(self, command):
+        """Ejecutar una tarea rápida"""
+        try:
+            self.add_result(f"🚀 Tarea Rápida", f"Ejecutando: {command}")
+            result = self.execute_rcon_command(command)
+            if result:
+                self.add_result(f"✅ Completado", result)
+            else:
+                self.add_result(f"⚠️ Sin respuesta", "Comando enviado pero sin respuesta del servidor")
+        except Exception as e:
+            self.add_result(f"❌ Error", f"Error al ejecutar tarea rápida: {str(e)}")
+    
+    def add_quick_task(self):
+        """Agregar nueva tarea rápida"""
+        dialog = QuickTaskDialog(self, "Agregar Nueva Tarea Rápida")
+        if dialog.result:
+            task_data = dialog.result
+            self.quick_tasks.append(task_data)
+            self.save_quick_tasks_config()
+            self.load_quick_tasks()
+            self.add_result("✅ Tarea Agregada", f"Nueva tarea rápida: {task_data['name']}")
+    
+    def edit_quick_tasks(self):
+        """Editar tareas rápidas existentes"""
+        if not self.quick_tasks:
+            self.add_result("⚠️ Sin Tareas", "No hay tareas rápidas para editar")
+            return
+        
+        dialog = EditTasksDialog(self, self.quick_tasks)
+        if dialog.result:
+            self.quick_tasks = dialog.result
+            self.save_quick_tasks_config()
+            self.load_quick_tasks()
+            self.add_result("✅ Tareas Actualizadas", "Tareas rápidas actualizadas correctamente")
+    
+    def delete_quick_task(self):
+        """Eliminar tarea rápida"""
+        if not self.quick_tasks:
+            self.add_result("⚠️ Sin Tareas", "No hay tareas rápidas para eliminar")
+            return
+        
+        dialog = DeleteTaskDialog(self, self.quick_tasks)
+        if dialog.result is not None:
+            task_name = self.quick_tasks[dialog.result]["name"]
+            del self.quick_tasks[dialog.result]
+            self.save_quick_tasks_config()
+            self.load_quick_tasks()
+            self.add_result("🗑️ Tarea Eliminada", f"Tarea eliminada: {task_name}")
+    
+    # Métodos para tareas programadas estilo comandos directos
+    def set_default_datetime(self):
+        """Establecer fecha y hora por defecto"""
+        from datetime import datetime, timedelta
+        
+        # Fecha actual
+        today = datetime.now().strftime("%Y-%m-%d")
+        self.scheduled_date_entry.insert(0, today)
+        
+        # Hora actual + 1 minuto
+        future_time = (datetime.now() + timedelta(minutes=1)).strftime("%H:%M:%S")
+        self.scheduled_time_entry.insert(0, future_time)
+    
+    def set_scheduled_quick_time(self, minutes):
+        """Establecer tiempo rápido para tareas programadas"""
+        from datetime import datetime, timedelta
+        
+        future_time = datetime.now() + timedelta(minutes=minutes)
+        
+        # Limpiar y establecer nueva fecha
+        self.scheduled_date_entry.delete(0, "end")
+        self.scheduled_date_entry.insert(0, future_time.strftime("%Y-%m-%d"))
+        
+        # Limpiar y establecer nueva hora
+        self.scheduled_time_entry.delete(0, "end")
+        self.scheduled_time_entry.insert(0, future_time.strftime("%H:%M:%S"))
+    
+    def create_scheduled_task(self):
+        """Crear nueva tarea programada"""
+        try:
+            from datetime import datetime
+            
+            # Obtener datos del formulario
+            command_type = self.scheduled_command_type.get()
+            params = self.scheduled_command_params.get().strip()
+            date_str = self.scheduled_date_entry.get().strip()
+            time_str = self.scheduled_time_entry.get().strip()
+            description = self.scheduled_description_entry.get().strip()
+            
+            # Validar datos
+            if not params:
+                self.add_result("❌ Error", "Los parámetros del comando son obligatorios")
+                return
+            
+            if not date_str or not time_str:
+                self.add_result("❌ Error", "La fecha y hora son obligatorias")
+                return
+            
+            # Construir comando completo
+            if command_type == "custom":
+                full_command = params
+            else:
+                full_command = f"{command_type} {params}"
+            
+            # Parsear fecha y hora
+            try:
+                datetime_str = f"{date_str} {time_str}"
+                execution_time = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                self.add_result("❌ Error", "Formato de fecha/hora inválido. Use YYYY-MM-DD HH:MM:SS")
+                return
+            
+            # Verificar que la fecha sea futura
+            if execution_time <= datetime.now():
+                self.add_result("❌ Error", "La fecha y hora deben ser futuras")
+                return
+            
+            # Crear tarea programada
+            task_data = {
+                "id": f"task_{int(datetime.now().timestamp())}",
+                "command": full_command,
+                "execution_time": execution_time.isoformat(),
+                "description": description or f"Comando {command_type}",
+                "status": "pending",
+                "created_at": datetime.now().isoformat()
+            }
+            
+            # Agregar a la lista de tareas programadas
+            if not hasattr(self, 'scheduled_tasks_list'):
+                self.scheduled_tasks_list = []
+            
+            self.scheduled_tasks_list.append(task_data)
+            
+            # Guardar en archivo
+            self.save_scheduled_tasks()
+            
+            # Actualizar display
+            self.load_scheduled_tasks_display()
+            
+            # Limpiar formulario
+            self.scheduled_command_params.delete(0, "end")
+            self.scheduled_description_entry.delete(0, "end")
+            self.set_default_datetime()
+            
+            self.add_result("✅ Tarea Creada", 
+                          f"Tarea programada creada exitosamente\n\n"
+                          f"Comando: {full_command}\n"
+                          f"Ejecución: {execution_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            
+        except Exception as e:
+            self.add_result("❌ Error", f"Error al crear tarea programada: {str(e)}")
+    
+    def save_scheduled_tasks(self):
+        """Guardar tareas programadas en archivo"""
+        try:
+            import json
+            os.makedirs("config", exist_ok=True)
+            
+            if not hasattr(self, 'scheduled_tasks_list'):
+                self.scheduled_tasks_list = []
+            
+            with open("config/scheduled_rcon_tasks.json", 'w', encoding='utf-8') as f:
+                json.dump(self.scheduled_tasks_list, f, indent=2, ensure_ascii=False)
+                
+        except Exception as e:
+            self.logger.error(f"Error al guardar tareas programadas: {e}")
+    
+    def load_scheduled_tasks(self):
+        """Cargar tareas programadas desde archivo"""
+        try:
+            import json
+            
+            if os.path.exists("config/scheduled_rcon_tasks.json"):
+                with open("config/scheduled_rcon_tasks.json", 'r', encoding='utf-8') as f:
+                    self.scheduled_tasks_list = json.load(f)
+            else:
+                self.scheduled_tasks_list = []
+                
+        except Exception as e:
+            self.logger.error(f"Error al cargar tareas programadas: {e}")
+            self.scheduled_tasks_list = []
+    
+    def load_scheduled_tasks_display(self):
+        """Cargar y mostrar tareas programadas en el display"""
+        # Limpiar display actual
+        for widget in self.tasks_scrollable.winfo_children():
+            widget.destroy()
+        
+        if not hasattr(self, 'scheduled_tasks_list'):
+            self.load_scheduled_tasks()
+        
+        if not self.scheduled_tasks_list:
+            no_tasks_label = ctk.CTkLabel(self.tasks_scrollable, text="📭 No hay tareas programadas")
+            no_tasks_label.pack(pady=20)
+            return
+        
+        from datetime import datetime
+        
+        for i, task in enumerate(self.scheduled_tasks_list):
+            if task.get('status') == 'completed':
+                continue
+                
+            task_frame = ctk.CTkFrame(self.tasks_scrollable)
+            task_frame.pack(fill="x", padx=5, pady=5)
+            task_frame.grid_columnconfigure(1, weight=1)
+            
+            # Información de la tarea
+            try:
+                execution_time = datetime.fromisoformat(task['execution_time'])
+                time_left = execution_time - datetime.now()
+                
+                if time_left.total_seconds() > 0:
+                    hours, remainder = divmod(int(time_left.total_seconds()), 3600)
+                    minutes, seconds = divmod(remainder, 60)
+                    time_left_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+                    status_icon = "⏳"
+                    status_color = "blue"
+                else:
+                    time_left_str = "¡Atrasada!"
+                    status_icon = "⚠️"
+                    status_color = "red"
+                
+                # Título y estado
+                title_text = f"{status_icon} {task.get('description', 'Tarea sin descripción')}"
+                title_label = ctk.CTkLabel(task_frame, text=title_text, font=ctk.CTkFont(weight="bold"))
+                title_label.grid(row=0, column=0, columnspan=2, sticky="w", padx=5, pady=2)
+                
+                # Comando
+                command_label = ctk.CTkLabel(task_frame, text=f"Comando: {task['command']}")
+                command_label.grid(row=1, column=0, columnspan=2, sticky="w", padx=5, pady=1)
+                
+                # Tiempo
+                time_text = f"Ejecución: {execution_time.strftime('%Y-%m-%d %H:%M:%S')} (Restante: {time_left_str})"
+                time_label = ctk.CTkLabel(task_frame, text=time_text)
+                time_label.grid(row=2, column=0, sticky="w", padx=5, pady=1)
+                
+                # Botón eliminar
+                delete_btn = ctk.CTkButton(task_frame, text="🗑️", width=30, height=25,
+                                         command=lambda idx=i: self.delete_scheduled_task(idx),
+                                         fg_color="red")
+                delete_btn.grid(row=2, column=1, sticky="e", padx=5, pady=1)
+                
+            except Exception as e:
+                error_label = ctk.CTkLabel(task_frame, text=f"Error en tarea: {str(e)}")
+                error_label.pack(padx=5, pady=5)
+    
+    def delete_scheduled_task(self, index):
+        """Eliminar tarea programada"""
+        try:
+            if 0 <= index < len(self.scheduled_tasks_list):
+                task_name = self.scheduled_tasks_list[index].get('description', 'Tarea sin nombre')
+                del self.scheduled_tasks_list[index]
+                self.save_scheduled_tasks()
+                self.load_scheduled_tasks_display()
+                self.add_result("🗑️ Tarea Eliminada", f"Tarea eliminada: {task_name}")
+        except Exception as e:
+            self.add_result("❌ Error", f"Error al eliminar tarea: {str(e)}")
+    
+    def show_scheduled_tasks_list(self):
+        """Mostrar lista detallada de tareas programadas"""
+        dialog = ScheduledTasksListDialog(self, self.scheduled_tasks_list if hasattr(self, 'scheduled_tasks_list') else [])
+        dialog.grab_set()
+    
+    def show_scheduled_history(self):
+        """Mostrar historial de tareas ejecutadas"""
+        self.add_result("ℹ️ Historial", "Funcionalidad de historial en desarrollo")
+    
+    def clear_completed_tasks(self):
+        """Limpiar tareas completadas"""
+        if not hasattr(self, 'scheduled_tasks_list'):
+            self.scheduled_tasks_list = []
+        
+        original_count = len(self.scheduled_tasks_list)
+        self.scheduled_tasks_list = [task for task in self.scheduled_tasks_list if task.get('status') != 'completed']
+        cleared_count = original_count - len(self.scheduled_tasks_list)
+        
+        if cleared_count > 0:
+            self.save_scheduled_tasks()
+            self.load_scheduled_tasks_display()
+            self.add_result("🗑️ Limpieza", f"Se eliminaron {cleared_count} tareas completadas")
+        else:
+            self.add_result("ℹ️ Limpieza", "No hay tareas completadas para eliminar")
+
+
+# Diálogos para gestión de tareas rápidas
+class QuickTaskDialog(ctk.CTkToplevel):
+    def __init__(self, parent, title):
+        super().__init__(parent)
+        self.parent = parent
+        self.result = None
+        
+        self.title(title)
+        self.geometry("400x300")
+        self.resizable(False, False)
+        self.transient(parent)
+        self.grab_set()
+        
+        # Centrar ventana
+        self.center_window()
+        
+        self.create_widgets()
+    
+    def center_window(self):
+        self.update_idletasks()
+        x = (self.winfo_screenwidth() // 2) - (400 // 2)
+        y = (self.winfo_screenheight() // 2) - (300 // 2)
+        self.geometry(f"400x300+{x}+{y}")
+    
+    def create_widgets(self):
+        # Frame principal
+        main_frame = ctk.CTkFrame(self)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Título
+        ctk.CTkLabel(main_frame, text="Nueva Tarea Rápida", 
+                    font=ctk.CTkFont(size=16, weight="bold")).pack(pady=10)
+        
+        # Nombre
+        ctk.CTkLabel(main_frame, text="Nombre de la tarea:").pack(anchor="w", padx=10)
+        self.name_entry = ctk.CTkEntry(main_frame, placeholder_text="📢 Mi Tarea")
+        self.name_entry.pack(fill="x", padx=10, pady=5)
+        
+        # Comando
+        ctk.CTkLabel(main_frame, text="Comando RCON:").pack(anchor="w", padx=10, pady=(10,0))
+        self.command_entry = ctk.CTkEntry(main_frame, placeholder_text="broadcast Hola mundo")
+        self.command_entry.pack(fill="x", padx=10, pady=5)
+        
+        # Color
+        ctk.CTkLabel(main_frame, text="Color del botón:").pack(anchor="w", padx=10, pady=(10,0))
+        self.color_var = ctk.StringVar(value="blue")
+        color_frame = ctk.CTkFrame(main_frame)
+        color_frame.pack(fill="x", padx=10, pady=5)
+        
+        colors = [("Azul", "blue"), ("Verde", "green"), ("Naranja", "orange"), 
+                 ("Rojo", "red"), ("Púrpura", "purple"), ("Gris", "gray")]
+        
+        for i, (name, value) in enumerate(colors):
+            ctk.CTkRadioButton(color_frame, text=name, variable=self.color_var, 
+                              value=value).grid(row=i//3, column=i%3, padx=5, pady=2, sticky="w")
+        
+        # Botones
+        button_frame = ctk.CTkFrame(main_frame)
+        button_frame.pack(fill="x", padx=10, pady=20)
+        
+        ctk.CTkButton(button_frame, text="✅ Agregar", 
+                     command=self.accept, fg_color="green").pack(side="left", padx=5)
+        
+        ctk.CTkButton(button_frame, text="❌ Cancelar", 
+                     command=self.cancel, fg_color="red").pack(side="right", padx=5)
+    
+    def accept(self):
+        name = self.name_entry.get().strip()
+        command = self.command_entry.get().strip()
+        color = self.color_var.get()
+        
+        if not name or not command:
+            return
+        
+        self.result = {
+            "name": name,
+            "command": command,
+            "color": color
+        }
+        self.destroy()
+    
+    def cancel(self):
+        self.destroy()
+
+class ScheduledTasksListDialog(ctk.CTkToplevel):
+    def __init__(self, parent, tasks):
+        super().__init__(parent)
+        self.tasks = tasks
+        
+        self.title("Lista de Tareas Programadas")
+        self.geometry("600x400")
+        self.transient(parent)
+        
+        # Centrar ventana
+        self.update_idletasks()
+        x = (self.winfo_screenwidth() // 2) - (600 // 2)
+        y = (self.winfo_screenheight() // 2) - (400 // 2)
+        self.geometry(f"600x400+{x}+{y}")
+        
+        self.create_widgets()
+    
+    def create_widgets(self):
+        # Título
+        title_label = ctk.CTkLabel(self, text="📋 Tareas Programadas", 
+                                  font=ctk.CTkFont(size=16, weight="bold"))
+        title_label.pack(pady=20)
+        
+        # Lista de tareas
+        self.tasks_frame = ctk.CTkScrollableFrame(self, height=250)
+        self.tasks_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        
+        if not self.tasks:
+            no_tasks_label = ctk.CTkLabel(self.tasks_frame, text="📭 No hay tareas programadas")
+            no_tasks_label.pack(pady=50)
+        else:
+            from datetime import datetime
+            
+            for i, task in enumerate(self.tasks):
+                if task.get('status') == 'completed':
+                    continue
+                    
+                task_frame = ctk.CTkFrame(self.tasks_frame)
+                task_frame.pack(fill="x", padx=5, pady=5)
+                
+                try:
+                    execution_time = datetime.fromisoformat(task['execution_time'])
+                    time_left = execution_time - datetime.now()
+                    
+                    if time_left.total_seconds() > 0:
+                        hours, remainder = divmod(int(time_left.total_seconds()), 3600)
+                        minutes, seconds = divmod(remainder, 60)
+                        time_left_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+                        status_icon = "⏳"
+                    else:
+                        time_left_str = "¡Atrasada!"
+                        status_icon = "⚠️"
+                    
+                    # Información de la tarea
+                    info_text = f"{status_icon} {task.get('description', 'Sin descripción')}\n"
+                    info_text += f"Comando: {task['command']}\n"
+                    info_text += f"Ejecución: {execution_time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+                    info_text += f"Tiempo restante: {time_left_str}"
+                    
+                    task_label = ctk.CTkLabel(task_frame, text=info_text, justify="left")
+                    task_label.pack(padx=10, pady=10)
+                    
+                except Exception as e:
+                    error_label = ctk.CTkLabel(task_frame, text=f"Error en tarea: {str(e)}")
+                    error_label.pack(padx=10, pady=10)
+        
+        # Botón cerrar
+        close_btn = ctk.CTkButton(self, text="Cerrar", command=self.destroy)
+        close_btn.pack(pady=20)
+
+
+class EditTasksDialog(ctk.CTkToplevel):
+    def __init__(self, parent, tasks):
+        super().__init__(parent)
+        self.parent = parent
+        self.tasks = tasks.copy()
+        self.result = None
+        
+        self.title("Editar Tareas Rápidas")
+        self.geometry("600x400")
+        self.resizable(True, True)
+        self.transient(parent)
+        self.grab_set()
+        
+        self.center_window()
+        self.create_widgets()
+    
+    def center_window(self):
+        self.update_idletasks()
+        x = (self.winfo_screenwidth() // 2) - (600 // 2)
+        y = (self.winfo_screenheight() // 2) - (400 // 2)
+        self.geometry(f"600x400+{x}+{y}")
+    
+    def create_widgets(self):
+        # Frame principal
+        main_frame = ctk.CTkFrame(self)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Título
+        ctk.CTkLabel(main_frame, text="Editar Tareas Rápidas", 
+                    font=ctk.CTkFont(size=16, weight="bold")).pack(pady=10)
+        
+        # Lista scrollable
+        self.scrollable_frame = ctk.CTkScrollableFrame(main_frame)
+        self.scrollable_frame.pack(fill="both", expand=True, pady=10)
+        
+        self.load_tasks()
+        
+        # Botones
+        button_frame = ctk.CTkFrame(main_frame)
+        button_frame.pack(fill="x", pady=10)
+        
+        ctk.CTkButton(button_frame, text="✅ Guardar Cambios", 
+                     command=self.save_changes, fg_color="green").pack(side="left", padx=5)
+        
+        ctk.CTkButton(button_frame, text="❌ Cancelar", 
+                     command=self.cancel, fg_color="red").pack(side="right", padx=5)
+    
+    def load_tasks(self):
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+        
+        self.task_entries = []
+        
+        for i, task in enumerate(self.tasks):
+            task_frame = ctk.CTkFrame(self.scrollable_frame)
+            task_frame.pack(fill="x", padx=5, pady=5)
+            
+            # Nombre
+            ctk.CTkLabel(task_frame, text=f"Tarea {i+1}:").grid(row=0, column=0, padx=5, pady=2, sticky="w")
+            name_entry = ctk.CTkEntry(task_frame, width=150)
+            name_entry.insert(0, task["name"])
+            name_entry.grid(row=0, column=1, padx=5, pady=2)
+            
+            # Comando
+            ctk.CTkLabel(task_frame, text="Comando:").grid(row=0, column=2, padx=5, pady=2, sticky="w")
+            command_entry = ctk.CTkEntry(task_frame, width=200)
+            command_entry.insert(0, task["command"])
+            command_entry.grid(row=0, column=3, padx=5, pady=2)
+            
+            # Color
+            color_var = ctk.StringVar(value=task.get("color", "blue"))
+            color_menu = ctk.CTkOptionMenu(task_frame, values=["blue", "green", "orange", "red", "purple", "gray"],
+                                          variable=color_var, width=80)
+            color_menu.grid(row=0, column=4, padx=5, pady=2)
+            
+            self.task_entries.append((name_entry, command_entry, color_var))
+    
+    def save_changes(self):
+        updated_tasks = []
+        for name_entry, command_entry, color_var in self.task_entries:
+            name = name_entry.get().strip()
+            command = command_entry.get().strip()
+            color = color_var.get()
+            
+            if name and command:
+                updated_tasks.append({
+                    "name": name,
+                    "command": command,
+                    "color": color
+                })
+        
+        self.result = updated_tasks
+        self.destroy()
+    
+    def cancel(self):
+        self.destroy()
+
+
+class DeleteTaskDialog(ctk.CTkToplevel):
+    def __init__(self, parent, tasks):
+        super().__init__(parent)
+        self.parent = parent
+        self.tasks = tasks
+        self.result = None
+        
+        self.title("Eliminar Tarea Rápida")
+        self.geometry("400x300")
+        self.resizable(False, False)
+        self.transient(parent)
+        self.grab_set()
+        
+        self.center_window()
+        self.create_widgets()
+    
+    def center_window(self):
+        self.update_idletasks()
+        x = (self.winfo_screenwidth() // 2) - (400 // 2)
+        y = (self.winfo_screenheight() // 2) - (300 // 2)
+        self.geometry(f"400x300+{x}+{y}")
+    
+    def create_widgets(self):
+        # Frame principal
+        main_frame = ctk.CTkFrame(self)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Título
+        ctk.CTkLabel(main_frame, text="Seleccionar Tarea a Eliminar", 
+                    font=ctk.CTkFont(size=16, weight="bold")).pack(pady=10)
+        
+        # Lista de tareas
+        self.task_var = ctk.StringVar()
+        
+        for i, task in enumerate(self.tasks):
+            ctk.CTkRadioButton(main_frame, text=f"{task['name']} - {task['command']}", 
+                              variable=self.task_var, value=str(i)).pack(anchor="w", padx=10, pady=2)
+        
+        # Botones
+        button_frame = ctk.CTkFrame(main_frame)
+        button_frame.pack(fill="x", padx=10, pady=20)
+        
+        ctk.CTkButton(button_frame, text="🗑️ Eliminar", 
+                     command=self.delete_task, fg_color="red").pack(side="left", padx=5)
+        
+        ctk.CTkButton(button_frame, text="❌ Cancelar", 
+                     command=self.cancel, fg_color="gray").pack(side="right", padx=5)
+    
+    def delete_task(self):
+        selected = self.task_var.get()
+        if selected:
+            self.result = int(selected)
+            self.destroy()
+    
+    def cancel(self):
+        self.destroy()

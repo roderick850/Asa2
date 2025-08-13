@@ -378,7 +378,7 @@ class ServerManager:
             self.logger.error(f"Error al obtener ruta del servidor: {e}")
             return None
     
-    def start_server(self, callback=None, server_name=None, map_name=None, capture_console=False):
+    def start_server(self, callback=None, server_name=None, map_name=None, capture_console=False, force_stdin=False):
         """Inicia el servidor de Ark"""
         def _start():
             try:
@@ -447,11 +447,13 @@ class ServerManager:
                 self.logger.info(f"Iniciando servidor {server_name} con mapa {map_name} - comando: {' '.join(cmd)}")
                 
                 # Iniciar proceso del servidor
-                # Si se quiere capturar la consola, no usar CREATE_NEW_CONSOLE
-                self.logger.info(f"DEBUG: capture_console = {capture_console}")
-                if capture_console:
-                    self.logger.info("DEBUG: Iniciando servidor en modo CAPTURA de consola (sin CREATE_NEW_CONSOLE)")
-                    # Modo para capturar consola: usar pipes para stdout/stdin
+                # Si se quiere capturar la consola o forzar stdin, no usar CREATE_NEW_CONSOLE
+                use_pipes = capture_console or force_stdin
+                self.logger.info(f"DEBUG: capture_console = {capture_console}, force_stdin = {force_stdin}")
+                if use_pipes:
+                    mode_desc = "CAPTURA" if capture_console else "STDIN FORZADO"
+                    self.logger.info(f"DEBUG: Iniciando servidor en modo {mode_desc} (sin CREATE_NEW_CONSOLE)")
+                    # Modo para capturar consola o usar stdin: usar pipes
                     self.server_process = subprocess.Popen(
                         cmd,
                         stdout=subprocess.PIPE,
@@ -459,6 +461,7 @@ class ServerManager:
                         stdin=subprocess.PIPE,
                         bufsize=1,
                         universal_newlines=True,  # Para compatibilidad con texto
+                        text=True,  # Asegurar modo texto
                         # NO usar CREATE_NEW_CONSOLE para poder capturar la salida
                     )
                 else:
@@ -484,7 +487,7 @@ class ServerManager:
         
         threading.Thread(target=_start, daemon=True).start()
     
-    def start_server_with_args(self, callback=None, server_name=None, map_name=None, custom_args=None, capture_console=False):
+    def start_server_with_args(self, callback=None, server_name=None, map_name=None, custom_args=None, capture_console=False, force_stdin=True):
         """Inicia el servidor de Ark con argumentos personalizados"""
         def _start_with_args():
             try:
@@ -564,8 +567,9 @@ class ServerManager:
                     callback("info", f"Comando del servidor: {' '.join(cmd)}")
                 
                 # Iniciar el proceso del servidor
-                # Si se quiere capturar la consola, usar pipes para stdout/stdin
-                self.logger.info(f"DEBUG: start_server_with_args - capture_console = {capture_console}")
+                # Si se quiere capturar la consola o forzar stdin, usar pipes
+                use_pipes = capture_console or force_stdin
+                self.logger.info(f"DEBUG: start_server_with_args - capture_console = {capture_console}, force_stdin = {force_stdin}")
                 
                 # Obtener el directorio de trabajo del servidor
                 server_dir = os.path.dirname(server_path)
@@ -615,6 +619,23 @@ class ServerManager:
                         exit_code = self.server_process.poll()
                         self.logger.error(f"DEBUG: ❌ El servidor terminó inmediatamente con código: {exit_code}")
                         
+                elif force_stdin:
+                    self.logger.info("DEBUG: start_server_with_args - Iniciando servidor en modo STDIN FORZADO (sin captura de consola)")
+                    # Modo stdin forzado: usar pipes para stdin pero no capturar stdout
+                    show_console = self.config_manager.get("app", "show_server_console", default="true").lower() == "true"
+                    creation_flags = subprocess.CREATE_NEW_CONSOLE if show_console else subprocess.CREATE_NO_WINDOW
+                    
+                    self.logger.info(f"DEBUG: show_server_console = {show_console}, usando flags: {creation_flags}")
+                    
+                    self.server_process = subprocess.Popen(
+                        cmd,
+                        stdin=subprocess.PIPE,
+                        creationflags=creation_flags,
+                        cwd=server_dir
+                    )
+                    
+                    self.logger.info(f"DEBUG: Proceso del servidor iniciado con PID: {self.server_process.pid} (stdin habilitado)")
+                    
                 else:
                     self.logger.info("DEBUG: start_server_with_args - Iniciando servidor en modo NORMAL (con control de visibilidad de consola)")
                     # Modo normal: crear nueva consola separada según configuración
@@ -771,7 +792,7 @@ class ServerManager:
         
         threading.Thread(target=_stop, daemon=True).start()
     
-    def restart_server(self, callback=None, server_name=None, map_name=None, custom_args=None, capture_console=False):
+    def restart_server(self, callback=None, server_name=None, map_name=None, custom_args=None, capture_console=False, force_stdin=True):
         """Reinicia el servidor de Ark con argumentos personalizados"""
         def _restart():
             try:
@@ -787,9 +808,9 @@ class ServerManager:
                 
                 # Usar start_server_with_args para conservar argumentos personalizados y mods
                 if custom_args:
-                    self.start_server_with_args(callback, server_name, map_name, custom_args, capture_console)
+                    self.start_server_with_args(callback, server_name, map_name, custom_args, capture_console, force_stdin)
                 else:
-                    self.start_server(callback, server_name, map_name, capture_console)
+                    self.start_server(callback, server_name, map_name, capture_console, force_stdin)
                 
             except Exception as e:
                 self.logger.error(f"Error al reiniciar el servidor: {e}")

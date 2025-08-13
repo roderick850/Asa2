@@ -208,10 +208,10 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         status_container = ctk.CTkFrame(header_frame)
         status_container.grid(row=0, column=1, padx=10, pady=5, sticky="e")
         
-        # Estado del sistema
+        # Estado del sistema con punto de color
         self.status_label = ctk.CTkLabel(
             status_container,
-            text="⏹️ Inactivo",
+            text="🔴 ⏹️ Inactivo",
             font=ctk.CTkFont(size=12)
         )
         self.status_label.pack(side="left", padx=(8, 15))
@@ -599,11 +599,13 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         self.auto_backup_enabled = enabled
         
         if enabled:
+            self._safe_update_status("🟢 🔄 Auto-backup activo")
             self.start_scheduler()
-            self._safe_update_status("🔄 Auto-backup activo")
+            # Asegurar que se calcule el próximo backup inmediatamente
+            self.after(100, self._calculate_and_update_next_backup)
         else:
             self.stop_scheduler()
-            self._safe_update_status("⏹️ Inactivo")
+            self._safe_update_status("🔴 ⏹️ Inactivo")
             self._safe_update_next_backup("Próximo backup: Deshabilitado")
     
     def on_interval_change(self, event=None):
@@ -614,9 +616,14 @@ class AdvancedBackupPanel(ctk.CTkFrame):
             self.stop_scheduler()
             # Pequeño retraso para asegurar que se reinicie correctamente
             self.after(100, self.start_scheduler)
+            # Actualizar el próximo backup después de reiniciar
+            self.after(600, self._calculate_and_update_next_backup)
         elif hasattr(self, 'auto_backup_var') and self.auto_backup_var.get():
             # Si el scheduler no está corriendo pero debería estar, actualizar próximo backup
             self.after(100, self._calculate_and_update_next_backup)
+        else:
+            # Si está deshabilitado, asegurar que muestre "Deshabilitado"
+            self._safe_update_next_backup("Próximo backup: Deshabilitado")
     
     def start_scheduler(self):
         """Iniciar programador de backups automáticos"""
@@ -682,9 +689,9 @@ class AdvancedBackupPanel(ctk.CTkFrame):
                 if hasattr(self, 'status_label') and self.status_label.winfo_exists():
                     # Usar el hilo principal de Tkinter para actualizar la UI
                     if hasattr(self.main_window, 'root'):
-                        self.main_window.root.after(0, lambda: self._safe_update_status("🔄 Auto-backup activo"))
+                        self.main_window.root.after(0, lambda: self._safe_update_status("🟢 🔄 Auto-backup activo"))
                     else:
-                        self.after(0, lambda: self._safe_update_status("🔄 Auto-backup activo"))
+                        self.after(0, lambda: self._safe_update_status("🟢 🔄 Auto-backup activo"))
                 # Calcular y mostrar próximo backup inmediatamente
                 # Usar el hilo principal de Tkinter para actualizar la UI
                 if hasattr(self.main_window, 'root'):
@@ -757,7 +764,13 @@ class AdvancedBackupPanel(ctk.CTkFrame):
     def _calculate_and_update_next_backup(self):
         """Calcular y actualizar próximo backup basado en configuración"""
         try:
+            # Verificar que el auto-backup esté habilitado (usar solo la variable de UI como fuente de verdad)
+            if not hasattr(self, 'auto_backup_var') or not self.auto_backup_var.get():
+                self._safe_update_next_backup("Próximo backup: Deshabilitado")
+                return
+                
             if not hasattr(self, 'interval_value_entry') or not hasattr(self, 'interval_type_combo'):
+                self._safe_update_next_backup("Próximo backup: Configuración no disponible")
                 return
                 
             interval_value = int(self.interval_value_entry.get() or "6")
@@ -786,9 +799,9 @@ class AdvancedBackupPanel(ctk.CTkFrame):
             self.logger.debug(f"Error al calcular próximo backup: {e}")
             # Usar el hilo principal de Tkinter para actualizar la UI
             if hasattr(self.main_window, 'root'):
-                self.main_window.root.after(0, lambda: self._safe_update_next_backup("Próximo backup: Calculando..."))
+                self.main_window.root.after(0, lambda: self._safe_update_next_backup("Próximo backup: Error al calcular"))
             else:
-                self.after(0, lambda: self._safe_update_next_backup("Próximo backup: Calculando..."))
+                self.after(0, lambda: self._safe_update_next_backup("Próximo backup: Error al calcular"))
     
     def _scheduled_backup(self):
         """Ejecutar backup programado"""
@@ -1626,7 +1639,7 @@ class AdvancedBackupPanel(ctk.CTkFrame):
                         self.logger.info("Iniciando backup automático desde configuración guardada")
                         self.toggle_auto_backup()
                     else:
-                        self._safe_update_status("⏹️ Inactivo")
+                        self._safe_update_status("🔴 ⏹️ Inactivo")
                 else:
                     # Si los widgets no están listos, intentar más tarde
                     self.logger.debug("Widgets de backup no están listos, reintentando en 2 segundos")

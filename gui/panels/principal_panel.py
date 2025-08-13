@@ -595,7 +595,8 @@ class PrincipalPanel:
                     selected_server, 
                     selected_map, 
                     server_args,
-                    capture_console
+                    capture_console,
+                    force_stdin=True
                 )
                 
                 # También notificar al main window si hay uno
@@ -649,7 +650,8 @@ class PrincipalPanel:
                     selected_server, 
                     selected_map, 
                     server_args,
-                    capture_console
+                    capture_console,
+                    force_stdin=True
                 )
                 
                 # También notificar al main window si hay uno

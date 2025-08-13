@@ -3,7 +3,10 @@ import subprocess
 import threading
 import time
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
+from tkinter import messagebox
+from utils.scheduled_commands import ScheduledCommandsManager, ScheduledCommand
+from utils.dialogs import AddTaskDialog, TasksListDialog, CommandHistoryDialog
 
 class DirectCommandsPanel(ctk.CTkFrame):
     def __init__(self, parent, config_manager, logger, main_window):
@@ -20,6 +23,11 @@ class DirectCommandsPanel(ctk.CTkFrame):
         self.monitoring_thread = None
         self.stop_monitoring = False
         self.auto_connect_enabled = True
+        
+        # Sistema de comandos programados
+        self.scheduled_manager = ScheduledCommandsManager()
+        self.scheduled_manager.on_command_executed = self._on_command_executed
+        self.scheduled_manager.on_command_failed = self._on_command_failed
         
         # Variables para monitoreo del archivo de log
         self.log_monitoring_thread = None
@@ -165,6 +173,36 @@ class DirectCommandsPanel(ctk.CTkFrame):
         separator3 = ctk.CTkFrame(main_frame, height=2)
         separator3.pack(fill="x", padx=10, pady=20)
         
+        # Frame de comandos programados
+        scheduled_frame = ctk.CTkFrame(main_frame)
+        scheduled_frame.pack(fill="x", padx=10, pady=10)
+        
+        scheduled_title = ctk.CTkLabel(scheduled_frame, text="⏰ Comandos Programados", 
+                                     font=("Arial", 16, "bold"))
+        scheduled_title.pack(pady=10)
+        
+        # Botones de gestión de tareas
+        scheduled_buttons_frame = ctk.CTkFrame(scheduled_frame)
+        scheduled_buttons_frame.pack(fill="x", padx=10, pady=5)
+        
+        ctk.CTkButton(scheduled_buttons_frame, text="➕ Nueva Tarea", 
+                     command=self.show_add_task_dialog, fg_color="green").pack(side="left", padx=5)
+        
+        ctk.CTkButton(scheduled_buttons_frame, text="📋 Ver Tareas", 
+                     command=self.show_tasks_list, fg_color="blue").pack(side="left", padx=5)
+        
+        ctk.CTkButton(scheduled_buttons_frame, text="📊 Historial", 
+                     command=self.show_command_history, fg_color="orange").pack(side="left", padx=5)
+        
+        # Estado del programador
+        self.scheduler_status_label = ctk.CTkLabel(scheduled_frame, text="⏸️ Programador: Detenido", 
+                                                 fg_color="red", corner_radius=5, padx=10, pady=5)
+        self.scheduler_status_label.pack(pady=5)
+        
+        # Separador
+        separator5 = ctk.CTkFrame(main_frame, height=2)
+        separator5.pack(fill="x", padx=10, pady=20)
+        
         # Frame de monitoreo en tiempo real
         monitoring_frame = ctk.CTkFrame(main_frame)
         monitoring_frame.pack(fill="x", padx=10, pady=10)
@@ -254,25 +292,42 @@ class DirectCommandsPanel(ctk.CTkFrame):
             if not server_process or server_process.poll() is not None:
                 self.show_error("El servidor no está ejecutándose. Inicia el servidor primero desde la pestaña Consola.")
                 self.add_result("ℹ️ Información", "El servidor se iniciará automáticamente desde la pestaña Consola. La conexión se establecerá automáticamente cuando esté disponible.")
+                self.add_result("⚠️ Importante", "Para usar comandos programados, el servidor debe iniciarse con captura de consola habilitada.")
+                return
+            
+            # Verificar que el servidor tenga stdin disponible
+            if not hasattr(server_process, 'stdin') or server_process.stdin is None:
+                self.show_error("El servidor no fue iniciado con captura de stdin.")
+                self.add_result("⚠️ Advertencia", "Para comandos programados, el servidor necesita stdin habilitado.")
+                self.add_result("💡 Solución", "El servidor se reiniciará automáticamente con stdin habilitado.")
+                
+                # Reiniciar automáticamente el servidor con stdin habilitado
+                self.restart_server_with_stdin()
                 return
             
             # Intentar conectar enviando un comando de prueba
             try:
-                # Enviar comando de prueba
-                server_process.stdin.write("time\n".encode())
+                # Enviar comando de prueba (sin encode porque el proceso usa text=True)
+                server_process.stdin.write("time\n")
                 server_process.stdin.flush()
                 
                 # Marcar como conectado
                 self.is_connected = True
                 self.server_process = server_process
                 
+                # Conectar el programador de comandos
+                self.scheduled_manager.set_server_process(server_process)
+                self.scheduled_manager.start_scheduler()
+                
                 # Actualizar interfaz
                 self.status_label.configure(text="✅ Conectado", fg_color="green")
+                self.scheduler_status_label.configure(text="▶️ Programador: Activo", fg_color="green")
                 self.connect_button.configure(state="disabled")
                 self.disconnect_button.configure(state="normal")
                 
                 self.show_success("✅ Conectado exitosamente al servidor")
                 self.add_result("🔌 Conexión", "Conectado al servidor de Ark")
+                self.add_result("⏰ Programador", "Sistema de comandos programados iniciado")
                 
                 # Iniciar monitoreo automáticamente
                 self.start_monitoring()
@@ -292,17 +347,22 @@ class DirectCommandsPanel(ctk.CTkFrame):
             # Detener monitoreo
             self.stop_monitoring_thread()
             
+            # Detener programador de comandos
+            self.scheduled_manager.stop_scheduler()
+            
             # Limpiar estado
             self.is_connected = False
             self.server_process = None
             
             # Actualizar interfaz
             self.status_label.configure(text="❌ Desconectado", fg_color="red")
+            self.scheduler_status_label.configure(text="⏸️ Programador: Detenido", fg_color="red")
             self.connect_button.configure(state="normal")
             self.disconnect_button.configure(state="disabled")
             
             self.show_success("✅ Desconectado del servidor")
             self.add_result("🔌 Conexión", "Desconectado del servidor")
+            self.add_result("⏰ Programador", "Sistema de comandos programados detenido")
             
         except Exception as e:
             self.show_error(f"Error al desconectar: {e}")
@@ -326,7 +386,7 @@ class DirectCommandsPanel(ctk.CTkFrame):
         
         try:
             # Enviar comando al servidor
-            self.server_process.stdin.write(f"{command}\n".encode())
+            self.server_process.stdin.write(f"{command}\n")
             self.server_process.stdin.flush()
             
             # Agregar a historial
@@ -385,7 +445,7 @@ class DirectCommandsPanel(ctk.CTkFrame):
             try:
                 # Enviar comando de estado cada 30 segundos
                 if self.server_process and self.server_process.poll() is None:
-                    self.server_process.stdin.write("time\n".encode())
+                    self.server_process.stdin.write("time\n")
                     self.server_process.stdin.flush()
                 
                 time.sleep(30)  # Actualizar cada 30 segundos
@@ -402,7 +462,7 @@ class DirectCommandsPanel(ctk.CTkFrame):
         
         try:
             # Enviar comando para obtener información
-            self.server_process.stdin.write("showworldinfo\n".encode())
+            self.server_process.stdin.write("showworldinfo\n")
             self.server_process.stdin.flush()
             
             self.add_result("🔄 Actualización", "Solicitando información del servidor...")
@@ -531,18 +591,26 @@ class DirectCommandsPanel(ctk.CTkFrame):
                 # Verificar que stdin esté disponible
                 if not hasattr(server_process, 'stdin') or server_process.stdin is None:
                     self.logger.error("stdin no disponible en el proceso del servidor")
+                    self.logger.info("Intentando reiniciar servidor con stdin habilitado...")
+                    self.parent.after(0, self.restart_server_with_stdin)
                     return
                 
                 # Enviar comando de prueba
                 self.logger.info("Enviando comando de prueba 'time'...")
-                server_process.stdin.write("time\n".encode())
+                server_process.stdin.write("time\n")
                 server_process.stdin.flush()
                 
                 # Marcar como conectado
                 self.is_connected = True
                 self.server_process = server_process
                 
-                self.logger.info("Conexión automática exitosa, actualizando UI...")
+                self.logger.info("Conexión automática exitosa, estableciendo proceso en ScheduledCommandsManager...")
+                
+                # Conectar el programador de comandos
+                self.scheduled_manager.set_server_process(server_process)
+                self.scheduled_manager.start_scheduler()
+                
+                self.logger.info("Actualizando UI...")
                 
                 # Actualizar interfaz en el hilo principal
                 self.parent.after(0, self._update_ui_after_auto_connect)
@@ -552,6 +620,9 @@ class DirectCommandsPanel(ctk.CTkFrame):
                 
             except Exception as e:
                 self.logger.error(f"Error al enviar comando de prueba: {e}")
+                self.logger.info("Reintentando conexión en 10 segundos...")
+                # Reintentar después de un delay
+                self.parent.after(10000, self.auto_connect_to_server)
                 
         except Exception as e:
             self.logger.error(f"Error general en conexión automática: {e}")
@@ -559,12 +630,18 @@ class DirectCommandsPanel(ctk.CTkFrame):
     def _update_ui_after_auto_connect(self):
         """Actualizar la interfaz después de la conexión automática (llamado en hilo principal)"""
         try:
+            # Conectar el programador de comandos
+            self.scheduled_manager.set_server_process(self.server_process)
+            self.scheduled_manager.start_scheduler()
+            
             # Actualizar interfaz
             self.status_label.configure(text="✅ Conectado", fg_color="green")
+            self.scheduler_status_label.configure(text="▶️ Programador: Activo", fg_color="green")
             self.connect_button.configure(state="disabled")
             self.disconnect_button.configure(state="normal")
             
             self.add_result("🔌 Conexión Automática", "Conectado automáticamente al servidor")
+            self.add_result("⏰ Programador", "Sistema de comandos programados iniciado")
             
         except Exception as e:
             self.logger.error(f"Error al actualizar UI después de conexión automática: {e}")
@@ -817,7 +894,7 @@ class DirectCommandsPanel(ctk.CTkFrame):
             
             for cmd in test_commands:
                 try:
-                    self.server_process.stdin.write(f"{cmd}\n".encode())
+                    self.server_process.stdin.write(f"{cmd}\n")
                     self.server_process.stdin.flush()
                     self.logger.info(f"Comando de prueba enviado: {cmd}")
                     time.sleep(0.5)  # Pequeña pausa entre comandos
@@ -840,3 +917,79 @@ class DirectCommandsPanel(ctk.CTkFrame):
         else:
             self.debug_button.configure(text="🐛 Modo Debug", fg_color="orange")
             self.add_result("🐛 Debug", "Modo debug desactivado - Solo mostrando respuestas relevantes")
+    
+    # Métodos para comandos programados
+    def show_add_task_dialog(self):
+        """Mostrar diálogo para agregar nueva tarea programada"""
+        dialog = AddTaskDialog(self, self.scheduled_manager)
+        dialog.grab_set()
+        
+    def show_tasks_list(self):
+        """Mostrar lista de tareas programadas"""
+        dialog = TasksListDialog(self, self.scheduled_manager)
+        dialog.grab_set()
+        
+    def show_command_history(self):
+        """Mostrar historial de comandos ejecutados"""
+        dialog = CommandHistoryDialog(self, self.scheduled_manager)
+        dialog.grab_set()
+    
+    def _on_command_executed(self, command, success, result):
+        """Callback cuando se ejecuta un comando programado"""
+        status = "✅" if success else "❌"
+        self.add_result(f"{status} Comando Programado", f"{command}: {result}")
+        
+    def _on_command_failed(self, command, error):
+        """Callback cuando falla un comando programado"""
+        self.add_result("❌ Error Programado", f"{command}: {error}")
+        self.show_error(f"Error en comando programado: {error}")
+    
+    def restart_server_with_stdin(self):
+        """Reiniciar el servidor con stdin habilitado para comandos programados"""
+        try:
+            self.add_result("🔄 Reinicio", "Reiniciando servidor con soporte para comandos programados...")
+            
+            # Desconectar primero si está conectado
+            if self.is_connected:
+                self.disconnect_from_server()
+            
+            # Detener el servidor actual
+            if (hasattr(self.main_window, 'server_manager') and 
+                self.main_window.server_manager and 
+                self.main_window.server_manager.server_process):
+                
+                self.main_window.server_manager.stop_server()
+                self.add_result("⏹️ Deteniendo", "Servidor detenido")
+                
+                # Esperar un momento para que el servidor se detenga completamente
+                time.sleep(3)
+            
+            # Obtener configuración actual
+            server_name = getattr(self.main_window, 'selected_server', None)
+            map_name = getattr(self.main_window, 'selected_map', None)
+            
+            # Reiniciar el servidor con force_stdin=True
+            def restart_callback(status, message):
+                if status == "started":
+                    self.add_result("✅ Iniciado", "Servidor reiniciado con soporte para comandos programados")
+                    # Intentar conectar automáticamente después de un momento
+                    self.parent.after(5000, self.connect_to_server)
+                elif status == "error":
+                    self.add_result("❌ Error", f"Error al reiniciar servidor: {message}")
+                    self.show_error(f"Error al reiniciar servidor: {message}")
+            
+            # Usar el método start_server con force_stdin=True
+            self.main_window.server_manager.start_server(
+                callback=restart_callback,
+                server_name=server_name,
+                map_name=map_name,
+                capture_console=False,
+                force_stdin=True
+            )
+            
+            self.add_result("🚀 Iniciando", "Servidor iniciándose con soporte para comandos programados...")
+            
+        except Exception as e:
+            self.logger.error(f"Error al reiniciar servidor con stdin: {e}")
+            self.show_error(f"Error al reiniciar servidor: {e}")
+            self.add_result("❌ Error", f"Error al reiniciar servidor: {e}")
