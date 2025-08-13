@@ -144,8 +144,8 @@ class ConfigManager:
     def _save_preserving_format(self):
         """Guardar preservando el formato original del archivo"""
         try:
-            print(f"🔍 DEBUG: Iniciando preservación de formato para {self.config_file}")
-            print(f"🔍 DEBUG: Contenido original tiene {len(self.original_file_content)} líneas")
+            # print(f"🔍 DEBUG: Iniciando preservación de formato para {self.config_file}")
+            # print(f"🔍 DEBUG: Contenido original tiene {len(self.original_file_content)} líneas")
             
             modified_lines = []
             current_section = None
@@ -158,7 +158,7 @@ class ConfigManager:
                 if stripped_line.startswith('[') and stripped_line.endswith(']'):
                     current_section = stripped_line[1:-1]
                     modified_lines.append(original_line)
-                    print(f"🔍 DEBUG: Línea {i+1}: Sección [{current_section}]")
+                    # print(f"🔍 DEBUG: Línea {i+1}: Sección [{current_section}]")
                     continue
                 
                 # Líneas vacías o comentarios
@@ -171,7 +171,7 @@ class ConfigManager:
                     key_part, value_part = stripped_line.split('=', 1)
                     original_key = key_part.strip()
                     
-                    print(f"🔍 DEBUG: Línea {i+1}: Clave '{original_key}' en sección '{current_section}'")
+                    # print(f"🔍 DEBUG: Línea {i+1}: Clave '{original_key}' en sección '{current_section}'")
                     
                     # Buscar si este valor ha sido modificado
                     # Usar búsqueda case-insensitive para encontrar la clave
@@ -197,18 +197,18 @@ class ConfigManager:
                         suffix = '\n' if line.endswith('\n') else ''
                         modified_line = f"{prefix}{found_value}{suffix}"
                         modified_lines.append(modified_line)
-                        print(f"🔍 DEBUG: Línea {i+1}: Modificada '{original_key}={found_value}'")
+                        # print(f"🔍 DEBUG: Línea {i+1}: Modificada '{original_key}={found_value}'")
                     else:
                         modified_lines.append(original_line)
                 else:
                     modified_lines.append(original_line)
             
             # Escribir el archivo modificado
-            print(f"🔍 DEBUG: Escribiendo archivo con {len(modified_lines)} líneas")
+            # print(f"🔍 DEBUG: Escribiendo archivo con {len(modified_lines)} líneas")
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 f.writelines(modified_lines)
                 
-            print("✅ DEBUG: Archivo guardado preservando formato exitosamente")
+            # print("✅ DEBUG: Archivo guardado preservando formato exitosamente")
                 
         except Exception as e:
             print(f"❌ Error preservando formato: {e}")

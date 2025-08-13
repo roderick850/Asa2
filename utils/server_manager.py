@@ -20,6 +20,7 @@ class ServerManager:
         self.server_pid = None
         self.uptime_start = None
         self.server_running = False
+        self.server_fully_started = False  # Nueva variable para controlar el estado completo
         self.logger = logging.getLogger(__name__)
         
         # Cargar APIs de Windows para controlar ventanas
@@ -265,9 +266,15 @@ class ServerManager:
         """Obtiene el estado actual del servidor"""
         # Verificar proceso guardado
         if self.server_process and self.server_process.poll() is None:
-            return "Ejecutándose"
+            if self.server_fully_started:
+                return "Ejecutándose"
+            else:
+                return "Iniciando"
         elif self.server_pid and psutil.pid_exists(self.server_pid):
-            return "Ejecutándose"
+            if self.server_fully_started:
+                return "Ejecutándose"
+            else:
+                return "Iniciando"
         else:
             # Buscar procesos de ARK Server por nombre
             for proc in psutil.process_iter(['pid', 'name']):
@@ -276,13 +283,17 @@ class ServerManager:
                         # Encontrado proceso ARK, actualizar PID
                         self.server_pid = proc.info['pid']
                         self.server_running = True
-                        return "Ejecutándose"
+                        if self.server_fully_started:
+                            return "Ejecutándose"
+                        else:
+                            return "Iniciando"
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
             
             # No se encontró ningún proceso ARK
             self.server_running = False
             self.server_pid = None
+            self.server_fully_started = False
             return "Detenido"
     
     def get_uptime(self):
@@ -382,6 +393,8 @@ class ServerManager:
         """Inicia el servidor de Ark"""
         def _start():
             try:
+                # Resetear el estado de servidor completamente iniciado
+                self.server_fully_started = False
                 # Obtener la ruta del ejecutable del servidor
                 if server_name:
                     # Usar la ruta específica del servidor
@@ -491,6 +504,8 @@ class ServerManager:
         """Inicia el servidor de Ark con argumentos personalizados"""
         def _start_with_args():
             try:
+                # Resetear el estado de servidor completamente iniciado
+                self.server_fully_started = False
                 # Obtener la ruta del ejecutable del servidor
                 if server_name:
                     # Usar la ruta específica del servidor

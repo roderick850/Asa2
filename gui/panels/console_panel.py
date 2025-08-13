@@ -732,12 +732,17 @@ class ConsolePanel:
     def _notify_server_active(self):
         """Notificar que el servidor está activo"""
         try:
-            # Notificar al MainWindow que el servidor está activo
+            # Marcar el servidor como completamente iniciado en ServerManager
+            if hasattr(self.server_manager, 'server_fully_started'):
+                self.server_manager.server_fully_started = True
+                self.logger.info("Servidor marcado como completamente iniciado")
+            
+            # Notificar al MainWindow que el servidor está ejecutándose
             if hasattr(self.main_window, 'update_server_status'):
-                self.main_window.update_server_status("Activo")
+                self.main_window.update_server_status("Ejecutándose")
             
             # Actualizar el estado local
-            self.add_console_message("🟢 Servidor activo y listo para conexiones")
+            self.add_console_message("🟢 Servidor ejecutándose y listo para conexiones")
             
         except Exception as e:
             self.logger.error(f"Error notificando estado activo del servidor: {e}")
@@ -800,6 +805,11 @@ class ConsolePanel:
         if status == "started":
             self.add_console_message("🟢 Servidor iniciado correctamente")
             # El estado "Activo" se marcará cuando se detecte el mensaje de inicio completo
+        elif status == "success":
+            self.add_console_message("🟢 Servidor iniciado exitosamente")
+            # Actualizar estado a "Iniciando" hasta que se complete totalmente
+            if hasattr(self.main_window, 'update_server_status'):
+                self.main_window.update_server_status("Iniciando")
         elif status == "stopped":
             self.add_console_message("🔴 Servidor detenido")
             # Notificar al MainWindow que el servidor está inactivo

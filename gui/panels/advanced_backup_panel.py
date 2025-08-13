@@ -23,9 +23,11 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         self.auto_backup_enabled = False
         self.backup_thread = None
         self.scheduler_thread = None
+        self.current_server = None
+        self.server_configs = {}  # Configuraciones por servidor
         
         # Configuración por defecto
-        self.backup_config = {
+        self.default_backup_config = {
             "backup_path": self.get_default_backup_path(),
             "auto_backup": False,
             "interval_type": "hours",  # minutes, hours, days
@@ -44,7 +46,7 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         
         self.create_widgets()
         self.pack(fill="both", expand=True)
-        self.load_backup_config()
+        self.load_all_server_configs()
         self.load_backup_history()
         
         # Iniciar scheduler si está habilitado (con retraso para asegurar que la UI esté lista)
@@ -266,6 +268,7 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         
         self.backup_path_entry = ctk.CTkEntry(general_tab, placeholder_text="Por defecto: [Ruta Raíz]/Backup")
         self.backup_path_entry.grid(row=0, column=1, padx=3, pady=3, sticky="ew")
+        self.backup_path_entry.bind("<KeyRelease>", self.on_config_change)
         
         path_button = ctk.CTkButton(
             general_tab,
@@ -305,7 +308,8 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         self.include_saves_check = ctk.CTkCheckBox(
             include_frame,
             text="💾 Archivos de guardado (.ark)",
-            variable=self.include_saves_var
+            variable=self.include_saves_var,
+            command=self.on_config_change
         )
         self.include_saves_check.pack(anchor="w", padx=10, pady=2)
         
@@ -313,7 +317,8 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         self.include_configs_check = ctk.CTkCheckBox(
             include_frame,
             text="⚙️ Archivos de configuración (.ini)",
-            variable=self.include_configs_var
+            variable=self.include_configs_var,
+            command=self.on_config_change
         )
         self.include_configs_check.pack(anchor="w", padx=10, pady=2)
         
@@ -321,7 +326,8 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         self.include_logs_check = ctk.CTkCheckBox(
             include_frame,
             text="📄 Archivos de log",
-            variable=self.include_logs_var
+            variable=self.include_logs_var,
+            command=self.on_config_change
         )
         self.include_logs_check.pack(anchor="w", padx=10, pady=2)
         
@@ -330,7 +336,8 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         self.compress_check = ctk.CTkCheckBox(
             general_tab,
             text="🗜️ Comprimir backup (ZIP)",
-            variable=self.compress_var
+            variable=self.compress_var,
+            command=self.on_config_change
         )
         self.compress_check.grid(row=3, column=1, padx=5, pady=10, sticky="w")
     
@@ -345,7 +352,7 @@ class AdvancedBackupPanel(ctk.CTkFrame):
             schedule_tab,
             text="🔄 Habilitar backup automático",
             variable=self.auto_backup_var,
-            command=self.toggle_auto_backup
+            command=self.toggle_auto_backup_and_save
         )
         self.auto_backup_check.grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="w")
         
@@ -392,6 +399,7 @@ class AdvancedBackupPanel(ctk.CTkFrame):
             placeholder_text="{server}_{date}_{time}"
         )
         self.name_format_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.name_format_entry.bind("<KeyRelease>", self.on_config_change)
         
         name_help = ctk.CTkLabel(
             advanced_tab,
@@ -410,6 +418,7 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         
         self.max_backups_entry = ctk.CTkEntry(max_frame, width=80, placeholder_text="10")
         self.max_backups_entry.pack(side="left", padx=5, pady=5)
+        self.max_backups_entry.bind("<KeyRelease>", self.on_config_change)
         
         max_help = ctk.CTkLabel(
             max_frame,
@@ -433,7 +442,8 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         self.backup_before_start_check = ctk.CTkCheckBox(
             advanced_tab,
             text="🚀 Backup automático antes de iniciar servidor",
-            variable=self.backup_before_start_var
+            variable=self.backup_before_start_var,
+            command=self.on_config_change
         )
         self.backup_before_start_check.grid(row=4, column=0, columnspan=2, padx=10, pady=10, sticky="w")
         
@@ -442,7 +452,8 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         self.verify_backup_check = ctk.CTkCheckBox(
             advanced_tab,
             text="✅ Verificar integridad del backup después de crearlo",
-            variable=self.verify_backup_var
+            variable=self.verify_backup_var,
+            command=self.on_config_change
         )
         self.verify_backup_check.grid(row=5, column=0, columnspan=2, padx=10, pady=5, sticky="w")
         
@@ -451,7 +462,8 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         self.saveworld_before_backup_check = ctk.CTkCheckBox(
             advanced_tab,
             text="💾 Ejecutar saveworld 5 segundos antes del backup",
-            variable=self.saveworld_before_backup_var
+            variable=self.saveworld_before_backup_var,
+            command=self.on_config_change
         )
         self.saveworld_before_backup_check.grid(row=6, column=0, columnspan=2, padx=10, pady=5, sticky="w")
     
@@ -624,6 +636,19 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         else:
             # Si está deshabilitado, asegurar que muestre "Deshabilitado"
             self._safe_update_next_backup("Próximo backup: Deshabilitado")
+        # Guardar configuración automáticamente
+        self.on_config_change()
+    
+    def on_config_change(self, *args):
+        """Callback cuando cambia cualquier configuración"""
+        if hasattr(self, 'current_server') and self.current_server:
+            # Guardar automáticamente la configuración del servidor actual
+            self.save_server_config(self.current_server)
+    
+    def toggle_auto_backup_and_save(self):
+        """Toggle auto backup y guardar configuración"""
+        self.toggle_auto_backup()
+        self.on_config_change()
     
     def start_scheduler(self):
         """Iniciar programador de backups automáticos"""
@@ -1285,17 +1310,22 @@ class AdvancedBackupPanel(ctk.CTkFrame):
             self.show_message(f"❌ {error_log_msg}")
     
     def update_backup_counter(self):
-        """Actualizar contador de backups"""
+        """Actualizar contador de backups (por servidor)"""
         try:
-            current_count = len(self.backup_history)
-            max_backups = int(self.max_backups_entry.get() or "10")
-            
-            if max_backups <= 0:
-                counter_text = f"Backups: {current_count} (sin límite)"
+            # Contar backups del servidor seleccionado
+            if self.current_server:
+                server_backups = [backup for backup in self.backup_history if backup.get('server') == self.current_server]
+                current_count = len(server_backups)
+                max_backups = int(self.max_backups_entry.get() or "10")
+                
+                if max_backups <= 0:
+                    counter_text = f"Backups ({self.current_server}): {current_count} (sin límite)"
+                else:
+                    counter_text = f"Backups ({self.current_server}): {current_count}/{max_backups}"
+                    if current_count >= max_backups:
+                        counter_text += " (se eliminarán los más antiguos)"
             else:
-                counter_text = f"Backups: {current_count}/{max_backups}"
-                if current_count >= max_backups:
-                    counter_text += " (se eliminarán los más antiguos)"
+                counter_text = "Seleccione un servidor"
             
             if hasattr(self, 'backup_counter_label'):
                 self.backup_counter_label.configure(text=counter_text)
@@ -1304,7 +1334,7 @@ class AdvancedBackupPanel(ctk.CTkFrame):
             self.logger.error(f"Error al actualizar contador de backups: {e}")
     
     def refresh_backup_history(self):
-        """Refrescar lista de historial de backups"""
+        """Refrescar lista de historial de backups (filtrado por servidor)"""
         # Actualizar contador
         self.update_backup_counter()
         
@@ -1312,17 +1342,30 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         for widget in self.history_scroll.winfo_children():
             widget.destroy()
         
-        if not self.backup_history:
-            no_backups_label = ctk.CTkLabel(
-                self.history_scroll,
-                text="📭 No hay backups registrados",
-                text_color="gray"
-            )
+        # Filtrar backups por servidor seleccionado
+        if self.current_server:
+            server_backups = [backup for backup in self.backup_history if backup.get('server') == self.current_server]
+        else:
+            server_backups = []
+        
+        if not server_backups:
+            if self.current_server:
+                no_backups_label = ctk.CTkLabel(
+                    self.history_scroll,
+                    text=f"📭 No hay backups para el servidor '{self.current_server}'",
+                    text_color="gray"
+                )
+            else:
+                no_backups_label = ctk.CTkLabel(
+                    self.history_scroll,
+                    text="📭 Seleccione un servidor para ver sus backups",
+                    text_color="gray"
+                )
             no_backups_label.pack(pady=20)
             return
         
         # Mostrar backups en orden inverso (más recientes primero)
-        for i, backup in enumerate(reversed(self.backup_history)):
+        for i, backup in enumerate(reversed(server_backups)):
             self.create_backup_entry(backup, i)
     
     def create_backup_entry(self, backup, index):
@@ -1569,33 +1612,11 @@ class AdvancedBackupPanel(ctk.CTkFrame):
                 pass
     
     def save_backup_config(self):
-        """Guardar configuración de backup"""
-        try:
-            config = {
-                "backup_path": self.backup_path_entry.get(),
-                "auto_backup": self.auto_backup_var.get(),
-                "interval_type": self.interval_type_combo.get(),
-                "interval_value": int(self.interval_value_entry.get() or "6"),
-                "compress": self.compress_var.get(),
-                "include_saves": self.include_saves_var.get(),
-                "include_configs": self.include_configs_var.get(),
-                "include_logs": self.include_logs_var.get(),
-                "backup_name_format": self.name_format_entry.get(),
-                "max_backups": int(self.max_backups_entry.get() or "10"),
-                "backup_before_start": self.backup_before_start_var.get(),
-                "verify_backup": self.verify_backup_var.get(),
-                "saveworld_before_backup": self.saveworld_before_backup_var.get()
-            }
-            
-            os.makedirs("data", exist_ok=True)
-            with open("data/backup_config.json", 'w', encoding='utf-8') as f:
-                json.dump(config, f, indent=2)
-            
-            self.show_ctk_info("Configuración guardada", "La configuración de backup ha sido guardada")
-            
-        except Exception as e:
-            self.logger.error(f"Error al guardar configuración de backup: {e}")
-            self.show_ctk_error("Error", f"No se pudo guardar la configuración: {e}")
+        """Guardar configuración de backup (ahora por servidor)"""
+        if self.current_server:
+            self.save_server_config(self.current_server)
+        else:
+            self.show_ctk_error("Error", "Debe seleccionar un servidor antes de guardar la configuración")
     
     def load_backup_history(self):
         """Cargar historial de backups"""
@@ -1656,6 +1677,10 @@ class AdvancedBackupPanel(ctk.CTkFrame):
     def update_server_selection(self, server_name):
         """Actualizar cuando se cambia el servidor seleccionado"""
         self.server_info_label.configure(text=f"Servidor actual: {server_name}")
+        
+        # Cargar configuración del servidor seleccionado
+        if server_name:
+            self.on_server_selected(server_name)
     
     def show_message(self, message, msg_type="info"):
         """Mostrar mensaje en el log principal"""
@@ -1663,3 +1688,133 @@ class AdvancedBackupPanel(ctk.CTkFrame):
             self.main_window.add_log_message(message)
         else:
             self.logger.info(message)
+    
+    def refresh_servers_list(self):
+        """Método mantenido por compatibilidad - ya no es necesario"""
+        pass
+    
+    def on_server_selected(self, server_name):
+        """Manejar selección de servidor"""
+        if server_name and server_name != "Seleccionar servidor...":
+            self.current_server = server_name
+            self.load_server_config(server_name)
+            self.refresh_backup_history()
+            self.logger.info(f"Servidor seleccionado para backup: {server_name}")
+        else:
+            self.current_server = None
+    
+    def get_server_config(self, server_name):
+        """Obtener configuración específica del servidor"""
+        if server_name not in self.server_configs:
+            self.server_configs[server_name] = self.default_backup_config.copy()
+        return self.server_configs[server_name]
+    
+    def load_server_config(self, server_name):
+        """Cargar configuración específica del servidor"""
+        try:
+            config = self.get_server_config(server_name)
+            
+            # Actualizar widgets con configuración del servidor
+            if hasattr(self, 'backup_path_entry'):
+                self.backup_path_entry.delete(0, "end")
+                backup_path = config.get("backup_path", self.get_default_backup_path())
+                if not backup_path:
+                    backup_path = self.get_default_backup_path()
+                self.backup_path_entry.insert(0, backup_path)
+            
+            if hasattr(self, 'auto_backup_var'):
+                self.auto_backup_var.set(config.get("auto_backup", False))
+            
+            if hasattr(self, 'interval_value_entry'):
+                self.interval_value_entry.delete(0, "end")
+                self.interval_value_entry.insert(0, str(config.get("interval_value", 6)))
+            
+            if hasattr(self, 'interval_type_combo'):
+                self.interval_type_combo.set(config.get("interval_type", "horas"))
+            
+            if hasattr(self, 'compress_var'):
+                self.compress_var.set(config.get("compress", True))
+            
+            if hasattr(self, 'include_saves_var'):
+                self.include_saves_var.set(config.get("include_saves", True))
+            
+            if hasattr(self, 'include_configs_var'):
+                self.include_configs_var.set(config.get("include_configs", True))
+            
+            if hasattr(self, 'include_logs_var'):
+                self.include_logs_var.set(config.get("include_logs", False))
+            
+            if hasattr(self, 'name_format_entry'):
+                self.name_format_entry.delete(0, "end")
+                self.name_format_entry.insert(0, config.get("backup_name_format", "{server}_{date}_{time}"))
+            
+            if hasattr(self, 'max_backups_entry'):
+                self.max_backups_entry.delete(0, "end")
+                self.max_backups_entry.insert(0, str(config.get("max_backups", 10)))
+            
+            if hasattr(self, 'backup_before_start_var'):
+                self.backup_before_start_var.set(config.get("backup_before_start", False))
+            
+            if hasattr(self, 'verify_backup_var'):
+                self.verify_backup_var.set(config.get("verify_backup", True))
+            
+            if hasattr(self, 'saveworld_before_backup_var'):
+                self.saveworld_before_backup_var.set(config.get("saveworld_before_backup", True))
+                
+        except Exception as e:
+            self.logger.error(f"Error al cargar configuración del servidor {server_name}: {e}")
+    
+    def save_server_config(self, server_name=None):
+        """Guardar configuración específica del servidor"""
+        if not server_name:
+            server_name = self.current_server
+        
+        if not server_name:
+            return
+        
+        try:
+            config = {
+                "backup_path": getattr(self, 'backup_path_entry', None) and self.backup_path_entry.get() or self.get_default_backup_path(),
+                "auto_backup": getattr(self, 'auto_backup_var', None) and self.auto_backup_var.get() or False,
+                "interval_type": getattr(self, 'interval_type_combo', None) and self.interval_type_combo.get() or "horas",
+                "interval_value": int(getattr(self, 'interval_value_entry', None) and self.interval_value_entry.get() or "6"),
+                "compress": getattr(self, 'compress_var', None) and self.compress_var.get() or True,
+                "include_saves": getattr(self, 'include_saves_var', None) and self.include_saves_var.get() or True,
+                "include_configs": getattr(self, 'include_configs_var', None) and self.include_configs_var.get() or True,
+                "include_logs": getattr(self, 'include_logs_var', None) and self.include_logs_var.get() or False,
+                "backup_name_format": getattr(self, 'name_format_entry', None) and self.name_format_entry.get() or "{server}_{date}_{time}",
+                "max_backups": int(getattr(self, 'max_backups_entry', None) and self.max_backups_entry.get() or "10"),
+                "backup_before_start": getattr(self, 'backup_before_start_var', None) and self.backup_before_start_var.get() or False,
+                "verify_backup": getattr(self, 'verify_backup_var', None) and self.verify_backup_var.get() or True,
+                "saveworld_before_backup": getattr(self, 'saveworld_before_backup_var', None) and self.saveworld_before_backup_var.get() or True
+            }
+            
+            self.server_configs[server_name] = config
+            self.save_all_server_configs()
+            
+        except Exception as e:
+            self.logger.error(f"Error al guardar configuración del servidor {server_name}: {e}")
+    
+    def load_all_server_configs(self):
+        """Cargar todas las configuraciones de servidores"""
+        try:
+            config_file = "data/backup_server_configs.json"
+            if os.path.exists(config_file):
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    self.server_configs = json.load(f)
+            else:
+                self.server_configs = {}
+                
+        except Exception as e:
+            self.logger.error(f"Error al cargar configuraciones de servidores: {e}")
+            self.server_configs = {}
+    
+    def save_all_server_configs(self):
+        """Guardar todas las configuraciones de servidores"""
+        try:
+            os.makedirs("data", exist_ok=True)
+            with open("data/backup_server_configs.json", 'w', encoding='utf-8') as f:
+                json.dump(self.server_configs, f, indent=2)
+                
+        except Exception as e:
+            self.logger.error(f"Error al guardar configuraciones de servidores: {e}")

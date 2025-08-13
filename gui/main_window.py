@@ -28,7 +28,7 @@ from .panels.ini_config_panel import IniConfigPanel
 
 class MainWindow:
 
-    APP_VERSION = "2.1"
+    APP_VERSION = "2.2"
     
     def __init__(self, root, config_manager, logger):
         """Inicializar la ventana principal"""
@@ -949,8 +949,10 @@ class MainWindow:
             if status == "Inactivo":
                 color = "red"
             elif status == "Iniciando":
-                color = "orange"
+                color = "yellow"
             elif status == "Activo":
+                color = "green"
+            elif status == "Ejecutándose":
                 color = "green"
             elif status == "Error":
                 color = "red"
