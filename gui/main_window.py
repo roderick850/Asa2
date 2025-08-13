@@ -129,106 +129,106 @@ class MainWindow:
             menu_buttons_frame, 
             text="Menu", 
             command=self.show_menu,
-            width=100,
-            height=25
+            width=80,
+            height=22
         )
-        self.menu_button.grid(row=0, column=0, padx=2, pady=2)
+        self.menu_button.grid(row=0, column=0, padx=1, pady=1)
         
         self.herramientas_button = ctk.CTkButton(
             menu_buttons_frame, 
             text="Herramientas", 
             command=self.show_herramientas,
-            width=100,
-            height=25
+            width=90,
+            height=22
         )
-        self.herramientas_button.grid(row=0, column=1, padx=2, pady=2)
+        self.herramientas_button.grid(row=0, column=1, padx=1, pady=1)
         
         self.ayuda_button = ctk.CTkButton(
             menu_buttons_frame, 
             text="Ayuda", 
             command=self.show_ayuda,
-            width=100,
-            height=25
+            width=70,
+            height=22
         )
-        self.ayuda_button.grid(row=0, column=2, padx=2, pady=2)
+        self.ayuda_button.grid(row=0, column=2, padx=1, pady=1)
         
         self.configuracion_button = ctk.CTkButton(
             menu_buttons_frame, 
             text="Configuración", 
             command=self.show_configuracion,
-            width=100,
-            height=25
+            width=90,
+            height=22
         )
-        self.configuracion_button.grid(row=0, column=3, padx=2, pady=2)
+        self.configuracion_button.grid(row=0, column=3, padx=1, pady=1)
         
         self.salir_button = ctk.CTkButton(
             menu_buttons_frame, 
             text="Salir", 
             command=self.salir_aplicacion,
-            width=100,
-            height=25
+            width=70,
+            height=22
         )
-        self.salir_button.grid(row=0, column=4, padx=2, pady=2)
+        self.salir_button.grid(row=0, column=4, padx=1, pady=1)
         
         # Frame para botones de administración grandes (fila 1)
         admin_frame = ctk.CTkFrame(self.top_bar, fg_color="transparent")
         admin_frame.grid(row=1, column=0, padx=10, pady=5, sticky="w")
         
-        # Botones de administración del servidor (tamaño grande)
+        # Botones de administración del servidor (tamaño compacto)
         self.start_button = ctk.CTkButton(
             admin_frame, 
-            text="Iniciar Servidor", 
+            text="Iniciar", 
             command=self.start_server,
             fg_color="green",
             hover_color="darkgreen",
-            width=120,
-            height=30
+            width=80,
+            height=25
         )
-        self.start_button.grid(row=0, column=0, padx=2, pady=2)
+        self.start_button.grid(row=0, column=0, padx=1, pady=1)
         
         self.stop_button = ctk.CTkButton(
             admin_frame, 
-            text="Detener Servidor", 
+            text="Detener", 
             command=self.stop_server,
             fg_color="red",
             hover_color="darkred",
-            width=120,
-            height=30
+            width=80,
+            height=25
         )
-        self.stop_button.grid(row=0, column=1, padx=2, pady=2)
+        self.stop_button.grid(row=0, column=1, padx=1, pady=1)
         
         self.restart_button = ctk.CTkButton(
             admin_frame, 
-            text="Reiniciar Servidor", 
+            text="Reiniciar", 
             command=self.restart_server,
             fg_color="orange",
             hover_color="darkorange",
-            width=120,
-            height=30
+            width=80,
+            height=25
         )
-        self.restart_button.grid(row=0, column=2, padx=2, pady=2)
+        self.restart_button.grid(row=0, column=2, padx=1, pady=1)
         
         self.install_button = ctk.CTkButton(
             admin_frame, 
-            text="Instalar Servidor", 
+            text="Instalar", 
             command=self.install_server,
             fg_color="blue",
             hover_color="darkblue",
-            width=120,
-            height=30
+            width=80,
+            height=25
         )
-        self.install_button.grid(row=0, column=3, padx=2, pady=2)
+        self.install_button.grid(row=0, column=3, padx=1, pady=1)
         
         self.update_button = ctk.CTkButton(
             admin_frame, 
-            text="Actualizar Servidor", 
+            text="Actualizar", 
             command=self.update_server,
             fg_color="#8B00FF",
             hover_color="#6B00CC",
-            width=120,
-            height=30
+            width=80,
+            height=25
         )
-        self.update_button.grid(row=0, column=4, padx=2, pady=2)
+        self.update_button.grid(row=0, column=4, padx=1, pady=1)
         
         # Frame para ruta raíz (fila 2)
         path_frame = ctk.CTkFrame(self.top_bar, fg_color="transparent")
@@ -251,10 +251,10 @@ class MainWindow:
             path_frame, 
             text="Cambiar", 
             command=self.browse_root_path,
-            width=80,
-            height=25
+            width=70,
+            height=22
         )
-        self.browse_button.grid(row=0, column=2, padx=(5, 0), pady=2)
+        self.browse_button.grid(row=0, column=2, padx=(3, 0), pady=1)
         
         # Configurar peso de columna para que la ruta ocupe el espacio disponible
         #.grid_columnconfigure(1, weight=1)
@@ -270,73 +270,119 @@ class MainWindow:
             selection_frame,
             values=["Seleccionar servidor..."],
             command=self.on_server_selected,
-            width=200
+            width=160,
+            height=22
         )
-        self.server_dropdown.grid(row=0, column=1, padx=5, pady=2, sticky="w")
+        self.server_dropdown.grid(row=0, column=1, padx=3, pady=1, sticky="w")
         
         # Botón para recargar lista de servidores
         self.refresh_servers_button = ctk.CTkButton(
             selection_frame,
             text="🔄",
             command=self.refresh_servers_list,
-            width=30,
-            height=25
+            width=25,
+            height=22
         )
-        self.refresh_servers_button.grid(row=0, column=2, padx=5, pady=2, sticky="w")
+        self.refresh_servers_button.grid(row=0, column=2, padx=3, pady=1, sticky="w")
         
         # Etiqueta y dropdown para mapa
-        ctk.CTkLabel(selection_frame, text="Mapa:").grid(row=0, column=3, padx=(20, 5), pady=2, sticky="w")
+        ctk.CTkLabel(selection_frame, text="Mapa:").grid(row=0, column=3, padx=(15, 3), pady=1, sticky="w")
         
         self.map_dropdown = ctk.CTkOptionMenu(
             selection_frame,
             values=["The Island", "The Center", "Scorched Earth", "Ragnarok", "Aberration", "Extinction", "Valguero", "Genesis: Part 1", "Crystal Isles", "Genesis: Part 2", "Lost Island", "Fjordur"],
             command=self.on_map_selected,
-            width=200
+            width=160,
+            height=22
         )
-        self.map_dropdown.grid(row=0, column=4, padx=5, pady=2, sticky="w")
+        self.map_dropdown.grid(row=0, column=4, padx=3, pady=1, sticky="w")
         
-        # Frame para estado del servidor (lado derecho, abarca todas las filas)
+        # Frame para estado del servidor expandido (lado derecho, abarca todas las filas)
         status_frame = ctk.CTkFrame(self.top_bar, fg_color=("gray90", "gray20"))
         status_frame.grid(row=0, column=2, rowspan=4, padx=10, pady=5, sticky="ne")
         
         # Panel de estado del servidor
         status_panel = ctk.CTkFrame(status_frame, fg_color="transparent")
-        status_panel.pack(fill="both", expand=True, padx=10, pady=10)
+        status_panel.pack(fill="both", expand=True, padx=10, pady=5)
         
         # Título del panel de estado
-        ctk.CTkLabel(status_panel, text="Estado del Servidor", font=("Arial", 14, "bold")).pack(pady=(0, 10))
+        ctk.CTkLabel(status_panel, text="Estado del Servidor", font=("Arial", 14, "bold")).pack(pady=(0, 4))
+        
+        # Frame horizontal para organizar la información en columnas
+        info_frame = ctk.CTkFrame(status_panel, fg_color="transparent")
+        info_frame.pack(fill="x", pady=5)
+        
+        # Columna 1: Estado y Tiempo
+        col1_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
+        col1_frame.pack(side="left", fill="y", padx=(0, 10))
         
         # Estado del servidor
-        status_container = ctk.CTkFrame(status_panel, fg_color="transparent")
+        status_container = ctk.CTkFrame(col1_frame, fg_color="transparent")
         status_container.pack(fill="x", pady=2)
-        
-        ctk.CTkLabel(status_container, text="Estado:").pack(side="left")
-        self.status_label = ctk.CTkLabel(status_container, text="Detenido", fg_color="red", corner_radius=5, padx=10, pady=2)
-        self.status_label.pack(side="right", padx=(5, 0))
+        ctk.CTkLabel(status_container, text="Estado:", font=("Arial", 10)).pack()
+        self.status_label = ctk.CTkLabel(status_container, text="Detenido", fg_color="red", corner_radius=5, padx=8, pady=2, font=("Arial", 9))
+        self.status_label.pack(pady=(2, 0))
         
         # Tiempo activo
-        uptime_container = ctk.CTkFrame(status_panel, fg_color="transparent")
+        uptime_container = ctk.CTkFrame(col1_frame, fg_color="transparent")
         uptime_container.pack(fill="x", pady=2)
+        ctk.CTkLabel(uptime_container, text="Tiempo Activo:", font=("Arial", 10)).pack()
+        self.uptime_label = ctk.CTkLabel(uptime_container, text="00:00:00", fg_color=("gray90", "gray20"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
+        self.uptime_label.pack(pady=(2, 0))
         
-        ctk.CTkLabel(uptime_container, text="Tiempo Activo:").pack(side="left")
-        self.uptime_label = ctk.CTkLabel(uptime_container, text="00:00:00", fg_color=("gray90", "gray20"), corner_radius=5, padx=10, pady=2)
-        self.uptime_label.pack(side="right", padx=(5, 0))
+        # Columna 2: CPU y Memoria
+        col2_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
+        col2_frame.pack(side="left", fill="y", padx=(0, 10))
         
         # Uso de CPU
-        cpu_container = ctk.CTkFrame(status_panel, fg_color="transparent")
+        cpu_container = ctk.CTkFrame(col2_frame, fg_color="transparent")
         cpu_container.pack(fill="x", pady=2)
-        
-        ctk.CTkLabel(cpu_container, text="CPU:").pack(side="left")
-        self.cpu_label = ctk.CTkLabel(cpu_container, text="0%", fg_color=("gray90", "gray20"), corner_radius=5, padx=10, pady=2)
-        self.cpu_label.pack(side="right", padx=(5, 0))
+        ctk.CTkLabel(cpu_container, text="CPU:", font=("Arial", 10)).pack()
+        self.cpu_label = ctk.CTkLabel(cpu_container, text="0%", fg_color=("gray90", "gray20"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
+        self.cpu_label.pack(pady=(2, 0))
         
         # Uso de memoria
-        memory_container = ctk.CTkFrame(status_panel, fg_color="transparent")
+        memory_container = ctk.CTkFrame(col2_frame, fg_color="transparent")
         memory_container.pack(fill="x", pady=2)
+        ctk.CTkLabel(memory_container, text="Memoria:", font=("Arial", 10)).pack()
+        self.memory_label = ctk.CTkLabel(memory_container, text="0 MB", fg_color=("gray90", "gray20"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
+        self.memory_label.pack(pady=(2, 0))
         
-        ctk.CTkLabel(memory_container, text="Memoria:").pack(side="left")
-        self.memory_label = ctk.CTkLabel(memory_container, text="0 MB", fg_color=("gray90", "gray20"), corner_radius=5, padx=10, pady=2)
-        self.memory_label.pack(side="right", padx=(5, 0))
+        # Columna 3: Información del Sistema
+        col3_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
+        col3_frame.pack(side="left", fill="y", padx=(0, 10))
+        
+        # Versión de la App
+        app_version_container = ctk.CTkFrame(col3_frame, fg_color="transparent")
+        app_version_container.pack(fill="x", pady=2)
+        ctk.CTkLabel(app_version_container, text="Versión App:", font=("Arial", 10)).pack()
+        self.app_version_label = ctk.CTkLabel(app_version_container, text="v1.0.0", fg_color=("blue", "blue"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
+        self.app_version_label.pack(pady=(2, 0))
+        
+        # Versión del Servidor
+        server_version_container = ctk.CTkFrame(col3_frame, fg_color="transparent")
+        server_version_container.pack(fill="x", pady=2)
+        ctk.CTkLabel(server_version_container, text="Servidor:", font=("Arial", 10)).pack()
+        self.server_version_label = ctk.CTkLabel(server_version_container, text="No detectado", fg_color=("gray90", "gray20"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
+        self.server_version_label.pack(pady=(2, 0))
+        
+        # Columna 4: Steam y Actualizaciones
+        col4_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
+        col4_frame.pack(side="left", fill="y")
+        
+        # Versión de Steam
+        steam_version_container = ctk.CTkFrame(col4_frame, fg_color="transparent")
+        steam_version_container.pack(fill="x", pady=2)
+        ctk.CTkLabel(steam_version_container, text="Steam:", font=("Arial", 10)).pack()
+        self.steam_version_label = ctk.CTkLabel(steam_version_container, text="Verificando...", fg_color=("orange", "orange"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
+        self.steam_version_label.pack(pady=(2, 0))
+        
+        # Estado de actualizaciones
+        update_container = ctk.CTkFrame(col4_frame, fg_color="transparent")
+        update_container.pack(fill="x", pady=2)
+        ctk.CTkLabel(update_container, text="Actualizaciones:", font=("Arial", 10)).pack()
+        self.update_status_label = ctk.CTkLabel(update_container, text="Al día", fg_color=("green", "green"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
+        self.update_status_label.pack(pady=(2, 0))
         
         # La lista de servidores se inicializará después de crear el server_panel
         
@@ -679,6 +725,9 @@ class MainWindow:
             if self.app_settings.get_setting("start_minimized"):
                 self.root.after(1000, self.minimize_to_tray)
             
+            # Inicializar información del panel expandido
+            self.root.after(2000, self.initialize_extended_panel_info)
+            
             self.logger.info("Configuraciones de aplicación aplicadas")
             
         except Exception as e:
@@ -952,8 +1001,6 @@ class MainWindow:
                 color = "yellow"
             elif status == "Activo":
                 color = "green"
-            elif status == "Ejecutándose":
-                color = "green"
             elif status == "Error":
                 color = "red"
             elif status == "Verificando...":
@@ -979,6 +1026,161 @@ class MainWindow:
         """Actualizar el uso de memoria del servidor"""
         self.memory_label.configure(text=f"{memory_mb} MB")
     
+    def update_app_version(self, version="v1.0.0"):
+        """Actualizar la versión de la aplicación"""
+        self.app_version_label.configure(text=version)
+    
+    def update_server_version(self, version="No detectado"):
+        """Actualizar la versión del servidor"""
+        color = ("green", "green") if version != "No detectado" else ("gray90", "gray20")
+        self.server_version_label.configure(text=version, fg_color=color)
+    
+    def update_steam_version(self, version="Verificando..."):
+        """Actualizar la versión de Steam"""
+        if "Build" in version:
+            color = ("green", "green")
+        elif "Verificando" in version:
+            color = ("orange", "orange")
+        elif "Error" in version or "No disponible" in version:
+            color = ("red", "red")
+        else:
+            color = ("blue", "blue")
+        self.steam_version_label.configure(text=version, fg_color=color)
+    
+    def update_update_status(self, status="Al día"):
+        """Actualizar el estado de actualizaciones"""
+        if "Al día" in status or "Actualizado" in status:
+            color = ("green", "green")
+        elif "Disponible" in status or "Pendiente" in status:
+            color = ("orange", "orange")
+        elif "Error" in status:
+            color = ("red", "red")
+        else:
+            color = ("gray90", "gray20")
+        self.update_status_label.configure(text=status, fg_color=color)
+    
+    def initialize_extended_panel_info(self):
+        """Inicializar información del panel expandido"""
+        try:
+            # Actualizar versión de la aplicación
+            app_version = self.get_app_version()
+            self.update_app_version(app_version)
+            
+            # Actualizar versión del servidor
+            server_version = self.get_server_version()
+            self.update_server_version(server_version)
+            
+            # Actualizar versión de Steam
+            steam_version = self.get_steam_version()
+            self.update_steam_version(steam_version)
+            
+            # Actualizar estado de actualizaciones
+            update_status = self.check_update_status()
+            self.update_update_status(update_status)
+            
+            # Programar actualizaciones periódicas cada 5 minutos
+            self.root.after(300000, self.initialize_extended_panel_info)
+            
+        except Exception as e:
+            self.logger.error(f"Error al inicializar información del panel: {e}")
+    
+    def get_app_version(self):
+        """Obtener versión de la aplicación"""
+        try:
+            # Intentar leer desde un archivo de versión o usar una versión por defecto
+            import os
+            version_file = os.path.join(os.path.dirname(__file__), '..', 'VERSION')
+            if os.path.exists(version_file):
+                with open(version_file, 'r') as f:
+                    return f"v{f.read().strip()}"
+            return "v1.0.0"
+        except:
+            return "v1.0.0"
+    
+    def get_server_version(self):
+        """Obtener versión del servidor ARK"""
+        try:
+            server_path = self.config_manager.get("server", "root_path", "")
+            if not server_path:
+                return "No configurado"
+            
+            # Buscar archivo de versión del servidor
+            import os
+            version_file = os.path.join(server_path, "version.txt")
+            if os.path.exists(version_file):
+                with open(version_file, 'r') as f:
+                    version = f.read().strip()
+                    return f"Build {version}" if version else "No detectado"
+            
+            # Buscar en archivos de Steam
+            steam_file = os.path.join(server_path, "steamapps", "appmanifest_2430930.acf")
+            if os.path.exists(steam_file):
+                with open(steam_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    if '"buildid"' in content:
+                        for line in content.split('\n'):
+                            if '"buildid"' in line:
+                                build_id = line.split('"')[3] if line.count('"') >= 3 else "Desconocido"
+                                return f"Build {build_id}"
+            
+            return "No detectado"
+        except Exception as e:
+            self.logger.error(f"Error al obtener versión del servidor: {e}")
+            return "Error"
+    
+    def get_steam_version(self):
+        """Obtener versión oficial de Steam de ARK"""
+        try:
+            import subprocess
+            import os
+            
+            # Intentar usar SteamCMD si está disponible
+            steamcmd_path = self.config_manager.get("server", "steamcmd_path", "")
+            if steamcmd_path and os.path.exists(steamcmd_path):
+                try:
+                    result = subprocess.run([
+                        steamcmd_path,
+                        "+login", "anonymous",
+                        "+app_info_update", "1",
+                        "+app_info_print", "2430930",
+                        "+quit"
+                    ], capture_output=True, text=True, timeout=30)
+                    
+                    if result.returncode == 0 and "buildid" in result.stdout.lower():
+                        lines = result.stdout.split('\n')
+                        for line in lines:
+                            if "buildid" in line.lower():
+                                build_id = line.split('"')[-2] if '"' in line else "Desconocido"
+                                return f"Build {build_id}"
+                except Exception:
+                    pass
+            
+            return "Disponible"
+        except Exception as e:
+            self.logger.error(f"Error al obtener versión de Steam: {e}")
+            return "No disponible"
+    
+    def check_update_status(self):
+        """Verificar estado de actualizaciones"""
+        try:
+            server_version = self.get_server_version()
+            steam_version = self.get_steam_version()
+            
+            if "Error" in server_version or "No detectado" in server_version:
+                return "Sin servidor"
+            
+            if "Build" in server_version and "Build" in steam_version:
+                server_build = server_version.split("Build ")[1] if "Build " in server_version else "0"
+                steam_build = steam_version.split("Build ")[1] if "Build " in steam_version else "0"
+                
+                if server_build != steam_build:
+                    return "Actualización disponible"
+            
+            return "Al día"
+        except Exception as e:
+            self.logger.error(f"Error al verificar actualizaciones: {e}")
+            return "Error"
+     
     def on_server_selected(self, server_name):
         """Maneja la selección de un servidor"""
         self.selected_server = server_name
