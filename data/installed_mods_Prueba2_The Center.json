@@ -1,0 +1,325 @@
+[
+  {
+    "screenshots": [
+      {
+        "id": 753416,
+        "modId": 912815,
+        "title": "S-Thylacoleo",
+        "description": "",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/753/416/310/172/s-thyla.jpg",
+        "url": "https://83374.media.forgecdn.net/attachments/753/416/s-thyla.jpg"
+      },
+      {
+        "id": 1137429,
+        "modId": 912815,
+        "title": "87677867.jpg",
+        "description": "87677867.jpg",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/1137/429/310/172/87677867-jpg.jpg",
+        "url": "https://83374.media.forgecdn.net/attachments/1137/429/87677867-jpg.jpg"
+      },
+      {
+        "id": 1137428,
+        "modId": 912815,
+        "title": "4555.jpg",
+        "description": "4555.jpg",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/1137/428/310/172/4555-jpg.jpg",
+        "url": "https://83374.media.forgecdn.net/attachments/1137/428/4555-jpg.jpg"
+      },
+      {
+        "id": 753417,
+        "modId": 912815,
+        "title": "S-Allosaurus",
+        "description": "",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/753/417/310/172/s-allo.jpg",
+        "url": "https://83374.media.forgecdn.net/attachments/753/417/s-allo.jpg"
+      },
+      {
+        "id": 753418,
+        "modId": 912815,
+        "title": "S-Therizino",
+        "description": "",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/753/418/310/172/s-theri.jpg",
+        "url": "https://83374.media.forgecdn.net/attachments/753/418/s-theri.jpg"
+      },
+      {
+        "id": 753419,
+        "modId": 912815,
+        "title": "S-Ankylo",
+        "description": "",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/753/419/310/172/s-anky.jpg",
+        "url": "https://83374.media.forgecdn.net/attachments/753/419/s-anky.jpg"
+      },
+      {
+        "id": 753420,
+        "modId": 912815,
+        "title": "S-Rex",
+        "description": "",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/753/420/310/172/s-rex_1080p.jpg",
+        "url": "https://83374.media.forgecdn.net/attachments/753/420/s-rex_1080p.jpg"
+      },
+      {
+        "id": 925461,
+        "modId": 912815,
+        "title": "S-Deinosuchus",
+        "description": "S-Deinosuchus",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/925/461/310/172/475647565467.jpg",
+        "url": "https://83374.media.forgecdn.net/attachments/925/461/475647565467.jpg"
+      }
+    ],
+    "id": 912815,
+    "gameId": 83374,
+    "name": "S-Dino Variants",
+    "slug": "s-dino-variants",
+    "links": {
+      "websiteUrl": "https://www.curseforge.com/ark-survival-ascended/mods/s-dino-variants",
+      "wikiUrl": "https://discord.gg/uW4yyQ7bbT",
+      "issuesUrl": null,
+      "sourceUrl": null
+    },
+    "summary": "This mod adds different kind of glowy, beautiful S-Dinos",
+    "status": 4,
+    "downloadCount": 5650975,
+    "isFeatured": false,
+    "primaryCategoryId": 6074,
+    "categories": [
+      {
+        "id": 6074,
+        "gameId": 83374,
+        "name": "Creatures",
+        "slug": "creatures",
+        "url": "https://www.curseforge.com/ark-survival-ascended/mods/creatures",
+        "iconUrl": "https://83374.media.forgecdn.net/avatars/780/861/638126560008756045.png",
+        "dateModified": "2023-02-22T09:46:40.88Z",
+        "isClass": false,
+        "classId": 6072,
+        "parentCategoryId": 6072
+      }
+    ],
+    "classId": 6072,
+    "authors": [
+      {
+        "id": 104961966,
+        "name": "Nekatus_Modding",
+        "url": "https://www.curseforge.com/members/nekatus_modding",
+        "avatarUrl": "https://media.forgecdn.net/avatars/1376/209/638893032621254109.jpeg"
+      }
+    ],
+    "logo": {
+      "id": 877233,
+      "modId": 912815,
+      "title": "638302200086552021.png",
+      "description": "",
+      "thumbnailUrl": "https://83374.media.forgecdn.net/avatars/thumbnails/877/233/256/256/638302200086552021.png",
+      "url": "https://83374.media.forgecdn.net/avatars/877/233/638302200086552021.png"
+    },
+    "mainFileId": 6848486,
+    "latestFiles": [
+      {
+        "id": 6848486,
+        "gameId": 83374,
+        "modId": 912815,
+        "isAvailable": true,
+        "displayName": "sdino variants-windows 182.zip",
+        "fileName": "sdino variants-windows 182.zip",
+        "releaseType": 1,
+        "fileStatus": 4,
+        "hashes": [
+          {
+            "value": "f96908b06b66aab0c7013c06cf8db71256e417d4",
+            "algo": 1
+          },
+          {
+            "value": "7e72fc80ff76499cd4cf96f31b266eed",
+            "algo": 2
+          }
+        ],
+        "fileDate": "2025-08-04T21:12:49.553Z",
+        "fileLength": 277777124,
+        "downloadCount": 0,
+        "fileSizeOnDisk": 339424493,
+        "downloadUrl": null,
+        "gameVersions": [
+          "1.0"
+        ],
+        "sortableGameVersions": [
+          {
+            "gameVersionName": "1.0",
+            "gameVersionPadded": "0000000001.0000000000",
+            "gameVersion": "1.0",
+            "gameVersionReleaseDate": "2023-02-22T00:00:00Z",
+            "gameVersionTypeId": 76367
+          }
+        ],
+        "dependencies": [],
+        "alternateFileId": 0,
+        "isServerPack": false,
+        "fileFingerprint": 2977167399,
+        "modules": [
+          {
+            "name": "SDinoVariants",
+            "fingerprint": 17488244
+          }
+        ],
+        "cookingInfo": {
+          "cookerVersion": "2",
+          "cookerRevision": "742496"
+        }
+      }
+    ],
+    "supportedPlatform": 0,
+    "supportsCrossPlatform": true,
+    "latestFilesIndexes": [
+      {
+        "gameVersion": "1.0",
+        "fileId": 6848486,
+        "filename": "sdino variants-windows 182.zip",
+        "releaseType": 1,
+        "gameVersionTypeId": 76367
+      }
+    ],
+    "latestEarlyAccessFilesIndexes": [],
+    "dateCreated": "2023-09-13T16:40:08.513Z",
+    "dateModified": "2025-08-05T09:14:22.097Z",
+    "dateReleased": "2025-08-04T21:12:50.073Z",
+    "allowModDistribution": false,
+    "gamePopularityRank": 35,
+    "isAvailable": true,
+    "thumbsUpCount": 0,
+    "ratingDetails": {
+      "rating": 97.85,
+      "totalRatings": 12180,
+      "positiveRatings": 11918,
+      "score": 1
+    },
+    "featuredProjectTag": 0
+  },
+  {
+    "screenshots": [],
+    "id": 972253,
+    "gameId": 83374,
+    "name": "Clean Glass Wall (Sample)",
+    "slug": "clean-glass-wall-sample",
+    "links": {
+      "websiteUrl": "https://www.curseforge.com/ark-survival-ascended/mods/clean-glass-wall-sample",
+      "wikiUrl": null,
+      "issuesUrl": null,
+      "sourceUrl": null
+    },
+    "summary": "Clean Glass Wall Cosmetic",
+    "status": 4,
+    "downloadCount": 6590885,
+    "isFeatured": false,
+    "primaryCategoryId": 6844,
+    "categories": [
+      {
+        "id": 6844,
+        "gameId": 83374,
+        "name": "Custom Cosmetics",
+        "slug": "custom-cosmetics",
+        "url": "https://www.curseforge.com/ark-survival-ascended/mods/custom-cosmetics",
+        "iconUrl": null,
+        "dateModified": "2024-01-25T09:46:36.767Z",
+        "isClass": false,
+        "classId": 6072,
+        "parentCategoryId": 6072
+      }
+    ],
+    "classId": 6072,
+    "authors": [
+      {
+        "id": 104601953,
+        "name": "StudioWildcardMods",
+        "url": "https://www.curseforge.com/members/studiowildcardmods",
+        "avatarUrl": "https://static-cdn.jtvnw.net/user-default-pictures-uv/ebb84563-db81-4b9c-8940-64ed33ccfc7b-profile_image-150x150.png"
+      }
+    ],
+    "logo": {
+      "id": 945276,
+      "modId": 972253,
+      "title": "638430013713601035.png",
+      "description": "",
+      "thumbnailUrl": "https://83374.media.forgecdn.net/avatars/thumbnails/945/276/256/256/638430013713601035.png",
+      "url": "https://83374.media.forgecdn.net/avatars/945/276/638430013713601035.png"
+    },
+    "mainFileId": 6601193,
+    "latestFiles": [
+      {
+        "id": 6601193,
+        "gameId": 83374,
+        "modId": 972253,
+        "isAvailable": true,
+        "displayName": "5.5-",
+        "fileName": "clean glass wall sample-windows 4.zip",
+        "releaseType": 1,
+        "fileStatus": 4,
+        "hashes": [
+          {
+            "value": "42a0d4c353fcf65005e2f928aacdad513eb45f31",
+            "algo": 1
+          },
+          {
+            "value": "cc3f8ef5342472a69b35143ce1987828",
+            "algo": 2
+          }
+        ],
+        "fileDate": "2025-05-31T14:07:45.633Z",
+        "fileLength": 83617,
+        "downloadCount": 1342,
+        "fileSizeOnDisk": 89251,
+        "downloadUrl": null,
+        "gameVersions": [
+          "1.0"
+        ],
+        "sortableGameVersions": [
+          {
+            "gameVersionName": "1.0",
+            "gameVersionPadded": "0000000001.0000000000",
+            "gameVersion": "1.0",
+            "gameVersionReleaseDate": "2023-02-22T00:00:00Z",
+            "gameVersionTypeId": 76367
+          }
+        ],
+        "dependencies": [],
+        "alternateFileId": 0,
+        "isServerPack": false,
+        "fileFingerprint": 679028300,
+        "modules": [
+          {
+            "name": "GlassCosmetic",
+            "fingerprint": 367521036
+          }
+        ],
+        "cookingInfo": {
+          "cookerVersion": "2",
+          "cookerRevision": "711291"
+        }
+      }
+    ],
+    "supportedPlatform": 0,
+    "supportsCrossPlatform": true,
+    "latestFilesIndexes": [
+      {
+        "gameVersion": "1.0",
+        "fileId": 6601193,
+        "filename": "clean glass wall sample-windows 4.zip",
+        "releaseType": 1,
+        "gameVersionTypeId": 76367
+      }
+    ],
+    "latestEarlyAccessFilesIndexes": [],
+    "dateCreated": "2024-02-08T20:40:30.093Z",
+    "dateModified": "2025-06-05T15:11:24.03Z",
+    "dateReleased": "2025-05-31T14:07:46.543Z",
+    "allowModDistribution": false,
+    "gamePopularityRank": 13,
+    "isAvailable": true,
+    "thumbsUpCount": 0,
+    "ratingDetails": {
+      "rating": 96.87,
+      "totalRatings": 9259,
+      "positiveRatings": 8969,
+      "score": 1
+    },
+    "featuredProjectTag": 0
+  }
+]

@@ -1207,7 +1207,7 @@ class ModsPanel(ctk.CTkFrame):
     
     def update_mods_ids_entry(self):
         """Actualizar el campo de IDs de mods"""
-        mod_ids = [mod.get("id", "") for mod in self.installed_mods if mod.get("id")]
+        mod_ids = [str(mod.get("id", "")) for mod in self.installed_mods if mod.get("id")]
         ids_text = ",".join(mod_ids)
         
         self.mods_ids_entry.delete(0, "end")
@@ -1228,12 +1228,65 @@ class ModsPanel(ctk.CTkFrame):
             self.mods_ids_entry.delete(0, "end")
             self.mods_ids_entry.insert(0, ",".join(mod_ids))
             
+            # Actualizar configuración específica del servidor/mapa
+            if self.config_manager and self.current_server and self.current_map:
+                server_map_key = f"{self.current_server}_{self.current_map}"
+                config_key = f"mod_ids_{server_map_key}"
+                
+                # Guardar en la configuración específica del servidor/mapa
+                self.config_manager.set("server", config_key, ",".join(mod_ids))
+                
+                if self.logger:
+                    self.logger.info(f"Mods aplicados a {self.current_server} - {self.current_map}: {','.join(mod_ids)}")
+            else:
+                # Fallback a configuración general si no hay contexto específico
+                if self.config_manager:
+                    self.config_manager.set("server", "mod_ids", ",".join(mod_ids))
+                    
+                if self.logger:
+                    self.logger.info(f"Mods aplicados a configuración general: {','.join(mod_ids)}")
+            
             self.show_message(f"✅ {len(mod_ids)} mods aplicados al servidor", "success")
             
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Error al aplicar mods: {e}")
             self.show_message(f"❌ Error al aplicar mods: {e}", "error")
+    
+    def apply_mods_to_server_silently(self):
+        """Aplicar mods al servidor sin mostrar mensajes (para uso automático)"""
+        try:
+            # Obtener IDs de mods instalados
+            mod_ids = [str(mod.get("id", "")) for mod in self.installed_mods if mod.get("id")]
+            
+            if not mod_ids:
+                return
+            
+            # Actualizar entrada de IDs
+            self.mods_ids_entry.delete(0, "end")
+            self.mods_ids_entry.insert(0, ",".join(mod_ids))
+            
+            # Actualizar configuración específica del servidor/mapa
+            if self.config_manager and self.current_server and self.current_map:
+                server_map_key = f"{self.current_server}_{self.current_map}"
+                config_key = f"mod_ids_{server_map_key}"
+                
+                # Guardar en la configuración específica del servidor/mapa
+                self.config_manager.set("server", config_key, ",".join(mod_ids))
+                
+                if self.logger:
+                    self.logger.info(f"Mods aplicados automáticamente a {self.current_server} - {self.current_map}: {','.join(mod_ids)}")
+            else:
+                # Fallback a configuración general si no hay contexto específico
+                if self.config_manager:
+                    self.config_manager.set("server", "mod_ids", ",".join(mod_ids))
+                    
+                if self.logger:
+                    self.logger.info(f"Mods aplicados automáticamente a configuración general: {','.join(mod_ids)}")
+            
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al aplicar mods automáticamente: {e}")
     
     def clear_mods(self):
         """Limpiar todos los mods"""
@@ -1253,6 +1306,24 @@ class ModsPanel(ctk.CTkFrame):
                 # Limpiar entrada de IDs
                 self.mods_ids_entry.delete(0, "end")
                 
+                # Limpiar configuración específica del servidor/mapa
+                if self.config_manager and self.current_server and self.current_map:
+                    server_map_key = f"{self.current_server}_{self.current_map}"
+                    config_key = f"mod_ids_{server_map_key}"
+                    
+                    # Limpiar la configuración específica del servidor/mapa
+                    self.config_manager.set("server", config_key, "")
+                    
+                    if self.logger:
+                        self.logger.info(f"Configuración de mods limpiada para {self.current_server} - {self.current_map}")
+                else:
+                    # Fallback a configuración general si no hay contexto específico
+                    if self.config_manager:
+                        self.config_manager.set("server", "mod_ids", "")
+                        
+                    if self.logger:
+                        self.logger.info("Configuración general de mods limpiada")
+                
                 # Actualizar visualización
                 self.refresh_mods_display()
                 self.update_stats()
@@ -1263,6 +1334,34 @@ class ModsPanel(ctk.CTkFrame):
             if self.logger:
                 self.logger.error(f"Error al limpiar mods: {e}")
             self.show_message(f"❌ Error al limpiar mods: {e}", "error")
+    
+    def clear_mods_silently(self):
+        """Limpiar configuración de mods sin mostrar mensajes (para uso automático)"""
+        try:
+            # Limpiar entrada de IDs
+            self.mods_ids_entry.delete(0, "end")
+            
+            # Limpiar configuración específica del servidor/mapa
+            if self.config_manager and self.current_server and self.current_map:
+                server_map_key = f"{self.current_server}_{self.current_map}"
+                config_key = f"mod_ids_{server_map_key}"
+                
+                # Limpiar la configuración específica del servidor/mapa
+                self.config_manager.set("server", config_key, "")
+                
+                if self.logger:
+                    self.logger.info(f"Configuración de mods limpiada automáticamente para {self.current_server} - {self.current_map}")
+            else:
+                # Fallback a configuración general si no hay contexto específico
+                if self.config_manager:
+                    self.config_manager.set("server", "mod_ids", "")
+                    
+                if self.logger:
+                    self.logger.info("Configuración general de mods limpiada automáticamente")
+            
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al limpiar mods automáticamente: {e}")
     
     def load_current_server_map(self):
         """Cargar servidor y mapa actuales"""
@@ -1315,12 +1414,25 @@ class ModsPanel(ctk.CTkFrame):
             # Guardar contexto actual
             self.save_current_server_map()
             
+            # Cargar mods específicos del servidor/mapa
+            self.load_installed_mods()
+            
+            # Actualizar entrada de IDs con los mods del contexto actual
+            self.update_mods_ids_entry()
+            
+            # Aplicar automáticamente los mods al servidor si hay mods instalados
+            if self.installed_mods:
+                self.apply_mods_to_server_silently()
+            else:
+                # Si no hay mods, limpiar la configuración del servidor
+                self.clear_mods_silently()
+            
             # Actualizar visualización
             self.refresh_mods_display()
             self.update_stats()
             
             if self.logger:
-                self.logger.info(f"Contexto actualizado: {server_name} - {map_name}")
+                self.logger.info(f"Contexto actualizado: {server_name} - {map_name} ({len(self.installed_mods)} mods cargados y aplicados automáticamente)")
                 
         except Exception as e:
             if self.logger:
