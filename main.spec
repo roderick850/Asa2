@@ -54,6 +54,8 @@ hiddenimports = [
     'requests',
     'urllib3',
     'certifi',
+    'ctypes',
+    'ctypes.wintypes',
     
     # Otros
     'pystray',

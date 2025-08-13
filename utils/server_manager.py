@@ -119,11 +119,11 @@ class ServerManager:
             
             # Log de debug con todas las ventanas encontradas
             if windows_found:
-                self.logger.debug(f"Total de ventanas encontradas para PID {pid}: {len(windows_found)}")
+                self.logger.debug(f"Total de ventanas encontradas para PID {server_pid}: {len(windows_found)}")
                 for window in windows_found:
                     self.logger.debug(f"  - {window}")
             else:
-                self.logger.warning(f"No se encontraron ventanas para PID {pid}")
+                self.logger.warning(f"No se encontraron ventanas para PID {server_pid}")
             
             # Si no se encontró por criterios específicos, usar la primera ventana visible como fallback
             if not self.server_console_hwnd and windows_found:
