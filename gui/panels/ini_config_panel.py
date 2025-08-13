@@ -184,6 +184,27 @@ class IniConfigPanel(ctk.CTkFrame):
             "BabyFoodConsumptionSpeedMultiplier": "babyfoodconsumptionspeedmultiplier",
             "DisableImprintDinoBuff": "disableimprintdinobuff",
             
+            # Nuevos campos agregados
+            "bAllowUnlimitedRespecs": "ballowunlimitedrespecs",
+            "bDisablePhotoMode": "bdisablephotomode",
+            "bDisableStructurePlacementCollision": "bdisablestructureplacementcollision",
+            "bIgnoreStructuresPreventionVolumes": "bignorestructurespreventionvolumes",
+            "bUseDinoLevelUpAnimations": "busedinolevelupanimations",
+            "bUseSingleplayerSettings": "busesingleplayersettings",
+            "ConfigAddNPCSpawnEntriesContainer": "configaddnpcspawnentriescontainer",
+            "CraftingSkillBonusMultiplier": "craftingskillbonusmultiplier",
+            "CustomRecipeEffectivenessMultiplier": "customrecipeeffectivenessmultiplier",
+            "CustomRecipeSkillMultiplier": "customrecipeskillmultiplier",
+            "DestroyTamesOverLevelClamp": "destroytamesoverlevelclamp",
+            "ExcludeItemIndices": "excludeitemindices",
+            "GlobalItemDecompositionTimeMultiplier": "globalitemdecompositiontimemultiplier",
+            "GlobalSpoilingTimeMultiplier": "globalspoilingtimemultiplier",
+            "HarvestResourceItemAmountClassMultipliers": "harvestresourceitemamountclassmultipliers",
+            "HexagonCostMultiplier": "hexagoncostmultiplier",
+            "MaxFallSpeedMultiplier": "maxfallspeedmultiplier",
+            "OverrideNamedEngramEntries": "overridenamedengram entries",
+            "PhotoModeRangeLimit": "photomoderangelimit",
+            
             # TamingAndDinos
             "PassiveTameIntervalMultiplier": "passivetameintervalmultiplier",
             "bAllowTamedDinoRiding": "ballowtameddinoriding",
@@ -293,6 +314,198 @@ class IniConfigPanel(ctk.CTkFrame):
         self.changed_values = {}
         self.field_mappings = {}  # Mapeo de campos a secciones/archivos
         
+        # Valores predeterminados para campos de INI
+        self.default_values = {
+            # GameUserSettings.ini - [ServerSettings]
+            "MaxNumbersofPlayersInTribe": "10",
+            "MaxAlliancesPerTribe": "10",
+            "MaxTribeLogs": "100",
+            "PreventTribeAlliances": "False",
+            "TribeNameChangeCooldown": "15.0",
+            "AllowAnyoneBabyImprintCuddle": "False",
+            "PreventMateBoost": "False",
+            "MaxTamedDinos": "5000",
+            "MaxTamedDinos_SoftTameLimit": "4000",
+            "MaxTamedDinos_SoftTameLimit_CountdownForDeletionDuration": "604800.0",
+            "MaxPersonalTamedDinos": "500",
+            "DifficultyOffset": "1.0",
+            "OverrideOfficialDifficulty": "5.0",
+            "XPMultiplier": "1.0",
+            "TamingSpeedMultiplier": "1.0",
+            "DinoCountMultiplier": "1.0",
+            "OverrideSecondsUntilBuriedTreasureAutoReveals": "86400",
+            "ServerHardcore": "False",
+            "ServerCrosshair": "True",
+            "ShowMapPlayerLocation": "True",
+            "serverForceNoHud": "False",
+            "ShowFloatingDamageText": "True",
+            "AllowHideDamageSourceFromLogs": "False",
+            "AllowHitMarkers": "True",
+            "bShowStatusNotificationMessages": "True",
+            "bShowChatBox": "True",
+            "bShowInfoButtons": "True",
+            "DayCycleSpeedScale": "1.0",
+            "NightTimeSpeedScale": "1.0",
+            "DayTimeSpeedScale": "1.0",
+            "BaseTemperatureMultiplier": "1.0",
+            "DisableWeatherFog": "False",
+            "EnablePVEGamma": "False",
+            "HarvestAmountMultiplier": "1.0",
+            "HarvestHealthMultiplier": "1.0",
+            "PlayerHarvestingDamageMultiplier": "1.0",
+            "DinoHarvestingDamageMultiplier": "1.0",
+            "ResourcesRespawnPeriodMultiplier": "1.0",
+            "ResourceNoReplenishRadiusPlayers": "1.0",
+            "ResourceNoReplenishRadiusStructures": "1.0",
+            "StructurePreventResourceRadiusMultiplier": "1.0",
+            "UseOptimizedHarvestingHealth": "False",
+            "ClampResourceHarvestDamage": "False",
+            "CropGrowthSpeedMultiplier": "1.0",
+            "CropDecaySpeedMultiplier": "1.0",
+            "PoopIntervalMultiplier": "1.0",
+            "HairGrowthSpeedMultiplier": "1.0",
+            "BabyImprintingStatScaleMultiplier": "1.0",
+            "BabyImprintAmountMultiplier": "1.0",
+            "MatingIntervalMultiplier": "1.0",
+            "MatingSpeedMultiplier": "1.0",
+            "LayEggIntervalMultiplier": "1.0",
+            "EggHatchSpeedMultiplier": "1.0",
+            "BabyMatureSpeedMultiplier": "1.0",
+            "BabyCuddleIntervalMultiplier": "1.0",
+            "BabyCuddleGracePeriodMultiplier": "1.0",
+            "BabyCuddleLoseImprintQualitySpeedMultiplier": "1.0",
+            "BabyFoodConsumptionSpeedMultiplier": "1.0",
+            "DisableImprintDinoBuff": "False",
+            "PassiveTameIntervalMultiplier": "1.0",
+            "bAllowTamedDinoRiding": "True",
+            "bDisableDinoRiding": "False",
+            "bDisableDinoTaming": "False",
+            "bUseTameLimitForStructuresOnly": "False",
+            "bForceCanRideFliers": "False",
+            "ForceAllowCaveFlyers": "False",
+            "AllowFlyingStaminaRecovery": "False",
+            "bAllowFlyerCarryPvE": "True",
+            "bFlyerPlatformAllowUnalignedDinoBasing": "False",
+            "TamedDinoCharacterFoodDrainMultiplier": "1.0",
+            "TamedDinoTorporDrainMultiplier": "1.0",
+            "WildDinoCharacterFoodDrainMultiplier": "1.0",
+            "WildDinoTorporDrainMultiplier": "1.0",
+            "DinoCharacterFoodDrainMultiplier": "1.0",
+            "DinoCharacterStaminaDrainMultiplier": "1.0",
+            "DinoCharacterHealthRecoveryMultiplier": "1.0",
+            "PlayerCharacterWaterDrainMultiplier": "1.0",
+            "PlayerCharacterFoodDrainMultiplier": "1.0",
+            "PlayerCharacterStaminaDrainMultiplier": "1.0",
+            "PlayerCharacterHealthRecoveryMultiplier": "1.0",
+            "MaxStructuresInRange": "10500",
+            "TheMaxStructuresInRange": "10500",
+            "StructureDamageRepairCooldown": "180.0",
+            "bForceAllStructureLocking": "False",
+            "bDisableStructurePlacementCollision": "False",
+            "bAllowPlatformsaddleMultifloors": "False",
+            "DestroyUnconnectedWaterPipes": "False",
+            "OverrideStructurePlatformPrevention": "False",
+            "EnableExtraStructurePreventionVolumes": "False",
+            "bIgnoreStructuresPreventionVolumes": "False",
+            "bGenesisUseStructuresPreventionVolumes": "False",
+            "MaxPlatformsaddleStructureLimit": "100",
+            "PersonalTamedDinosSaddleStructureCost": "19",
+            "PlatformsaddleBuildAreaBoundsMultiplier": "1.0",
+            "AlwaysAllowStructurePickup": "False",
+            "StructurePickupTimeAfterPlacement": "30.0",
+            "StructurePickupHoldDuration": "0.5",
+            "AllowIntegratedSPlusStructures": "False",
+            "bPassiveDefensesDamageRiderlessDinos": "False",
+            "bLimitTurretsInRange": "False",
+            "LimitTurretsRange": "10000.0",
+            "LimitTurretsNum": "100",
+            "bHardLimitTurretsInRange": "False",
+            "SupplyCrateLootQualityMultiplier": "1.0",
+            "FishingLootQualityMultiplier": "1.0",
+            "CraftingSkillBonusMultiplier": "1.0",
+            "PerPlatformMaxStructuresMultiplier": "1.0",
+            "DinoTurretDamageMultiplier": "1.0",
+            "RaidDinoCharacterFoodDrainMultiplier": "1.0",
+            "GlobalItemDecompositionTimeMultiplier": "1.0",
+            "GlobalCorpseDecompositionTimeMultiplier": "1.0",
+            "GlobalSpoilingTimeMultiplier": "1.0",
+            "UseCorpseLifespanMultiplier": "1.0",
+            "ClampItemSpoilingTimes": "False",
+            "FastDecayInterval": "43200.0",
+            "AutoDestroyOldStructuresMultiplier": "0.0",
+            "AutoDestroyStructures": "False",
+            "OnlyAutoDestroyCoreStructures": "False",
+            "OnlyDecayUnsnappedCoreStructures": "False",
+            "ServerPVE": "False",
+            "AllowCaveBuildingPvE": "False",
+            "bDisableStructureDecayPvE": "False",
+            "PvEStructureDecayPeriodMultiplier": "1.0",
+            "PvEStructureDecayDestructionPeriod": "604800.0",
+            "PvEAllowStructuresAtSupplyDrops": "False",
+            "bPvEDisableFriendlyFire": "False",
+            "bAutoPvETimer": "False",
+            "bAutoPvEUsesSystemTime": "False",
+            "AutoPvEStartTimeSeconds": "0",
+            "AutoPvEStopTimeSeconds": "0",
+            "AutoSavePeriodMinutes": "15.0",
+            "KickIdlePlayersPeriod": "3600.0",
+            "NPCNetworkStasisRangeScalePlayerCountStart": "70",
+            "NPCNetworkStasisRangeScalePlayerCountEnd": "120",
+            "NPCNetworkStasisRangeScalePercentEnd": "0.4",
+            "RCONEnabled": "True",
+            "RCONPort": "27020",
+            "RCONServerGameLogBuffer": "600",
+            "GlobalPoweredBatteryDurabilityDecreasePerSecond": "4.0",
+            "ImplantSuicideCD": "28800.0",
+            # Game.ini - [/Script/ShooterGame.ShooterGameMode] - Valores adicionales
+            "bUseCorpseLocator": "True",
+            "bDisableStructurePlacementCollision": "False",
+            "bAllowUnlimitedRespecs": "False",
+            "bDisablePhotoMode": "False",
+            "bUseDinoLevelUpAnimations": "True",
+            "bUseSingleplayerSettings": "False",
+            "bIgnoreStructuresPreventionVolumes": "False",
+            "ConfigAddNPCSpawnEntriesContainer": "",
+            "CustomRecipeEffectivenessMultiplier": "1.0",
+            "CustomRecipeSkillMultiplier": "1.0",
+            "DestroyTamesOverLevelClamp": "0",
+            "ExcludeItemIndices": "",
+            "HarvestResourceItemAmountClassMultipliers": "",
+            "HexagonCostMultiplier": "1.0",
+            "MaxFallSpeedMultiplier": "1.0",
+            "OverrideNamedEngramEntries": "",
+            "PhotoModeRangeLimit": "8000.0",
+            "bDisableDinoDecayPvE": "False",
+            "bDisableDinoDecayPvP": "False",
+            "bAutoDestroyOldStructuresMultiplier": "1.0",
+            "PvPStructureDecay": "False",
+            "bDisableStructureDecayPvE": "False",
+            "bAllowFlyerCarryPvE": "True",
+            "bDisablePvEGamma": "False",
+            "OxygenSwimSpeedStatMultiplier": "1.0",
+            "PlatformSaddleBuildAreaBoundsMultiplier": "1.0",
+            "PassiveDefensesDamageRiderlessDinos": "False",
+            "bPvEDisableFriendlyFire": "False",
+            "bPvEAllowTribeWar": "True",
+            "bPvEAllowTribeWarCancel": "False",
+            "bAutoPvETimer": "False",
+            "bAutoPvEUseSystemTime": "False",
+            "AutoPvEStartTimeSeconds": "0",
+            "AutoPvEStopTimeSeconds": "0",
+            "bDisableFriendlyFire": "False",
+            "bEnablePvPGamma": "False",
+            "MaxNumberOfPlayersInTribe": "10",
+            "BattleNumOfTribestoStartGame": "2",
+            "TimeToCollapseROD": "100",
+            "BattleAutoStartGameInterval": "100",
+            "BattleSuddenDeathInterval": "300",
+            "KillXPMultiplier": "1.0",
+            "HarvestXPMultiplier": "1.0",
+            "CraftXPMultiplier": "1.0",
+            "GenericXPMultiplier": "1.0",
+            "SpecialXPMultiplier": "1.0"
+        }
+        
         # Empaquetar el frame principal
         self.pack(fill="both", expand=True)
         
@@ -366,6 +579,26 @@ class IniConfigPanel(ctk.CTkFrame):
             fg_color=("red", "darkred")
         )
         self.discard_button.pack(side="left", padx=(0, 10))
+        
+        self.create_game_ini_button = ctk.CTkButton(
+            control_frame,
+            text="📄 Crear Game.ini",
+            command=self.create_game_ini_file,
+            width=150,
+            height=35,
+            fg_color=("#8B4B9B", "#6A3A7A")
+        )
+        self.create_game_ini_button.pack(side="left", padx=(0, 10))
+        
+        self.create_gus_fields_button = ctk.CTkButton(
+            control_frame,
+            text="📋 Agregar Campos GUS",
+            command=self.create_gameusersettings_missing_fields,
+            width=180,
+            height=35,
+            fg_color=("#4A90E2", "#357ABD")
+        )
+        self.create_gus_fields_button.pack(side="left", padx=(0, 10))
         
         # Indicador de estado
         self.status_label = ctk.CTkLabel(
@@ -716,44 +949,32 @@ class IniConfigPanel(ctk.CTkFrame):
             fields = [
                 ("HarvestAmountMultiplier", "Multiplicador de cantidad de recolección", "float"),
                 ("HarvestHealthMultiplier", "Multiplicador de salud de recolección", "float"),
-                ("PlayerHarvestingDamageMultiplier", "Multiplicador de daño de recolección del jugador", "float"),
-                ("DinoHarvestingDamageMultiplier", "Multiplicador de daño de recolección de dinos", "float"),
                 ("ResourcesRespawnPeriodMultiplier", "Multiplicador de período de respawn de recursos", "float"),
-                ("ResourceNoReplenishRadiusPlayers", "Radio de no reabastecimiento de recursos - jugadores", "float"),
                 ("ResourceNoReplenishRadiusStructures", "Radio de no reabastecimiento de recursos - estructuras", "float"),
                 ("StructurePreventResourceRadiusMultiplier", "Multiplicador de radio de prevención de recursos por estructuras", "float"),
                 ("UseOptimizedHarvestingHealth", "Usar salud de recolección optimizada", "bool"),
-                ("ClampResourceHarvestDamage", "Limitar daño de recolección de recursos", "bool"),
-                ("CropGrowthSpeedMultiplier", "Multiplicador de velocidad de crecimiento de cultivos", "float"),
-                ("CropDecaySpeedMultiplier", "Multiplicador de velocidad de descomposición de cultivos", "float"),
-                ("PoopIntervalMultiplier", "Multiplicador de intervalo de excremento", "float"),
-                ("HairGrowthSpeedMultiplier", "Multiplicador de velocidad de crecimiento de cabello", "float")
+                ("ClampResourceHarvestDamage", "Limitar daño de recolección de recursos", "bool")
             ]
         elif category == "BreedingAndReproduction":
             fields = [
-                ("BabyImprintingStatScaleMultiplier", "Multiplicador de escala de estadísticas de impronta de bebés", "float"),
-                ("BabyImprintAmountMultiplier", "Multiplicador de cantidad de impronta de bebés", "float"),
-                ("MatingIntervalMultiplier", "Multiplicador de intervalo de apareamiento", "float"),
-                ("MatingSpeedMultiplier", "Multiplicador de velocidad de apareamiento", "float"),
-                ("LayEggIntervalMultiplier", "Multiplicador de intervalo de puesta de huevos", "float"),
-                ("EggHatchSpeedMultiplier", "Multiplicador de velocidad de eclosión de huevos", "float"),
-                ("BabyMatureSpeedMultiplier", "Multiplicador de velocidad de maduración de bebés", "float"),
-                ("BabyCuddleIntervalMultiplier", "Multiplicador de intervalo de mimos de bebés", "float"),
-                ("BabyCuddleGracePeriodMultiplier", "Multiplicador de período de gracia de mimos de bebés", "float"),
-                ("BabyCuddleLoseImprintQualitySpeedMultiplier", "Multiplicador de velocidad de pérdida de calidad de impronta", "float"),
-                ("BabyFoodConsumptionSpeedMultiplier", "Multiplicador de velocidad de consumo de comida de bebés", "float"),
+                ("BabyImprintingStatScaleMultiplier", "Multiplicador de estadísticas de impronta", "float"),
+                ("BabyImprintAmountMultiplier", "Multiplicador de cantidad de impronta", "float"),
+                ("BabyMatureSpeedMultiplier", "Multiplicador de velocidad de maduración", "float"),
+                ("BabyCuddleIntervalMultiplier", "Multiplicador de intervalo de mimos", "float"),
+                ("BabyCuddleGracePeriodMultiplier", "Multiplicador de período de gracia de mimos", "float"),
+                ("BabyCuddleLoseImprintQualitySpeedMultiplier", "Multiplicador de pérdida de calidad de impronta", "float"),
+                ("BabyFoodConsumptionSpeedMultiplier", "Multiplicador de consumo de comida de bebés", "float"),
                 ("DisableImprintDinoBuff", "Deshabilitar buff de impronta de dinos", "bool")
             ]
         elif category == "TamingAndDinos":
             fields = [
                 ("PassiveTameIntervalMultiplier", "Multiplicador de intervalo de domesticación pasiva", "float"),
-                ("bAllowTamedDinoRiding", "Permitir montar dinos domesticados", "bool"),
                 ("bDisableDinoRiding", "Deshabilitar montar dinos", "bool"),
                 ("bDisableDinoTaming", "Deshabilitar domesticación de dinos", "bool"),
                 ("bUseTameLimitForStructuresOnly", "Usar límite de domesticación solo para estructuras", "bool"),
                 ("bForceCanRideFliers", "Forzar poder montar voladores", "bool"),
                 ("ForceAllowCaveFlyers", "Forzar permitir voladores en cuevas", "bool"),
-                ("AllowFlyingStaminaRecovery", "Permitir recuperación de stamina volando", "bool"),
+                ("bAllowFlyingStaminaRecovery", "Permitir recuperación de stamina volando", "bool"),
                 ("bAllowFlyerCarryPvE", "Permitir carga de voladores en PvE", "bool"),
                 ("bFlyerPlatformAllowUnalignedDinoBasing", "Permitir dinos no alineados en plataforma de voladores", "bool"),
                 ("TamedDinoCharacterFoodDrainMultiplier", "Multiplicador de drenaje de comida de dinos domesticados", "float"),
@@ -1056,84 +1277,66 @@ class IniConfigPanel(ctk.CTkFrame):
             fields = [
                 ("PerLevelStatsMultiplier_Player[7]", "Multiplicador de estadística por nivel - Jugador [7]", "float"),
                 ("PerLevelStatsMultiplier_DinoTamed[7]", "Multiplicador de estadística por nivel - Dino domesticado [7]", "float"),
-                ("PlayerHarvestingDamageMultiplier", "Multiplicador de daño de recolección del jugador", "float"),
-                ("DinoHarvestingDamageMultiplier", "Multiplicador de daño de recolección de dinos", "float"),
                 ("DinoTurretDamageMultiplier", "Multiplicador de daño de torretas de dinos", "float")
             ]
         elif category == "BreedingAndReproduction":
             fields = [
-                ("BabyImprintingStatScaleMultiplier", "Multiplicador de estadísticas de impronta", "float"),
-                ("BabyImprintAmountMultiplier", "Multiplicador de cantidad de impronta", "float"),
                 ("MatingIntervalMultiplier", "Multiplicador de intervalo de apareamiento", "float"),
                 ("MatingSpeedMultiplier", "Multiplicador de velocidad de apareamiento", "float"),
                 ("LayEggIntervalMultiplier", "Multiplicador de intervalo de puesta de huevos", "float"),
                 ("EggHatchSpeedMultiplier", "Multiplicador de velocidad de eclosión", "float"),
-                ("BabyMatureSpeedMultiplier", "Multiplicador de velocidad de maduración", "float"),
-                ("BabyCuddleIntervalMultiplier", "Multiplicador de intervalo de mimos", "float"),
-                ("BabyCuddleGracePeriodMultiplier", "Multiplicador de período de gracia de mimos", "float"),
+                ("BabyCuddleGracePeriodMultiplier", "Multiplicador de período de gracia para mimar bebés", "float"),
+                ("BabyCuddleIntervalMultiplier", "Multiplicador de intervalo para mimar bebés", "float"),
                 ("BabyCuddleLoseImprintQualitySpeedMultiplier", "Multiplicador de pérdida de calidad de impronta", "float"),
-                ("BabyFoodConsumptionSpeedMultiplier", "Multiplicador de consumo de comida de bebés", "float")
+                ("BabyFoodConsumptionSpeedMultiplier", "Multiplicador de consumo de comida de bebés", "float"),
+                ("BabyImprintAmountMultiplier", "Multiplicador de cantidad de impronta de bebés", "float"),
+                ("BabyImprintingStatScaleMultiplier", "Multiplicador de escala de estadísticas por impronta", "float"),
+                ("BabyMatureSpeedMultiplier", "Multiplicador de velocidad de maduración de bebés", "float")
             ]
         elif category == "TamingAndDinos":
             fields = [
-                ("bAllowTamedDinoRiding", "Permitir montar dinos domesticados", "bool"),
                 ("TamedDinoRidingWaitTime", "Tiempo de espera para montar dino domesticado", "float"),
-                ("bDisableDinoRiding", "Deshabilitar montar dinos", "bool"),
-                ("bDisableDinoTaming", "Deshabilitar domesticación de dinos", "bool"),
                 ("bAllowFlyerSpeedLeveling", "Permitir nivelar velocidad de voladores", "bool"),
-                ("bFlyerPlatformAllowUnalignedDinoBasing", "Permitir dinos no alineados en plataforma de voladores", "bool"),
-                ("TamedDinoCharacterFoodDrainMultiplier", "Multiplicador de drenaje de comida de dino domesticado", "float"),
-                ("TamedDinoTorporDrainMultiplier", "Multiplicador de drenaje de torpor de dino domesticado", "float"),
-                ("WildDinoCharacterFoodDrainMultiplier", "Multiplicador de drenaje de comida de dino salvaje", "float"),
-                ("WildDinoTorporDrainMultiplier", "Multiplicador de drenaje de torpor de dino salvaje", "float"),
-                ("PassiveTameIntervalMultiplier", "Multiplicador de intervalo de tameo pasivo", "float")
+                ("DestroyTamesOverLevelClamp", "Destruir domesticados sobre límite de nivel", "int"),
+                ("ConfigAddNPCSpawnEntriesContainer", "Configurar contenedor de entradas de spawn de NPCs", "string")
             ]
         elif category == "ResourcesAndGrowth":
             fields = [
-                ("ResourceNoReplenishRadiusPlayers", "Radio de no reabastecimiento de recursos - jugadores", "float"),
                 ("ResourceNoReplenishRadiusStructures", "Radio de no reabastecimiento de recursos - estructuras", "float"),
-                ("CropGrowthSpeedMultiplier", "Multiplicador de crecimiento de cultivos", "float"),
                 ("CropDecaySpeedMultiplier", "Multiplicador de descomposición de cultivos", "float"),
-                ("PoopIntervalMultiplier", "Multiplicador de intervalo de excremento", "float")
+                ("PoopIntervalMultiplier", "Multiplicador de intervalo de excremento", "float"),
+                ("CropGrowthSpeedMultiplier", "Multiplicador de velocidad de crecimiento de cultivos", "float"),
+                ("HairGrowthSpeedMultiplier", "Multiplicador de velocidad de crecimiento de cabello", "float"),
+                ("ResourceNoReplenishRadiusPlayers", "Radio de no reabastecimiento de recursos - jugadores", "float"),
+                ("HarvestResourceItemAmountClassMultipliers", "Multiplicadores de cantidad de recursos por clase", "string")
             ]
         elif category == "LootAndRecipes":
             fields = [
-                ("SupplyCrateLootQualityMultiplier", "Multiplicador de calidad de loot de cajas de suministro", "float"),
-                ("FishingLootQualityMultiplier", "Multiplicador de calidad de loot de pesca", "float"),
                 ("bAllowCustomRecipes", "Permitir recetas personalizadas", "bool"),
                 ("CustomRecipeEffectivenessMultiplier", "Multiplicador de efectividad de recetas personalizadas", "float"),
-                ("CustomRecipeSkillMultiplier", "Multiplicador de habilidad de recetas personalizadas", "float")
+                ("CustomRecipeSkillMultiplier", "Multiplicador de habilidad de recetas personalizadas", "float"),
+                ("CraftingSkillBonusMultiplier", "Multiplicador de bonificación de habilidad de crafteo", "float"),
+                ("OverrideNamedEngramEntries", "Anular entradas de engramas nombrados", "string"),
+                ("ExcludeItemIndices", "Excluir índices de objetos", "string"),
+                ("HexagonCostMultiplier", "Multiplicador de costo de hexágonos", "float")
             ]
         elif category == "TimesAndDecay":
             fields = [
-                ("UseCorpseLifeSpanMultiplier", "Multiplicador de duración de cadáveres", "float"),
                 ("GlobalPoweredBatteryDurabilityDecreasePerSecond", "Disminución de durabilidad de batería por segundo", "float"),
-                ("GlobalItemDecompositionTimeMultiplier", "Multiplicador de tiempo de descomposición de ítems", "float"),
-                ("GlobalCorpseDecompositionTimeMultiplier", "Multiplicador de tiempo de descomposición de cadáveres", "float"),
-                ("GlobalSpoilingTimeMultiplier", "Multiplicador de tiempo de descomposición de comida", "float"),
                 ("StructureDamageRepairCooldown", "Tiempo de espera para reparar daño a estructuras", "float"),
-                ("FastDecayInterval", "Intervalo de decaimiento rápido", "float"),
-                ("BaseTemperatureMultiplier", "Multiplicador de temperatura base", "float"),
-                ("HairGrowthSpeedMultiplier", "Multiplicador de crecimiento de cabello", "float")
+                ("GlobalItemDecompositionTimeMultiplier", "Multiplicador de tiempo de descomposición global de objetos", "float"),
+                ("GlobalSpoilingTimeMultiplier", "Multiplicador de tiempo de descomposición global", "float")
             ]
         elif category == "PlatformsAndStructures":
             fields = [
-                ("bAllowPlatformSaddleMultiFloors", "Permitir múltiples pisos en silla de plataforma", "bool"),
-                ("PlatformSaddleBuildAreaBoundsMultiplier", "Multiplicador de área de construcción en silla de plataforma", "float"),
-                ("bDisableStructurePlacementCollision", "Deshabilitar colisión de colocación de estructuras", "bool")
+                ("bDisableStructurePlacementCollision", "Deshabilitar colisión de colocación de estructuras", "bool"),
+                ("bIgnoreStructuresPreventionVolumes", "Ignorar volúmenes de prevención de estructuras", "bool")
             ]
         elif category == "DefensesAndTurrets":
             fields = [
-                ("bPassiveDefensesDamageRiderlessDinos", "Defensas pasivas dañan dinos sin jinete", "bool"),
-                ("bLimitTurretsInRange", "Limitar torretas en rango", "bool"),
-                ("LimitTurretsRange", "Rango de torretas", "int"),
-                ("LimitTurretsNum", "Número de torretas", "int"),
-                ("bHardLimitTurretsInRange", "Límite estricto de torretas en rango", "bool"),
-                ("bUseTameLimitForStructuresOnly", "Usar límite de domesticación solo para estructuras", "bool")
             ]
         elif category == "PlayersAndTribes":
             fields = [
-                ("MaxTribeLogs", "Máximo de logs de tribu", "int"),
                 ("bDisableFriendlyFire", "Deshabilitar fuego amigo", "bool"),
                 ("bPvEDisableFriendlyFire", "Deshabilitar fuego amigo en PvE", "bool"),
                 ("bPvEAllowTribeWar", "Permitir guerra tribal en PvE", "bool"),
@@ -1146,12 +1349,16 @@ class IniConfigPanel(ctk.CTkFrame):
                 ("bDisableGenesisMissions", "Deshabilitar misiones Genesis", "bool"),
                 ("bShowCreativeMode", "Mostrar modo creativo", "bool"),
                 ("bAllowUnlimitedRespecs", "Permitir respecs ilimitados", "bool"),
-                ("bDisableLootCrates", "Deshabilitar cajas de loot", "bool"),
                 ("bUseCorpseLocator", "Usar localizador de cadáveres", "bool"),
                 ("bAutoPvETimer", "Auto temporizador PvE", "bool"),
                 ("bAutoPvEUseSystemTime", "Usar hora del sistema para PvE", "bool"),
                 ("AutoPvEStartTimeSeconds", "Hora de inicio PvE (segundos)", "int"),
-                ("AutoPvEStopTimeSeconds", "Hora de fin PvE (segundos)", "int")
+                ("AutoPvEStopTimeSeconds", "Hora de fin PvE (segundos)", "int"),
+                ("bDisablePhotoMode", "Deshabilitar modo foto", "bool"),
+                ("bUseDinoLevelUpAnimations", "Usar animaciones de subida de nivel de dinos", "bool"),
+                ("bUseSingleplayerSettings", "Usar configuraciones de un jugador", "bool"),
+                ("PhotoModeRangeLimit", "Límite de rango del modo foto", "float"),
+                ("MaxFallSpeedMultiplier", "Multiplicador de velocidad máxima de caída", "float")
             ]
         else:
             fields = []
@@ -1785,8 +1992,14 @@ class IniConfigPanel(ctk.CTkFrame):
             if key.endswith(f".{field_name}"):
                 self.logger.debug(f"Valor encontrado en originales: {key} = {value}")
                 return value
+        
+        # Si no se encuentra en ningún lugar, usar valor predeterminado
+        if field_name in self.default_values:
+            default_value = self.default_values[field_name]
+            self.logger.debug(f"Usando valor predeterminado para {field_name}: {default_value}")
+            return default_value
                 
-        self.logger.debug(f"Campo {field_name} no encontrado en ningún lugar")
+        self.logger.debug(f"Campo {field_name} no encontrado en ningún lugar y sin valor predeterminado")
         return None
         
     def set_field_value(self, widget, value):
@@ -1855,16 +2068,44 @@ class IniConfigPanel(ctk.CTkFrame):
             target_file = mapping['file']
             target_section = mapping['section']
             
-            # Aplicar cambio
-            if target_file in self.ini_data:
-                if target_section not in self.ini_data[target_file]:
-                    self.ini_data[target_file].add_section(target_section)
-                self.ini_data[target_file][target_section][field_name] = str(value)
+            # Crear archivo INI si no existe
+            if target_file not in self.ini_data:
+                self.ini_data[target_file] = configparser.ConfigParser()
+                self.ini_data[target_file].optionxform = str  # Preservar mayúsculas/minúsculas
+                self.logger.info(f"Creado nuevo archivo INI: {target_file}")
+            
+            # Crear sección si no existe
+            if target_section not in self.ini_data[target_file]:
+                self.ini_data[target_file].add_section(target_section)
+                self.logger.info(f"Creada nueva sección [{target_section}] en {target_file}")
                 
-                # Actualizar valores originales
-                full_key = f"{target_section}.{field_name}"
-                self.original_values[full_key] = str(value)
-                self.original_values[field_name] = str(value)
+                # Para Game.ini, si se crea la sección [/Script/ShooterGame.ShooterGameMode],
+                # agregar todos los parámetros con valores predeterminados
+                if target_file == "Game" and target_section == "/Script/ShooterGame.ShooterGameMode":
+                    self.logger.info("Creando Game.ini con todos los parámetros predeterminados")
+                    for param_name, default_value in self.default_values.items():
+                        # Solo agregar parámetros que pertenecen a Game.ini
+                        if param_name in self.field_mappings:
+                            param_mapping = self.field_mappings[param_name]
+                            if param_mapping['file'] == "Game" and param_mapping['section'] == target_section:
+                                self.ini_data[target_file][target_section][param_name] = default_value
+                                self.logger.debug(f"Agregado parámetro predeterminado: {param_name} = {default_value}")
+            
+            # Para GameUserSettings.ini, agregar campos faltantes cuando se hace cualquier cambio
+            if target_file == "GameUserSettings":
+                self.add_missing_gameusersettings_fields()
+            
+            # Aplicar cambio específico
+            self.ini_data[target_file][target_section][field_name] = str(value)
+            
+            # Actualizar valores originales
+            full_key = f"{target_section}.{field_name}"
+            self.original_values[full_key] = str(value)
+            self.original_values[field_name] = str(value)
+            
+            self.logger.debug(f"Aplicado cambio: {field_name} = {value} en [{target_section}] de {target_file}")
+        else:
+            self.logger.warning(f"Campo {field_name} no tiene mapeo definido, no se puede aplicar cambio")
         
     def save_ini_files(self):
         """Guardar archivos INI preservando formato"""
@@ -1958,11 +2199,84 @@ class IniConfigPanel(ctk.CTkFrame):
                     # Mantener línea original
                     modified_lines.append(original_line)
             
+            # Agregar campos nuevos que no estaban en el archivo original
+            sections_in_original = set()
+            current_section = None
+            
+            # Identificar qué secciones ya existen en el archivo original
+            for line in original_lines:
+                stripped_line = line.strip()
+                if stripped_line.startswith('[') and stripped_line.endswith(']'):
+                    current_section = stripped_line[1:-1]
+                    sections_in_original.add(current_section)
+            
+            # Agregar campos nuevos al final de cada sección existente
+            final_lines = []
+            current_section = None
+            i = 0
+            
+            while i < len(modified_lines):
+                line = modified_lines[i]
+                stripped_line = line.strip()
+                
+                # Detectar sección
+                if stripped_line.startswith('[') and stripped_line.endswith(']'):
+                    current_section = stripped_line[1:-1]
+                    final_lines.append(line)
+                    
+                    # Buscar el final de esta sección para agregar campos nuevos
+                    section_end = i + 1
+                    while section_end < len(modified_lines):
+                        next_line = modified_lines[section_end].strip()
+                        if next_line.startswith('[') and next_line.endswith(']'):
+                            break
+                        section_end += 1
+                    
+                    # Agregar líneas de la sección original
+                    for j in range(i + 1, section_end):
+                        final_lines.append(modified_lines[j])
+                    
+                    # Agregar campos nuevos de esta sección si existen en config
+                    if current_section in config.sections():
+                        existing_keys = set()
+                        
+                        # Identificar claves que ya existen en el archivo original
+                        for j in range(i + 1, section_end):
+                            line_content = modified_lines[j].strip()
+                            if '=' in line_content and not line_content.startswith(';') and not line_content.startswith('#'):
+                                key_part = line_content.split('=', 1)[0].strip()
+                                existing_keys.add(key_part.lower())
+                        
+                        # Agregar campos nuevos que no existen en el archivo original
+                        new_fields_added = 0
+                        for key, value in config.items(current_section):
+                            if key.lower() not in existing_keys:
+                                final_lines.append(f"{key}={value}\n")
+                                new_fields_added += 1
+                                self.logger.debug(f"Agregado campo nuevo: {key} = {value} en [{current_section}]")
+                        
+                        if new_fields_added > 0:
+                            self.logger.info(f"Agregados {new_fields_added} campos nuevos a la sección [{current_section}]")
+                    
+                    i = section_end
+                    continue
+                else:
+                    final_lines.append(line)
+                    i += 1
+            
+            # Agregar secciones completamente nuevas que no existían en el archivo original
+            for section_name in config.sections():
+                if section_name not in sections_in_original:
+                    final_lines.append(f"\n[{section_name}]\n")
+                    for key, value in config.items(section_name):
+                        final_lines.append(f"{key}={value}\n")
+                    self.logger.info(f"Agregada sección nueva: [{section_name}] con {len(config.items(section_name))} campos")
+            
             # Escribir archivo modificado
             with open(file_path, 'w', encoding='utf-8') as f:
-                f.writelines(modified_lines)
+                f.writelines(final_lines)
                 
-            self.logger.info(f"Archivo {file_path} guardado preservando formato original")
+            self.logger.info(f"Archivo {file_path} guardado preservando formato original y agregando campos nuevos")
             
         except Exception as e:
             self.logger.error(f"Error preservando formato de {file_path}: {e}")
@@ -2055,4 +2369,241 @@ class IniConfigPanel(ctk.CTkFrame):
             self.status_label.configure(
                 text="ℹ️ No hay cambios para descartar",
                 fg_color=("lightblue", "darkblue")
+            )
+            
+    def create_game_ini_file(self):
+        """Crear archivo Game.ini con valores predeterminados"""
+        try:
+            # Construir ruta de Game.ini si no existe
+            if self.game_ini_path is None:
+                if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'selected_server') and self.main_window.selected_server:
+                    from pathlib import Path
+                    # Obtener ruta raíz de servidores
+                    root_path = self.config_manager.get("server", "root_path", "")
+                    if not root_path:
+                        self.status_label.configure(
+                            text="❌ Error: Ruta raíz no configurada",
+                            fg_color=("red", "darkred")
+                        )
+                        return
+                    
+                    server_dir = Path(root_path) / self.main_window.selected_server
+                    game_ini_path = server_dir / "ShooterGame" / "Saved" / "Config" / "WindowsServer" / "Game.ini"
+                    self.game_ini_path = str(game_ini_path)
+                    self.logger.info(f"Ruta de Game.ini construida: {self.game_ini_path}")
+                else:
+                    self.status_label.configure(
+                        text="❌ Error: No hay servidor seleccionado",
+                        fg_color=("red", "darkred")
+                    )
+                    return
+            
+            # Verificar si Game.ini ya existe
+            if os.path.exists(self.game_ini_path):
+                # Mostrar diálogo de confirmación con CustomTkinter
+                from gui.dialogs.custom_dialogs import ask_yes_no
+                result = ask_yes_no(
+                    self.main_window.root,
+                    "Archivo existente",
+                    "El archivo Game.ini ya existe. ¿Desea sobrescribirlo con los valores actuales de los campos?"
+                )
+                if not result:
+                    return
+            
+            # Crear directorio si no existe
+            os.makedirs(os.path.dirname(self.game_ini_path), exist_ok=True)
+            
+            # Crear configuración para Game.ini
+            if "Game" not in self.ini_data:
+                self.ini_data["Game"] = configparser.ConfigParser()
+                self.ini_data["Game"].optionxform = str  # Preservar mayúsculas/minúsculas
+            
+            # Crear sección principal
+            section_name = "/Script/ShooterGame.ShooterGameMode"
+            if section_name not in self.ini_data["Game"]:
+                self.ini_data["Game"].add_section(section_name)
+            
+            # Agregar parámetros de Game.ini con valores actuales de los campos o predeterminados
+            added_params = 0
+            for param_name, default_value in self.default_values.items():
+                if param_name in self.field_mappings:
+                    param_mapping = self.field_mappings[param_name]
+                    if param_mapping['file'] == "Game" and param_mapping['section'] == section_name:
+                        # Obtener valor actual del campo si existe, sino usar predeterminado
+                        current_value = default_value
+                        if param_name in self.field_widgets:
+                            widget = self.field_widgets[param_name]
+                            if hasattr(widget, 'get'):
+                                field_value = widget.get()
+                                if field_value and field_value.strip():
+                                    current_value = field_value
+                        
+                        # Si hay cambios pendientes, usar esos valores
+                        if param_name in self.changed_values:
+                            current_value = self.changed_values[param_name]
+                        
+                        self.ini_data["Game"][section_name][param_name] = str(current_value)
+                        # Actualizar valores originales
+                        full_key = f"{section_name}.{param_name}"
+                        self.original_values[full_key] = str(current_value)
+                        self.original_values[param_name] = str(current_value)
+                        added_params += 1
+            
+            # Guardar el archivo
+            self.save_single_ini_file(self.game_ini_path, self.ini_data["Game"])
+            
+            # Recargar campos del formulario para mostrar los nuevos valores
+            self.populate_form_fields()
+            
+            # Actualizar estado
+            self.status_label.configure(
+                text=f"✅ Game.ini creado con {added_params} parámetros predeterminados",
+                fg_color=("lightgreen", "darkgreen")
+            )
+            
+            self.logger.info(f"Game.ini creado exitosamente con {added_params} parámetros predeterminados")
+            
+        except Exception as e:
+            self.logger.error(f"Error al crear Game.ini: {e}")
+            self.status_label.configure(
+                text=f"❌ Error al crear Game.ini: {str(e)}",
+                fg_color=("red", "darkred")
+            )
+    
+    def add_missing_gameusersettings_fields(self):
+        """Agregar campos faltantes a GameUserSettings.ini con valores actuales o predeterminados"""
+        try:
+            self.logger.info("=== INICIANDO add_missing_gameusersettings_fields ===")
+            
+            if "GameUserSettings" not in self.ini_data:
+                self.logger.warning("GameUserSettings no está en ini_data, saliendo del método")
+                return
+            
+            # Log del estado actual
+            current_sections = list(self.ini_data["GameUserSettings"].sections())
+            self.logger.info(f"Secciones actuales en GameUserSettings: {current_sections}")
+            
+            added_fields = 0
+            total_gus_fields = 0
+            
+            # Recorrer todos los campos que pertenecen a GameUserSettings.ini
+            for field_name, default_value in self.default_values.items():
+                if field_name in self.field_mappings:
+                    mapping = self.field_mappings[field_name]
+                    if mapping['file'] == "GameUserSettings":
+                        total_gus_fields += 1
+                        section_name = mapping['section']
+                        
+                        # Crear sección si no existe
+                        if section_name not in self.ini_data["GameUserSettings"]:
+                            self.ini_data["GameUserSettings"].add_section(section_name)
+                            self.logger.info(f"Creada nueva sección [{section_name}] en GameUserSettings.ini")
+                        
+                        # Solo agregar si el campo no existe ya
+                        if field_name not in self.ini_data["GameUserSettings"][section_name]:
+                            # Obtener valor actual del campo si existe, sino usar predeterminado
+                            current_value = default_value
+                            
+                            # Verificar si hay un valor en el widget
+                            if field_name in self.field_widgets:
+                                widget = self.field_widgets[field_name]
+                                if hasattr(widget, 'get'):
+                                    field_value = widget.get()
+                                    if field_value and field_value.strip():
+                                        current_value = field_value
+                            
+                            # Si hay cambios pendientes, usar esos valores
+                            if field_name in self.changed_values:
+                                current_value = self.changed_values[field_name]
+                            
+                            # Agregar el campo
+                            self.ini_data["GameUserSettings"][section_name][field_name] = str(current_value)
+                            
+                            # Actualizar valores originales
+                            full_key = f"{section_name}.{field_name}"
+                            self.original_values[full_key] = str(current_value)
+                            self.original_values[field_name] = str(current_value)
+                            
+                            added_fields += 1
+                            self.logger.debug(f"Agregado campo faltante: {field_name} = {current_value} en [{section_name}]")
+                        else:
+                            self.logger.debug(f"Campo {field_name} ya existe en [{section_name}], saltando")
+            
+            self.logger.info(f"Procesados {total_gus_fields} campos de GameUserSettings, agregados {added_fields} campos faltantes")
+            
+            # Log de las secciones finales
+            final_sections = list(self.ini_data["GameUserSettings"].sections())
+            self.logger.info(f"Secciones finales en GameUserSettings: {final_sections}")
+            
+            if added_fields > 0:
+                self.logger.info(f"✅ Agregados {added_fields} campos faltantes a GameUserSettings.ini")
+            else:
+                self.logger.info("ℹ️ No se agregaron campos faltantes (todos ya existían)")
+                
+        except Exception as e:
+            self.logger.error(f"❌ Error al agregar campos faltantes a GameUserSettings.ini: {e}", exc_info=True)
+    
+    def create_gameusersettings_missing_fields(self):
+        """Crear/agregar campos faltantes a GameUserSettings.ini manualmente"""
+        try:
+            # Verificar que tengamos la ruta de GameUserSettings.ini
+            if not self.game_user_settings_path:
+                if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'selected_server') and self.main_window.selected_server:
+                    from pathlib import Path
+                    # Obtener ruta raíz de servidores
+                    root_path = self.config_manager.get("server", "root_path", "")
+                    if not root_path:
+                        self.status_label.configure(
+                            text="❌ Error: Ruta raíz no configurada",
+                            fg_color=("red", "darkred")
+                        )
+                        return
+                    
+                    server_dir = Path(root_path) / self.main_window.selected_server
+                    gus_path = server_dir / "ShooterGame" / "Saved" / "Config" / "WindowsServer" / "GameUserSettings.ini"
+                    self.game_user_settings_path = str(gus_path)
+                    self.logger.info(f"Ruta de GameUserSettings.ini construida: {self.game_user_settings_path}")
+                else:
+                    self.status_label.configure(
+                        text="❌ Error: No hay servidor seleccionado",
+                        fg_color=("red", "darkred")
+                    )
+                    return
+            
+            # Crear directorio si no existe
+            os.makedirs(os.path.dirname(self.game_user_settings_path), exist_ok=True)
+            
+            # Crear configuración para GameUserSettings.ini si no existe
+            if "GameUserSettings" not in self.ini_data:
+                self.ini_data["GameUserSettings"] = configparser.ConfigParser()
+                self.ini_data["GameUserSettings"].optionxform = str  # Preservar mayúsculas/minúsculas
+                self.logger.info("Creado nuevo objeto ConfigParser para GameUserSettings.ini")
+            
+            # Si el archivo existe, cargarlo primero para no perder datos
+            if os.path.exists(self.game_user_settings_path):
+                self.load_single_ini_file(self.game_user_settings_path, "GameUserSettings")
+                self.logger.info("Archivo GameUserSettings.ini existente cargado")
+            
+            # Agregar campos faltantes
+            self.add_missing_gameusersettings_fields()
+            
+            # Guardar el archivo
+            self.save_single_ini_file(self.game_user_settings_path, self.ini_data["GameUserSettings"])
+            
+            # Recargar campos del formulario para mostrar los nuevos valores
+            self.populate_form_fields()
+            
+            # Actualizar estado
+            self.status_label.configure(
+                text="✅ Campos faltantes agregados a GameUserSettings.ini",
+                fg_color=("lightgreen", "darkgreen")
+            )
+            
+            self.logger.info("Proceso de agregar campos faltantes a GameUserSettings.ini completado")
+            
+        except Exception as e:
+            self.logger.error(f"Error al crear campos faltantes en GameUserSettings.ini: {e}")
+            self.status_label.configure(
+                text=f"❌ Error al agregar campos: {str(e)}",
+                fg_color=("red", "darkred")
             )

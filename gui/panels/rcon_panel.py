@@ -751,79 +751,67 @@ class RconPanel(ctk.CTkFrame):
         separator = ctk.CTkFrame(scheduler_frame, height=2)
         separator.grid(row=3, column=0, columnspan=4, pady=20, padx=10, sticky="ew")
         
-        # Frame de tareas personalizables (estilo comandos directos)
-        custom_tasks_frame = ctk.CTkFrame(scheduler_frame)
-        custom_tasks_frame.grid(row=4, column=0, columnspan=4, pady=10, padx=10, sticky="ew")
-        custom_tasks_frame.grid_columnconfigure(0, weight=1)
+        # Sistema unificado de tareas RCON
+        unified_tasks_frame = ctk.CTkFrame(scheduler_frame)
+        unified_tasks_frame.grid(row=4, column=0, columnspan=4, pady=10, padx=10, sticky="ew")
+        unified_tasks_frame.grid_columnconfigure(0, weight=1)
         
-        ctk.CTkLabel(custom_tasks_frame, text="⚡ Tareas Rápidas Personalizables", 
+        ctk.CTkLabel(unified_tasks_frame, text="⚡ Gestión de Tareas RCON", 
                     font=ctk.CTkFont(size=16, weight="bold")).grid(row=0, column=0, pady=10)
         
-        # Frame para botones de tareas rápidas
-        self.quick_tasks_frame = ctk.CTkFrame(custom_tasks_frame)
+        # Frame para botones de tareas rápidas existentes
+        self.quick_tasks_frame = ctk.CTkFrame(unified_tasks_frame)
         self.quick_tasks_frame.grid(row=1, column=0, pady=10, padx=10, sticky="ew")
         
-        # Botones de gestión de tareas personalizables
-        management_frame = ctk.CTkFrame(custom_tasks_frame)
-        management_frame.grid(row=2, column=0, pady=10, padx=10, sticky="ew")
-        
-        ctk.CTkButton(management_frame, text="➕ Nueva Tarea Rápida", 
-                     command=self.add_quick_task, fg_color="green", width=150).pack(side="left", padx=5)
-        
-        ctk.CTkButton(management_frame, text="✏️ Editar Tareas", 
-                     command=self.edit_quick_tasks, fg_color="blue", width=150).pack(side="left", padx=5)
-        
-        ctk.CTkButton(management_frame, text="🗑️ Eliminar Tarea", 
-                     command=self.delete_quick_task, fg_color="red", width=150).pack(side="left", padx=5)
-        
-        # Separador
-        separator2 = ctk.CTkFrame(scheduler_frame, height=2)
-        separator2.grid(row=5, column=0, columnspan=4, pady=20, padx=10, sticky="ew")
-        
-        # Lista de tareas programadas automáticas (estilo comandos directos)
-        auto_tasks_frame = ctk.CTkFrame(scheduler_frame)
-        auto_tasks_frame.grid(row=6, column=0, columnspan=4, pady=10, padx=10, sticky="ew")
-        auto_tasks_frame.grid_columnconfigure(0, weight=1)
-        
-        ctk.CTkLabel(auto_tasks_frame, text="⏰ Tareas Automáticas Programadas", 
-                    font=ctk.CTkFont(size=16, weight="bold")).grid(row=0, column=0, pady=10)
-        
-        # Formulario de nueva tarea programada
-        task_form_frame = ctk.CTkFrame(auto_tasks_frame)
-        task_form_frame.grid(row=1, column=0, pady=10, padx=10, sticky="ew")
+        # Formulario unificado de tareas
+        task_form_frame = ctk.CTkFrame(unified_tasks_frame)
+        task_form_frame.grid(row=2, column=0, pady=10, padx=10, sticky="ew")
         task_form_frame.grid_columnconfigure(1, weight=1)
         
+        # Tipo de tarea
+        ctk.CTkLabel(task_form_frame, text="Tipo de Tarea:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.task_type = ctk.CTkOptionMenu(task_form_frame, values=["Ejecutar Ahora", "Programar", "Tarea Rápida"])
+        self.task_type.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.task_type.set("Ejecutar Ahora")
+        self.task_type.configure(command=lambda value: self.on_task_type_change(value))
+        
         # Tipo de comando
-        ctk.CTkLabel(task_form_frame, text="Tipo de Comando:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.scheduled_command_type = ctk.CTkOptionMenu(task_form_frame, values=[
+        ctk.CTkLabel(task_form_frame, text="Comando:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.unified_command_type = ctk.CTkOptionMenu(task_form_frame, values=[
             "broadcast", "saveworld", "listplayers", "kick", "ban", 
             "unban", "admincheat", "destroywilddinos", "time", "weather", "custom"
         ])
-        self.scheduled_command_type.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
-        self.scheduled_command_type.set("broadcast")
+        self.unified_command_type.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        self.unified_command_type.set("broadcast")
         
         # Parámetros del comando
-        ctk.CTkLabel(task_form_frame, text="Parámetros:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-        self.scheduled_command_params = ctk.CTkEntry(task_form_frame, placeholder_text="Parámetros del comando")
-        self.scheduled_command_params.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        ctk.CTkLabel(task_form_frame, text="Parámetros:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        self.unified_command_params = ctk.CTkEntry(task_form_frame, placeholder_text="Parámetros del comando")
+        self.unified_command_params.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
+        
+        # Frame para opciones específicas (se muestra según el tipo)
+        self.options_frame = ctk.CTkFrame(task_form_frame)
+        self.options_frame.grid(row=3, column=0, columnspan=2, pady=10, padx=5, sticky="ew")
+        self.options_frame.grid_columnconfigure(1, weight=1)
+        self.options_frame.grid_columnconfigure(3, weight=1)
+        
+        # Opciones para tareas programadas (inicialmente ocultas)
+        self.schedule_widgets = []
         
         # Fecha y hora
-        datetime_frame = ctk.CTkFrame(task_form_frame)
-        datetime_frame.grid(row=2, column=0, columnspan=2, pady=10, padx=5, sticky="ew")
-        datetime_frame.grid_columnconfigure(1, weight=1)
-        datetime_frame.grid_columnconfigure(3, weight=1)
+        date_label = ctk.CTkLabel(self.options_frame, text="Fecha:")
+        self.schedule_widgets.append(date_label)
+        self.scheduled_date_entry = ctk.CTkEntry(self.options_frame, width=120, placeholder_text="YYYY-MM-DD")
+        self.schedule_widgets.append(self.scheduled_date_entry)
         
-        ctk.CTkLabel(datetime_frame, text="Fecha:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.scheduled_date_entry = ctk.CTkEntry(datetime_frame, width=120, placeholder_text="YYYY-MM-DD")
-        self.scheduled_date_entry.grid(row=0, column=1, padx=5, pady=5, sticky="w")
-        
-        ctk.CTkLabel(datetime_frame, text="Hora:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
-        self.scheduled_time_entry = ctk.CTkEntry(datetime_frame, width=100, placeholder_text="HH:MM:SS")
-        self.scheduled_time_entry.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+        time_label = ctk.CTkLabel(self.options_frame, text="Hora:")
+        self.schedule_widgets.append(time_label)
+        self.scheduled_time_entry = ctk.CTkEntry(self.options_frame, width=100, placeholder_text="HH:MM:SS")
+        self.schedule_widgets.append(self.scheduled_time_entry)
         
         # Botones de tiempo rápido
-        quick_time_frame = ctk.CTkFrame(datetime_frame)
-        quick_time_frame.grid(row=1, column=0, columnspan=4, pady=5, sticky="ew")
+        quick_time_frame = ctk.CTkFrame(self.options_frame)
+        self.schedule_widgets.append(quick_time_frame)
         
         ctk.CTkLabel(quick_time_frame, text="⚡ Tiempo rápido:").pack(side="left", padx=5)
         ctk.CTkButton(quick_time_frame, text="+1 min", width=60,
@@ -835,30 +823,47 @@ class RconPanel(ctk.CTkFrame):
         ctk.CTkButton(quick_time_frame, text="+1 hora", width=60,
                      command=lambda: self.set_scheduled_quick_time(60)).pack(side="left", padx=2)
         
-        # Descripción
-        ctk.CTkLabel(task_form_frame, text="Descripción:").grid(row=3, column=0, padx=5, pady=5, sticky="w")
-        self.scheduled_description_entry = ctk.CTkEntry(task_form_frame, placeholder_text="Descripción opcional")
-        self.scheduled_description_entry.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
+        # Opciones para tareas rápidas (inicialmente ocultas)
+        self.quick_task_widgets = []
         
-        # Botón crear tarea
-        ctk.CTkButton(task_form_frame, text="✅ Crear Tarea Programada", 
-                     command=self.create_scheduled_task, fg_color="green").grid(row=4, column=0, columnspan=2, pady=10)
+        name_label = ctk.CTkLabel(self.options_frame, text="Nombre:")
+        self.quick_task_widgets.append(name_label)
+        self.quick_task_name = ctk.CTkEntry(self.options_frame, placeholder_text="Nombre de la tarea rápida")
+        self.quick_task_widgets.append(self.quick_task_name)
         
-        # Botones de gestión de tareas automáticas
-        auto_buttons_frame = ctk.CTkFrame(auto_tasks_frame)
-        auto_buttons_frame.grid(row=2, column=0, pady=10, sticky="ew")
+        color_label = ctk.CTkLabel(self.options_frame, text="Color:")
+        self.quick_task_widgets.append(color_label)
+        self.quick_task_color = ctk.CTkOptionMenu(self.options_frame, values=["blue", "green", "red", "orange", "purple"])
+        self.quick_task_widgets.append(self.quick_task_color)
+        self.quick_task_color.set("blue")
         
-        ctk.CTkButton(auto_buttons_frame, text="📋 Ver Tareas", width=120, 
+        # Descripción (común para programadas y rápidas)
+        self.description_label = ctk.CTkLabel(self.options_frame, text="Descripción:")
+        self.unified_description_entry = ctk.CTkEntry(self.options_frame, placeholder_text="Descripción opcional")
+        
+        # Botón de acción (cambia según el tipo)
+        self.action_button = ctk.CTkButton(task_form_frame, text="▶️ Ejecutar Ahora", 
+                                         command=self.execute_unified_task, fg_color="green")
+        self.action_button.grid(row=4, column=0, columnspan=2, pady=10)
+        
+        # Botones de gestión
+        management_frame = ctk.CTkFrame(unified_tasks_frame)
+        management_frame.grid(row=3, column=0, pady=10, padx=10, sticky="ew")
+        
+        ctk.CTkButton(management_frame, text="📋 Ver Tareas Programadas", width=150, 
                      command=self.show_scheduled_tasks_list).pack(side="left", padx=5)
-        ctk.CTkButton(auto_buttons_frame, text="📊 Historial", width=120,
-                     command=self.show_scheduled_history).pack(side="left", padx=5)
-        ctk.CTkButton(auto_buttons_frame, text="🗑️ Limpiar Completadas", width=120,
+        ctk.CTkButton(management_frame, text="✏️ Editar Tareas Rápidas", width=150,
+                     command=self.edit_quick_tasks).pack(side="left", padx=5)
+        ctk.CTkButton(management_frame, text="🗑️ Limpiar Completadas", width=150,
                      command=self.clear_completed_tasks).pack(side="left", padx=5)
         
-        # Frame scrollable para las tareas automáticas
-        self.tasks_scrollable = ctk.CTkScrollableFrame(auto_tasks_frame, height=150)
-        self.tasks_scrollable.grid(row=3, column=0, sticky="ew", padx=10, pady=(5, 10))
+        # Frame scrollable para mostrar tareas activas
+        self.tasks_scrollable = ctk.CTkScrollableFrame(unified_tasks_frame, height=150)
+        self.tasks_scrollable.grid(row=4, column=0, sticky="ew", padx=10, pady=(5, 10))
         self.tasks_scrollable.grid_columnconfigure(0, weight=1)
+        
+        # Inicializar vista
+        self.on_task_type_change("Ejecutar Ahora")
         
         # Actualizar configuración de tiempo inicial
         self.update_time_config()
@@ -1364,9 +1369,8 @@ class RconPanel(ctk.CTkFrame):
         except Exception as e:
              print(f"Error agregando alerta: {str(e)}")
     
-    def on_task_type_change(self, event=None):
-        """Manejar cambio en el tipo de tarea"""
-        # Este método se puede usar para actualizar la UI según el tipo de tarea seleccionado
+    def on_task_type_change_old(self, event=None):
+        """Método obsoleto - reemplazado por el nuevo sistema unificado"""
         pass
     
     def update_time_config(self):
@@ -1714,6 +1718,178 @@ class RconPanel(ctk.CTkFrame):
             self.add_result("🗑️ Limpieza", f"Se eliminaron {cleared_count} tareas completadas")
         else:
             self.add_result("ℹ️ Limpieza", "No hay tareas completadas para eliminar")
+    
+    # Métodos para el sistema unificado de tareas
+    def on_task_type_change(self, task_type):
+        """Manejar cambio de tipo de tarea"""
+        # Ocultar todos los widgets específicos
+        for widget in self.schedule_widgets:
+            widget.grid_remove()
+        
+        for widget in self.quick_task_widgets:
+            widget.grid_remove()
+        
+        self.description_label.grid_remove()
+        self.unified_description_entry.grid_remove()
+        
+        if task_type == "Ejecutar Ahora":
+            self.action_button.configure(text="▶️ Ejecutar Ahora", fg_color="green")
+            
+        elif task_type == "Programar":
+            # Mostrar widgets de programación
+            self.schedule_widgets[0].grid(row=0, column=0, padx=5, pady=5, sticky="w")  # date_label
+            self.schedule_widgets[1].grid(row=0, column=1, padx=5, pady=5, sticky="w")  # date_entry
+            self.schedule_widgets[2].grid(row=0, column=2, padx=5, pady=5, sticky="w")  # time_label
+            self.schedule_widgets[3].grid(row=0, column=3, padx=5, pady=5, sticky="w")  # time_entry
+            self.schedule_widgets[4].grid(row=1, column=0, columnspan=4, pady=5, sticky="ew")  # quick_time_frame
+            
+            self.description_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+            self.unified_description_entry.grid(row=2, column=1, columnspan=3, padx=5, pady=5, sticky="ew")
+            
+            self.action_button.configure(text="⏰ Programar Tarea", fg_color="blue")
+            self.set_default_datetime()
+            
+        elif task_type == "Tarea Rápida":
+            # Mostrar widgets de tarea rápida
+            self.quick_task_widgets[0].grid(row=0, column=0, padx=5, pady=5, sticky="w")  # name_label
+            self.quick_task_widgets[1].grid(row=0, column=1, columnspan=3, padx=5, pady=5, sticky="ew")  # name_entry
+            self.quick_task_widgets[2].grid(row=1, column=0, padx=5, pady=5, sticky="w")  # color_label
+            self.quick_task_widgets[3].grid(row=1, column=1, padx=5, pady=5, sticky="w")  # color_option
+            
+            self.description_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+            self.unified_description_entry.grid(row=2, column=1, columnspan=3, padx=5, pady=5, sticky="ew")
+            
+            self.action_button.configure(text="💾 Guardar Tarea Rápida", fg_color="purple")
+    
+    def execute_unified_task(self):
+        """Ejecutar tarea según el tipo seleccionado"""
+        task_type = self.task_type.get()
+        command_type = self.unified_command_type.get()
+        params = self.unified_command_params.get().strip()
+        
+        if not params:
+            self.add_result("❌ Error", "Los parámetros del comando son obligatorios")
+            return
+        
+        # Construir comando completo
+        if command_type == "custom":
+            full_command = params
+        else:
+            full_command = f"{command_type} {params}"
+        
+        if task_type == "Ejecutar Ahora":
+            # Ejecutar inmediatamente
+            self.execute_command(full_command)
+            
+        elif task_type == "Programar":
+            # Crear tarea programada
+            self.create_scheduled_task_unified(full_command)
+            
+        elif task_type == "Tarea Rápida":
+            # Crear tarea rápida
+            self.create_quick_task_unified(full_command)
+    
+    def create_scheduled_task_unified(self, full_command):
+        """Crear tarea programada desde el sistema unificado"""
+        try:
+            from datetime import datetime
+            
+            date_str = self.scheduled_date_entry.get().strip()
+            time_str = self.scheduled_time_entry.get().strip()
+            description = self.unified_description_entry.get().strip()
+            
+            if not date_str or not time_str:
+                self.add_result("❌ Error", "La fecha y hora son obligatorias")
+                return
+            
+            # Parsear fecha y hora
+            try:
+                datetime_str = f"{date_str} {time_str}"
+                execution_time = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                self.add_result("❌ Error", "Formato de fecha/hora inválido. Use YYYY-MM-DD HH:MM:SS")
+                return
+            
+            # Verificar que la fecha sea futura
+            if execution_time <= datetime.now():
+                self.add_result("❌ Error", "La fecha y hora deben ser futuras")
+                return
+            
+            # Crear tarea programada
+            task_data = {
+                "id": f"task_{int(datetime.now().timestamp())}",
+                "command": full_command,
+                "execution_time": execution_time.isoformat(),
+                "description": description or f"Tarea programada",
+                "status": "pending",
+                "created_at": datetime.now().isoformat()
+            }
+            
+            # Agregar a la lista de tareas programadas
+            if not hasattr(self, 'scheduled_tasks_list'):
+                self.scheduled_tasks_list = []
+            
+            self.scheduled_tasks_list.append(task_data)
+            
+            # Guardar en archivo
+            self.save_scheduled_tasks()
+            
+            # Actualizar display
+            self.load_scheduled_tasks_display()
+            
+            # Limpiar formulario
+            self.unified_command_params.delete(0, "end")
+            self.unified_description_entry.delete(0, "end")
+            self.set_default_datetime()
+            
+            self.add_result("✅ Tarea Programada", 
+                          f"Tarea creada exitosamente\n\n"
+                          f"Comando: {full_command}\n"
+                          f"Ejecución: {execution_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            
+        except Exception as e:
+            self.add_result("❌ Error", f"Error al crear tarea programada: {str(e)}")
+    
+    def create_quick_task_unified(self, full_command):
+        """Crear tarea rápida desde el sistema unificado"""
+        try:
+            name = self.quick_task_name.get().strip()
+            color = self.quick_task_color.get()
+            description = self.unified_description_entry.get().strip()
+            
+            if not name:
+                self.add_result("❌ Error", "El nombre de la tarea rápida es obligatorio")
+                return
+            
+            # Verificar que no exista una tarea con el mismo nombre
+            for task in self.quick_tasks:
+                if task["name"] == name:
+                    self.add_result("❌ Error", f"Ya existe una tarea rápida con el nombre '{name}'")
+                    return
+            
+            # Crear tarea rápida
+            task_data = {
+                "name": name,
+                "command": full_command,
+                "color": color,
+                "description": description or name
+            }
+            
+            self.quick_tasks.append(task_data)
+            self.save_quick_tasks_config()
+            self.load_quick_tasks()
+            
+            # Limpiar formulario
+            self.unified_command_params.delete(0, "end")
+            self.quick_task_name.delete(0, "end")
+            self.unified_description_entry.delete(0, "end")
+            
+            self.add_result("✅ Tarea Rápida Creada", 
+                          f"Tarea rápida '{name}' creada exitosamente\n\n"
+                          f"Comando: {full_command}")
+            
+        except Exception as e:
+            self.add_result("❌ Error", f"Error al crear tarea rápida: {str(e)}")
 
 
 # Diálogos para gestión de tareas rápidas

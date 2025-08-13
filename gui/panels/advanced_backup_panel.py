@@ -1246,9 +1246,9 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         if hasattr(self.main_window, 'log_server_event'):
             backup_type = "manual" if is_manual else "automático"
             self.main_window.log_server_event("backup_event", 
-                event_type=backup_type,
                 success=True,
-                details=f"Backup '{backup_info['name']}' creado exitosamente")
+                details=f"Backup '{backup_info['name']}' creado exitosamente",
+                event_type=backup_type)
         
         # Notificación solo para backups manuales
         if is_manual:
