@@ -1,0 +1,42 @@
+{
+  "Prueba2": {
+    "restart_enabled": true,
+    "update_always": false,
+    "update_specific_days": false,
+    "restart_days": {
+      "Lunes": true,
+      "Martes": true,
+      "Miércoles": true,
+      "Jueves": true,
+      "Viernes": true,
+      "Sábado": true,
+      "Domingo": true
+    },
+    "update_days": {
+      "Lunes": false,
+      "Martes": false,
+      "Miércoles": false,
+      "Jueves": false,
+      "Viernes": false,
+      "Sábado": false,
+      "Domingo": false
+    },
+    "restart_hours": "00:35, 06:00, 12:00, 18:00",
+    "backup_before_restart": true,
+    "saveworld_before_restart": true,
+    "destroywilddinos_enabled": false,
+    "destroywilddinos_days": {
+      "Lunes": false,
+      "Martes": false,
+      "Miércoles": false,
+      "Jueves": false,
+      "Viernes": false,
+      "Sábado": false,
+      "Domingo": false
+    },
+    "destroywilddinos_warning": true,
+    "rcon_warnings_enabled": true,
+    "warning_intervals": "15, 10, 5, 2, 1",
+    "warning_message": "⚠️ ATENCIÓN: El servidor se reiniciará en {time} minuto(s). Por favor, encuentra un lugar seguro."
+  }
+}

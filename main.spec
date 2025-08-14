@@ -74,6 +74,10 @@ hiddenimports = [
     'shutil',
     'zipfile',
     'win10toast',
+    'winreg',
+    'typing',
+    'collections',
+    'platform',
     
     # Módulos de la aplicación
     'gui.main_window',
@@ -99,6 +103,7 @@ hiddenimports = [
     'gui.panels.simple_logs_panel',
     'gui.panels.logs_panel_new',
     'gui.panels.working_logs_panel',
+    'gui.panels.test_logs_panel',
     'utils.config_manager',
     'utils.logger',
     'utils.server_manager',
@@ -106,6 +111,8 @@ hiddenimports = [
     'utils.system_tray',
     'utils.server_logger',
     'utils.ini_cleaner',
+    'utils.dialogs',
+    'utils.scheduled_commands',
 ]
 
 # Exclusiones

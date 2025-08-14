@@ -51,55 +51,55 @@ class AdvancedRestartPanel(ctk.CTkFrame):
     def create_header(self):
         """Crear sección de título y estado"""
         header_frame = ctk.CTkFrame(self)
-        header_frame.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="ew")
+        header_frame.grid(row=0, column=0, padx=5, pady=(5, 3), sticky="ew")
         header_frame.grid_columnconfigure(1, weight=1)
         
         # Título
         title_label = ctk.CTkLabel(
             header_frame,
             text="🔄 Sistema de Reinicios Programados",
-            font=ctk.CTkFont(size=16, weight="bold")
+            font=ctk.CTkFont(size=12, weight="bold")
         )
-        title_label.grid(row=0, column=0, padx=10, pady=5)
+        title_label.grid(row=0, column=0, padx=6, pady=3)
         
         # Frame para estado y próximo reinicio
         status_container = ctk.CTkFrame(header_frame)
-        status_container.grid(row=0, column=1, padx=10, pady=5, sticky="e")
+        status_container.grid(row=0, column=1, padx=6, pady=3, sticky="e")
         
         # Estado del sistema
         self.restart_status_label = ctk.CTkLabel(
             status_container,
             text="⏹️ Inactivo",
-            font=ctk.CTkFont(size=12)
+            font=ctk.CTkFont(size=10)
         )
-        self.restart_status_label.pack(side="left", padx=(8, 15))
+        self.restart_status_label.pack(side="left", padx=(5, 8))
         
         # Próximo reinicio
         self.next_restart_info = ctk.CTkLabel(
             status_container,
             text="Próximo reinicio: Deshabilitado",
-            font=ctk.CTkFont(size=10),
+            font=ctk.CTkFont(size=9),
             text_color="gray"
         )
-        self.next_restart_info.pack(side="left", padx=(0, 8))
+        self.next_restart_info.pack(side="left", padx=(0, 5))
 
     def create_restart_config_section(self):
         """Crear sección de configuración"""
         config_frame = ctk.CTkFrame(self)
-        config_frame.grid(row=1, column=0, padx=10, pady=(0, 5), sticky="ew")
+        config_frame.grid(row=1, column=0, padx=5, pady=(0, 3), sticky="ew")
         config_frame.grid_columnconfigure(1, weight=1)
         
         # Título de configuración
         config_title = ctk.CTkLabel(
             config_frame,
             text="⚙️ Configuración de Reinicios",
-            font=ctk.CTkFont(size=14, weight="bold")
+            font=ctk.CTkFont(size=11, weight="bold")
         )
-        config_title.grid(row=0, column=0, columnspan=3, pady=10)
+        config_title.grid(row=0, column=0, columnspan=3, pady=5)
         
         # Crear pestañas para organizar configuración
         self.config_tabview = ctk.CTkTabview(config_frame)
-        self.config_tabview.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
+        self.config_tabview.grid(row=1, column=0, columnspan=3, padx=6, pady=6, sticky="ew")
         
         # Pestaña Reinicios
         self.create_restart_schedule_tab()
@@ -124,44 +124,45 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             restart_tab,
             text="Habilitar reinicios programados",
             variable=self.restart_enabled_var,
-            command=self.on_restart_enabled_change
+            command=self.on_restart_enabled_change,
+            font=ctk.CTkFont(size=10)
         )
-        self.restart_enabled_check.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="w")
+        self.restart_enabled_check.grid(row=0, column=0, columnspan=2, padx=6, pady=6, sticky="w")
         
         # Selección de días de la semana
-        days_label = ctk.CTkLabel(restart_tab, text="Días de la semana:", font=ctk.CTkFont(weight="bold"))
-        days_label.grid(row=1, column=0, padx=10, pady=(10, 5), sticky="w")
+        days_label = ctk.CTkLabel(restart_tab, text="Días de la semana:", font=ctk.CTkFont(size=10, weight="bold"))
+        days_label.grid(row=1, column=0, padx=6, pady=(6, 3), sticky="w")
         
         self.days_frame = ctk.CTkFrame(restart_tab)
-        self.days_frame.grid(row=2, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
+        self.days_frame.grid(row=2, column=0, columnspan=2, padx=6, pady=3, sticky="ew")
         
         self.day_vars = {}
         days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
         for i, day in enumerate(days):
             var = ctk.BooleanVar()
-            check = ctk.CTkCheckBox(self.days_frame, text=day, variable=var)
-            check.grid(row=0, column=i, padx=5, pady=5)
+            check = ctk.CTkCheckBox(self.days_frame, text=day, variable=var, font=ctk.CTkFont(size=9))
+            check.grid(row=0, column=i, padx=3, pady=3)
             self.day_vars[day] = var
         
         # Horas de reinicio
-        hours_label = ctk.CTkLabel(restart_tab, text="Horas de reinicio:", font=ctk.CTkFont(weight="bold"))
-        hours_label.grid(row=3, column=0, padx=10, pady=(15, 5), sticky="w")
+        hours_label = ctk.CTkLabel(restart_tab, text="Horas de reinicio:", font=ctk.CTkFont(size=10, weight="bold"))
+        hours_label.grid(row=3, column=0, padx=6, pady=(8, 3), sticky="w")
         
         self.hours_frame = ctk.CTkFrame(restart_tab)
-        self.hours_frame.grid(row=4, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
+        self.hours_frame.grid(row=4, column=0, columnspan=2, padx=6, pady=3, sticky="ew")
         
         # Lista de horas
-        self.restart_hours_text = ctk.CTkTextbox(self.hours_frame, height=60)
-        self.restart_hours_text.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+        self.restart_hours_text = ctk.CTkTextbox(self.hours_frame, height=45, font=ctk.CTkFont(size=9))
+        self.restart_hours_text.grid(row=0, column=0, padx=4, pady=4, sticky="ew")
         self.restart_hours_text.insert("0.0", "00:00, 06:00, 12:00, 18:00")
         
         hours_info = ctk.CTkLabel(
             self.hours_frame, 
             text="Formato: HH:MM separadas por comas (ej: 00:00, 06:00, 12:00, 18:00)",
-            font=ctk.CTkFont(size=10),
+            font=ctk.CTkFont(size=8),
             text_color="gray"
         )
-        hours_info.grid(row=1, column=0, padx=5, pady=(0, 5), sticky="w")
+        hours_info.grid(row=1, column=0, padx=4, pady=(0, 4), sticky="w")
         
         self.hours_frame.grid_columnconfigure(0, weight=1)
 
@@ -174,10 +175,10 @@ class AdvancedRestartPanel(ctk.CTkFrame):
         desc_label = ctk.CTkLabel(
             update_tab,
             text="Las actualizaciones se ejecutan automáticamente durante los reinicios programados",
-            font=ctk.CTkFont(size=12, weight="bold"),
+            font=ctk.CTkFont(size=9, weight="bold"),
             text_color="blue"
         )
-        desc_label.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="w")
+        desc_label.grid(row=0, column=0, columnspan=2, padx=6, pady=6, sticky="w")
         
         # Opción 1: Actualizar siempre
         self.update_always_var = ctk.BooleanVar(value=True)
@@ -185,13 +186,14 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             update_tab,
             text="Actualizar servidor en TODOS los reinicios automáticos",
             variable=self.update_always_var,
-            command=self.on_update_mode_change
+            command=self.on_update_mode_change,
+            font=ctk.CTkFont(size=10)
         )
-        self.update_always_check.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="w")
+        self.update_always_check.grid(row=1, column=0, columnspan=2, padx=6, pady=6, sticky="w")
         
         # Separador
-        separator = ctk.CTkLabel(update_tab, text="── O ──", text_color="gray")
-        separator.grid(row=2, column=0, columnspan=2, padx=10, pady=5)
+        separator = ctk.CTkLabel(update_tab, text="── O ──", text_color="gray", font=ctk.CTkFont(size=9))
+        separator.grid(row=2, column=0, columnspan=2, padx=6, pady=3)
         
         # Opción 2: Días específicos
         self.update_specific_days_var = ctk.BooleanVar()
@@ -199,20 +201,21 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             update_tab,
             text="Actualizar solo en días específicos:",
             variable=self.update_specific_days_var,
-            command=self.on_update_mode_change
+            command=self.on_update_mode_change,
+            font=ctk.CTkFont(size=10)
         )
-        self.update_specific_days_check.grid(row=3, column=0, columnspan=2, padx=10, pady=(10, 5), sticky="w")
+        self.update_specific_days_check.grid(row=3, column=0, columnspan=2, padx=6, pady=(6, 3), sticky="w")
         
         # Selección de días para actualizaciones
         self.update_days_frame = ctk.CTkFrame(update_tab)
-        self.update_days_frame.grid(row=4, column=0, columnspan=2, padx=30, pady=5, sticky="ew")
+        self.update_days_frame.grid(row=4, column=0, columnspan=2, padx=20, pady=3, sticky="ew")
         
         self.update_day_vars = {}
         days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
         for i, day in enumerate(days):
             var = ctk.BooleanVar()
-            check = ctk.CTkCheckBox(self.update_days_frame, text=day, variable=var, state="disabled")
-            check.grid(row=0, column=i, padx=5, pady=5)
+            check = ctk.CTkCheckBox(self.update_days_frame, text=day, variable=var, state="disabled", font=ctk.CTkFont(size=9))
+            check.grid(row=0, column=i, padx=3, pady=3)
             self.update_day_vars[day] = var
         
         # Información adicional
@@ -224,88 +227,133 @@ class AdvancedRestartPanel(ctk.CTkFrame):
                  "3. Backup (si está habilitado)\n"
                  "4. Saveworld (si está habilitado)\n"
                  "5. Iniciar servidor",
-            font=ctk.CTkFont(size=10),
+            font=ctk.CTkFont(size=8),
             text_color="gray",
             justify="left"
         )
-        info_label.grid(row=5, column=0, columnspan=2, padx=10, pady=15, sticky="w")
+        info_label.grid(row=5, column=0, columnspan=2, padx=6, pady=8, sticky="w")
 
     def create_options_tab(self):
         """Crear pestaña de opciones"""
         options_tab = self.config_tabview.add("⚙️ Opciones")
-        options_tab.grid_columnconfigure(1, weight=1)
+        
+        # Crear frame scrollable para las opciones
+        self.options_scroll = ctk.CTkScrollableFrame(options_tab)
+        self.options_scroll.grid(row=0, column=0, padx=4, pady=4, sticky="nsew")
+        self.options_scroll.grid_columnconfigure(1, weight=1)
+        self.options_scroll.grid_columnconfigure(2, weight=1)
+        options_tab.grid_columnconfigure(0, weight=1)
+        options_tab.grid_rowconfigure(0, weight=1)
         
         # Backup antes del reinicio
         self.backup_before_restart_var = ctk.BooleanVar(value=True)
         self.backup_before_restart_check = ctk.CTkCheckBox(
-            options_tab,
+            self.options_scroll,
             text="Realizar backup antes del reinicio",
-            variable=self.backup_before_restart_var
+            variable=self.backup_before_restart_var,
+            font=ctk.CTkFont(size=10)
         )
-        self.backup_before_restart_check.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="w")
+        self.backup_before_restart_check.grid(row=0, column=0, columnspan=2, padx=6, pady=6, sticky="w")
         
         # Saveworld antes del reinicio
         self.saveworld_before_restart_var = ctk.BooleanVar(value=True)
         self.saveworld_before_restart_check = ctk.CTkCheckBox(
-            options_tab,
+            self.options_scroll,
             text="Ejecutar saveworld (RCON) antes del reinicio",
-            variable=self.saveworld_before_restart_var
+            variable=self.saveworld_before_restart_var,
+            font=ctk.CTkFont(size=10)
         )
-        self.saveworld_before_restart_check.grid(row=1, column=0, columnspan=2, padx=10, pady=5, sticky="w")
+        self.saveworld_before_restart_check.grid(row=1, column=0, columnspan=2, padx=6, pady=3, sticky="w")
+        
+        # DestroyWildDinos antes del reinicio
+        self.destroywilddinos_enabled_var = ctk.BooleanVar(value=False)
+        self.destroywilddinos_enabled_check = ctk.CTkCheckBox(
+            self.options_scroll,
+            text="Ejecutar DestroyWildDinos 5 min antes del reinicio en días específicos",
+            variable=self.destroywilddinos_enabled_var,
+            command=self.on_destroywilddinos_enabled_change,
+            font=ctk.CTkFont(size=10)
+        )
+        self.destroywilddinos_enabled_check.grid(row=2, column=0, columnspan=2, padx=6, pady=3, sticky="w")
+        
+        # Selección de días para DestroyWildDinos
+        self.destroywilddinos_days_frame = ctk.CTkFrame(self.options_scroll)
+        self.destroywilddinos_days_frame.grid(row=3, column=0, columnspan=2, padx=20, pady=3, sticky="ew")
+        
+        self.destroywilddinos_day_vars = {}
+        days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+        for i, day in enumerate(days):
+            var = ctk.BooleanVar()
+            check = ctk.CTkCheckBox(self.destroywilddinos_days_frame, text=day, variable=var, state="disabled", font=ctk.CTkFont(size=9))
+            check.grid(row=0, column=i, padx=3, pady=3)
+            self.destroywilddinos_day_vars[day] = var
+        
+        # Aviso para DestroyWildDinos
+        self.destroywilddinos_warning_var = ctk.BooleanVar(value=True)
+        self.destroywilddinos_warning_check = ctk.CTkCheckBox(
+            self.options_scroll,
+            text="Avisar cuando se destruyen los dinosaurios salvajes",
+            variable=self.destroywilddinos_warning_var,
+            font=ctk.CTkFont(size=10)
+        )
+        self.destroywilddinos_warning_check.grid(row=4, column=0, columnspan=2, padx=20, pady=3, sticky="w")
         
         # Avisos por RCON
-        rcon_warnings_label = ctk.CTkLabel(options_tab, text="Avisos por RCON:", font=ctk.CTkFont(weight="bold"))
-        rcon_warnings_label.grid(row=2, column=0, columnspan=3, padx=10, pady=(15, 5), sticky="w")
+        rcon_warnings_label = ctk.CTkLabel(self.options_scroll, text="Avisos por RCON:", font=ctk.CTkFont(size=10, weight="bold"))
+        rcon_warnings_label.grid(row=5, column=0, columnspan=3, padx=6, pady=(8, 3), sticky="w")
         
         # Habilitar avisos RCON
         self.rcon_warnings_var = ctk.BooleanVar(value=True)
         self.rcon_warnings_check = ctk.CTkCheckBox(
-            options_tab,
+            self.options_scroll,
             text="Enviar avisos por RCON antes del reinicio",
-            variable=self.rcon_warnings_var
+            variable=self.rcon_warnings_var,
+            font=ctk.CTkFont(size=10)
         )
-        self.rcon_warnings_check.grid(row=3, column=0, columnspan=3, padx=10, pady=5, sticky="w")
+        self.rcon_warnings_check.grid(row=6, column=0, columnspan=3, padx=6, pady=3, sticky="w")
         
         # Intervalos de aviso
-        intervals_label = ctk.CTkLabel(options_tab, text="Intervalos de aviso (minutos):")
-        intervals_label.grid(row=4, column=0, padx=10, pady=(10, 5), sticky="w")
+        intervals_label = ctk.CTkLabel(self.options_scroll, text="Intervalos de aviso (minutos):", font=ctk.CTkFont(size=10))
+        intervals_label.grid(row=7, column=0, padx=6, pady=(6, 3), sticky="w")
         
-        self.warning_intervals_entry = ctk.CTkEntry(options_tab, placeholder_text="15, 10, 5, 2, 1")
-        self.warning_intervals_entry.grid(row=4, column=1, columnspan=2, padx=10, pady=(10, 5), sticky="ew")
+        self.warning_intervals_entry = ctk.CTkEntry(self.options_scroll, placeholder_text="15, 10, 5, 2, 1", font=ctk.CTkFont(size=9), height=24)
+        self.warning_intervals_entry.grid(row=7, column=1, columnspan=2, padx=6, pady=(6, 3), sticky="ew")
         self.warning_intervals_entry.insert(0, "15, 10, 5, 2, 1")
         
         intervals_info = ctk.CTkLabel(
-            options_tab, 
+            self.options_scroll, 
             text="Separar con comas (ej: 15, 10, 5, 2, 1)",
-            font=ctk.CTkFont(size=10),
+            font=ctk.CTkFont(size=8),
             text_color="gray"
         )
-        intervals_info.grid(row=5, column=1, columnspan=2, padx=10, pady=(0, 5), sticky="w")
+        intervals_info.grid(row=8, column=1, columnspan=2, padx=6, pady=(0, 3), sticky="w")
         
         # Mensaje personalizado
-        message_label = ctk.CTkLabel(options_tab, text="Mensaje de aviso:")
-        message_label.grid(row=6, column=0, padx=10, pady=(10, 5), sticky="w")
+        message_label = ctk.CTkLabel(self.options_scroll, text="Mensaje de aviso:", font=ctk.CTkFont(size=10))
+        message_label.grid(row=9, column=0, padx=6, pady=(6, 3), sticky="w")
         
-        self.warning_message_text = ctk.CTkTextbox(options_tab, height=60)
-        self.warning_message_text.grid(row=7, column=0, columnspan=3, padx=10, pady=5, sticky="ew")
+        self.warning_message_text = ctk.CTkTextbox(self.options_scroll, height=45, font=ctk.CTkFont(size=9))
+        self.warning_message_text.grid(row=10, column=0, columnspan=3, padx=6, pady=3, sticky="ew")
         self.warning_message_text.insert("0.0", "⚠️ ATENCIÓN: El servidor se reiniciará en {time} minuto(s). Por favor, encuentra un lugar seguro.")
         
         message_info = ctk.CTkLabel(
-            options_tab,
+            self.options_scroll,
             text="Usa {time} para mostrar el tiempo restante",
-            font=ctk.CTkFont(size=10),
+            font=ctk.CTkFont(size=8),
             text_color="gray"
         )
-        message_info.grid(row=8, column=0, columnspan=3, padx=10, pady=(0, 10), sticky="w")
+        message_info.grid(row=11, column=0, columnspan=3, padx=6, pady=(0, 6), sticky="w")
         
         # Botón guardar configuración
         save_config_button = ctk.CTkButton(
-            options_tab,
+            self.options_scroll,
             text="💾 Guardar Configuración",
             command=self.save_restart_config,
-            width=200
+            width=160,
+            height=28,
+            font=ctk.CTkFont(size=10)
         )
-        save_config_button.grid(row=9, column=0, columnspan=3, padx=10, pady=20)
+        save_config_button.grid(row=12, column=0, columnspan=3, padx=6, pady=10)
 
     def create_history_tab(self):
         """Crear pestaña de historial de reinicios"""
@@ -317,61 +365,65 @@ class AdvancedRestartPanel(ctk.CTkFrame):
         self.history_title = ctk.CTkLabel(
             history_tab,
             text="📚 Historial de Reinicios",
-            font=ctk.CTkFont(size=14, weight="bold")
+            font=ctk.CTkFont(size=11, weight="bold")
         )
-        self.history_title.grid(row=0, column=0, pady=(5, 5))
+        self.history_title.grid(row=0, column=0, pady=(3, 3))
         
         # Lista de reinicios con scroll
         self.history_scroll = ctk.CTkScrollableFrame(history_tab)
-        self.history_scroll.grid(row=1, column=0, padx=5, pady=(0, 5), sticky="nsew")
+        self.history_scroll.grid(row=1, column=0, padx=4, pady=(0, 3), sticky="nsew")
         self.history_scroll.grid_columnconfigure(0, weight=1)
         
         # Botones de gestión del historial
         history_buttons = ctk.CTkFrame(history_tab)
-        history_buttons.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
+        history_buttons.grid(row=2, column=0, padx=4, pady=3, sticky="ew")
         
         refresh_history_button = ctk.CTkButton(
             history_buttons,
             text="🔄 Actualizar",
             command=self.refresh_restart_history,
-            width=100
+            width=80,
+            height=26,
+            font=ctk.CTkFont(size=9)
         )
-        refresh_history_button.pack(side="left", padx=5, pady=5)
+        refresh_history_button.pack(side="left", padx=3, pady=3)
         
         clear_history_button = ctk.CTkButton(
             history_buttons,
             text="🗑️ Limpiar Historial",
             command=self.clear_restart_history,
-            width=140
+            width=110,
+            height=26,
+            font=ctk.CTkFont(size=9)
         )
-        clear_history_button.pack(side="left", padx=5, pady=5)
+        clear_history_button.pack(side="left", padx=3, pady=3)
 
     def create_restart_controls(self):
         """Crear controles de reinicio"""
         controls_frame = ctk.CTkFrame(self)
-        controls_frame.grid(row=2, column=0, padx=10, pady=(0, 10), sticky="ew")
+        controls_frame.grid(row=2, column=0, padx=5, pady=(0, 5), sticky="ew")
         
         # Botón reinicio manual
         self.manual_restart_button = ctk.CTkButton(
             controls_frame,
             text="🔄 Reinicio Manual",
             command=self.start_manual_restart,
-            width=200,
-            height=40,
-            font=ctk.CTkFont(size=12, weight="bold")
+            width=160,
+            height=32,
+            font=ctk.CTkFont(size=10, weight="bold")
         )
-        self.manual_restart_button.pack(side="left", padx=10, pady=10)
+        self.manual_restart_button.pack(side="left", padx=6, pady=6)
         
         # Estado del reinicio
         self.restart_progress_frame = ctk.CTkFrame(controls_frame)
-        self.restart_progress_frame.pack(side="left", padx=10, pady=10, fill="x", expand=True)
+        self.restart_progress_frame.pack(side="left", padx=6, pady=6, fill="x", expand=True)
         
         self.restart_progress_label = ctk.CTkLabel(
             self.restart_progress_frame,
             text="Listo para reinicio",
-            font=ctk.CTkFont(size=11)
+            font=ctk.CTkFont(size=9)
         )
-        self.restart_progress_label.pack(pady=(5, 0))
+        self.restart_progress_label.pack(pady=(3, 0))
         
         self.restart_progress_bar = ctk.CTkProgressBar(self.restart_progress_frame)
         self.restart_progress_bar.pack(fill="x", padx=10, pady=(0, 5))
@@ -413,6 +465,22 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             # Si ninguno está marcado, deshabilitar días específicos
             for day, var in self.update_day_vars.items():
                 checkbox = None
+    
+    def on_destroywilddinos_enabled_change(self):
+        """Llamado cuando se cambia el estado de DestroyWildDinos"""
+        enabled = self.destroywilddinos_enabled_var.get()
+        
+        # Habilitar/deshabilitar checkboxes de días
+        for day, var in self.destroywilddinos_day_vars.items():
+            checkbox = None
+            for widget in self.destroywilddinos_days_frame.winfo_children():
+                if hasattr(widget, 'cget') and widget.cget('text') == day:
+                    checkbox = widget
+                    break
+            if checkbox:
+                checkbox.configure(state="normal" if enabled else "disabled")
+                if not enabled:
+                    var.set(False)
                 for widget in self.update_days_frame.winfo_children():
                     if hasattr(widget, 'cget') and widget.cget('text') == day:
                         checkbox = widget
@@ -474,6 +542,7 @@ class AdvancedRestartPanel(ctk.CTkFrame):
         hours_text = self.restart_hours_text.get("0.0", "end-1c").strip()
         
         if not selected_days or not hours_text:
+            self.logger.warning("No hay días u horas seleccionados para reinicios")
             return
         
         try:
@@ -489,11 +558,12 @@ class AdvancedRestartPanel(ctk.CTkFrame):
                     }
                     
                     if day in day_map:
-                        schedule.every().week.at(hour).do(
-                            self._scheduled_restart
-                        ).tag('restart')
+                        # Usar la sintaxis correcta para cada día específico
+                        day_schedule = getattr(schedule.every(), day_map[day])
+                        day_schedule.at(hour).do(self._scheduled_restart).tag('restart')
             
             self.logger.info(f"Programados reinicios para {selected_days} a las {hours}")
+            self.logger.info(f"Total de trabajos programados: {len([job for job in schedule.jobs if 'restart' in job.tags])}")
             
         except Exception as e:
             self.logger.error(f"Error configurando trabajos de reinicio: {e}")
@@ -501,7 +571,7 @@ class AdvancedRestartPanel(ctk.CTkFrame):
     def _scheduled_restart(self):
         """Ejecutar reinicio programado"""
         self.logger.info("Ejecutando reinicio programado")
-        self.show_message("🔄 Ejecutando reinicio programado")
+        self.show_message("🔄 REINICIO PROGRAMADO: Iniciando secuencia automática de reinicio")
         
         # Registrar inicio del reinicio automático
         if hasattr(self.main_window, 'log_server_event'):
@@ -533,7 +603,16 @@ class AdvancedRestartPanel(ctk.CTkFrame):
         if self.rcon_warnings_var.get():
             self.after(0, lambda: self._send_rcon_warnings_and_restart(restart_info))
         else:
-            self.after(0, lambda: self._execute_restart_sequence(restart_info))
+            # Si no hay avisos RCON pero sí DestroyWildDinos, programar para 5 minutos antes
+            if self._should_execute_destroywilddinos_today():
+                self.logger.info("DestroyWildDinos programado para 5 minutos antes del reinicio")
+                self.show_message("🦕 COMANDO PROGRAMADO: DestroyWildDinos programado para 5 minutos antes del reinicio")
+                # Ejecutar DestroyWildDinos inmediatamente y luego esperar 5 minutos para el reinicio
+                self._execute_destroywilddinos()
+                # Programar reinicio en 5 minutos
+                self.after(5 * 60 * 1000, lambda: self._execute_restart_sequence(restart_info))
+            else:
+                self.after(0, lambda: self._execute_restart_sequence(restart_info))
 
 
 
@@ -568,10 +647,63 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             
             # Por defecto, no actualizar
             return False
-            
         except Exception as e:
             self.logger.error(f"Error determinando si actualizar hoy: {e}")
             return False
+    
+    def _should_execute_destroywilddinos_today(self):
+        """Determinar si se debe ejecutar DestroyWildDinos hoy"""
+        try:
+            # Verificar si la función está habilitada
+            if not hasattr(self, 'destroywilddinos_enabled_var') or not self.destroywilddinos_enabled_var.get():
+                return False
+            
+            # Obtener el día actual
+            today = datetime.now().strftime('%A')  # Lunes, Martes, etc. en inglés
+            
+            # Mapear día en inglés a español
+            day_map = {
+                'Monday': 'Lunes',
+                'Tuesday': 'Martes', 
+                'Wednesday': 'Miércoles',
+                'Thursday': 'Jueves',
+                'Friday': 'Viernes',
+                'Saturday': 'Sábado',
+                'Sunday': 'Domingo'
+            }
+            
+            today_spanish = day_map.get(today, today)
+            
+            # Verificar si hoy está seleccionado para DestroyWildDinos
+            if today_spanish in self.destroywilddinos_day_vars:
+                return self.destroywilddinos_day_vars[today_spanish].get()
+            
+            return False
+        except Exception as e:
+            self.logger.error(f"Error determinando si ejecutar DestroyWildDinos hoy: {e}")
+            return False
+    
+    def _execute_destroywilddinos(self):
+        """Ejecutar DestroyWildDinos via RCON"""
+        try:
+            if hasattr(self.main_window, 'rcon_panel'):
+                rcon_panel = self.main_window.rcon_panel
+                success = rcon_panel.execute_rcon_command("DestroyWildDinos")
+                if success:
+                    self.logger.info("DestroyWildDinos ejecutado exitosamente")
+                    self.show_message("🦕 COMANDO PROGRAMADO: DestroyWildDinos ejecutado - Dinosaurios salvajes destruidos")
+                    # Enviar mensaje de confirmación solo si está habilitado
+                    if hasattr(self, 'destroywilddinos_warning_var') and self.destroywilddinos_warning_var.get():
+                        confirmation_message = "🦕 Los dinosaurios salvajes han sido destruidos antes del reinicio"
+                        self._send_rcon_message(confirmation_message)
+                else:
+                    self.logger.warning("No se pudo ejecutar DestroyWildDinos")
+                    self.show_message("⚠️ Error al ejecutar comando programado DestroyWildDinos")
+            else:
+                self.logger.warning("Panel RCON no disponible para DestroyWildDinos")
+        except Exception as e:
+            self.logger.error(f"Error ejecutando DestroyWildDinos: {e}")
+            self.show_message(f"❌ Error en DestroyWildDinos: {e}")
 
     def _send_rcon_warnings_and_restart(self, restart_info):
         """Enviar avisos RCON y luego ejecutar reinicio"""
@@ -607,7 +739,7 @@ class AdvancedRestartPanel(ctk.CTkFrame):
                 message_template = "⚠️ ATENCIÓN: El servidor se reiniciará en {time} minuto(s). Por favor, encuentra un lugar seguro."
             
             self.logger.info(f"Enviando avisos RCON: {intervals} minutos antes del reinicio")
-            self.show_message(f"📢 Enviando avisos RCON: {intervals} minutos antes del reinicio")
+            self.show_message(f"📢 AVISOS PROGRAMADOS: Enviando mensajes RCON {intervals} minutos antes del reinicio")
             
             # Programar avisos
             self._schedule_warnings(intervals, message_template, restart_info)
@@ -635,6 +767,10 @@ class AdvancedRestartPanel(ctk.CTkFrame):
         # Enviar aviso inmediatamente
         self._send_rcon_message(message)
         
+        # Verificar si necesitamos ejecutar DestroyWildDinos en 5 minutos
+        if next_interval == 5 and self._should_execute_destroywilddinos_today():
+            self._execute_destroywilddinos()
+        
         # Programar siguiente aviso o reinicio
         if remaining_intervals:
             # Calcular tiempo hasta el siguiente aviso
@@ -654,26 +790,29 @@ class AdvancedRestartPanel(ctk.CTkFrame):
         """Ejecutar reinicio después de los avisos"""
         restart_info["warnings_sent"] = True
         self.logger.info("Todos los avisos RCON enviados, iniciando secuencia de reinicio")
-        self.show_message("📢 Avisos RCON completados, iniciando reinicio")
+        self.show_message("📢 AVISOS PROGRAMADOS: Todos los mensajes RCON enviados, iniciando reinicio")
         self._execute_restart_sequence(restart_info)
 
     def _send_rcon_message(self, message):
         """Enviar mensaje via RCON"""
         try:
             if hasattr(self.main_window, 'rcon_panel'):
-                rcon_command = f'broadcast "{message}"'
+                # Obtener el tipo de mensaje configurado (serverchat o broadcast)
+                message_type = self.main_window.rcon_panel.get_message_type()
+                rcon_command = f'{message_type} "{message}"'
                 success = self.main_window.rcon_panel.execute_rcon_command(rcon_command)
                 if success:
-                    self.logger.info(f"Aviso RCON enviado: {message}")
-                    self.show_message(f"📢 Aviso enviado: {message}")
+                    self.logger.info(f"Aviso RCON enviado usando {message_type}: {message}")
+                    self.show_message(f"📢 Mensaje programado enviado ({message_type}): {message}")
                 else:
-                    self.logger.warning(f"No se pudo enviar aviso RCON: {message}")
-                    self.show_message(f"⚠️ Error al enviar aviso: {message}")
+                    self.logger.warning(f"No se pudo enviar aviso RCON usando {message_type}: {message}")
+                    self.show_message(f"⚠️ Error al enviar mensaje programado ({message_type}): {message}")
             else:
                 self.logger.warning("Panel RCON no disponible para enviar avisos")
+                self.show_message("⚠️ Panel RCON no disponible para enviar mensajes programados")
         except Exception as e:
             self.logger.error(f"Error enviando mensaje RCON: {e}")
-            self.show_message(f"❌ Error en aviso RCON: {e}")
+            self.show_message(f"❌ Error en mensaje programado RCON: {e}")
 
     def start_manual_restart(self):
         """Iniciar reinicio manual"""
@@ -742,10 +881,36 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             if restart_info.get("update_requested", False):
                 self.restart_progress_label.configure(text="Actualizando servidor...")
                 self.restart_progress_bar.set(0.7)
-                if self._execute_update():
-                    restart_info["update_done"] = True
-                    self.logger.info("Actualización completada")
+                
+                # Callback para manejar la finalización de la actualización
+                def on_update_complete(success):
+                    try:
+                        if success:
+                            restart_info["update_done"] = True
+                            self.logger.info("Actualización completada")
+                        else:
+                            self.logger.error("Error en actualización durante reinicio")
+                        
+                        # Continuar con el inicio del servidor
+                        self._finalize_restart_sequence(restart_info)
+                    except Exception as e:
+                        self.logger.error(f"Error en callback de actualización durante reinicio: {e}")
+                        self._finalize_restart_sequence(restart_info)
+                
+                # Ejecutar actualización con callback
+                self._execute_update(on_update_complete)
+            else:
+                # Si no se requiere actualización, continuar directamente
+                self._finalize_restart_sequence(restart_info)
             
+        except Exception as e:
+            self.logger.error(f"Error en secuencia de reinicio: {e}")
+            self.restart_progress_label.configure(text="❌ Error en reinicio")
+            self.show_message(f"❌ Error en reinicio: {e}")
+    
+    def _finalize_restart_sequence(self, restart_info):
+        """Finalizar la secuencia de reinicio iniciando el servidor"""
+        try:
             # 5. Iniciar servidor
             self.restart_progress_label.configure(text="Iniciando servidor...")
             self.restart_progress_bar.set(0.9)
@@ -773,9 +938,9 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             self.after(5000, lambda: self.restart_progress_label.configure(text="Listo para reinicio"))
             
         except Exception as e:
-            self.logger.error(f"Error en secuencia de reinicio: {e}")
-            self.restart_progress_label.configure(text="❌ Error en reinicio")
-            self.show_message(f"❌ Error en reinicio: {e}")
+            self.logger.error(f"Error al finalizar secuencia de reinicio: {e}")
+            self.restart_progress_label.configure(text="❌ Error al finalizar reinicio")
+            self.show_message(f"❌ Error al finalizar reinicio: {e}")
 
     def _execute_update_sequence(self):
         """Ejecutar secuencia de actualización"""
@@ -786,14 +951,33 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             if self._stop_server():
                 self.logger.info("Servidor detenido para actualización")
             
-            # Actualizar
-            if self._execute_update():
-                self.logger.info("Actualización completada")
+            # Callback para manejar la finalización de la actualización
+            def on_update_complete(success):
+                try:
+                    if success:
+                        self.logger.info("Actualización completada")
+                        # Iniciar servidor después de la actualización
+                        if self._start_server():
+                            self.logger.info("Servidor iniciado después de actualización")
+                            self.show_message("✅ Actualización completada exitosamente")
+                        else:
+                            self.logger.error("Error al iniciar servidor después de actualización")
+                            self.show_message("❌ Error al iniciar servidor después de actualización")
+                    else:
+                        self.logger.error("Error en actualización")
+                        self.show_message("❌ Error en actualización, iniciando servidor sin actualizar")
+                        # Intentar iniciar servidor aunque falle la actualización
+                        if self._start_server():
+                            self.logger.info("Servidor iniciado sin actualización")
+                        else:
+                            self.logger.error("Error al iniciar servidor")
+                            self.show_message("❌ Error crítico: No se pudo iniciar el servidor")
+                except Exception as e:
+                    self.logger.error(f"Error en callback de actualización: {e}")
+                    self.show_message(f"❌ Error en callback de actualización: {e}")
             
-            # Iniciar servidor
-            if self._start_server():
-                self.logger.info("Servidor iniciado después de actualización")
-                self.show_message("✅ Actualización completada exitosamente")
+            # Actualizar con callback
+            self._execute_update(on_update_complete)
             
         except Exception as e:
             self.logger.error(f"Error en secuencia de actualización: {e}")
@@ -841,14 +1025,45 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             self.logger.error(f"Error iniciando servidor: {e}")
         return False
 
-    def _execute_update(self):
+    def _execute_update(self, callback=None):
         """Ejecutar actualización del servidor"""
         try:
-            if hasattr(self.main_window, 'server_panel'):
-                self.main_window.server_panel.update_server()
+            if hasattr(self.main_window, 'server_panel') and hasattr(self.main_window.server_panel, 'server_manager'):
+                server_name = getattr(self.main_window.server_panel, 'selected_server', None)
+                if not server_name:
+                    self.logger.error("No hay servidor seleccionado para actualizar")
+                    if callback:
+                        callback(False)
+                    return False
+                
+                # Crear callback para manejar la finalización de la actualización
+                def update_callback(message_type, message):
+                    try:
+                        if message_type == "success" and ("completada" in message.lower() or "success" in message.lower()):
+                            # La actualización terminó exitosamente
+                            self.logger.info("Actualización completada exitosamente")
+                            if callback:
+                                callback(True)
+                        elif message_type == "error":
+                            # Error en la actualización
+                            self.logger.error(f"Error en actualización: {message}")
+                            if callback:
+                                callback(False)
+                        # Para otros tipos de mensaje (info, progress), solo registrar
+                        elif message:
+                            self.logger.info(f"Actualización: {message}")
+                    except Exception as e:
+                        self.logger.error(f"Error en callback de actualización: {e}")
+                        if callback:
+                            callback(False)
+                
+                # Ejecutar actualización con callback
+                self.main_window.server_panel.server_manager.update_server(update_callback, server_name)
                 return True
         except Exception as e:
             self.logger.error(f"Error actualizando servidor: {e}")
+            if callback:
+                callback(False)
         return False
 
     def _save_restart_to_history(self, restart_info):
@@ -981,7 +1196,7 @@ class AdvancedRestartPanel(ctk.CTkFrame):
     def _create_history_item(self, restart_info, index):
         """Crear item del historial"""
         item_frame = ctk.CTkFrame(self.history_scroll)
-        item_frame.pack(fill="x", padx=5, pady=2)
+        item_frame.pack(fill="x", padx=3, pady=1)
         item_frame.grid_columnconfigure(1, weight=1)
         
         # Fecha y tipo
@@ -996,9 +1211,9 @@ class AdvancedRestartPanel(ctk.CTkFrame):
         title_label = ctk.CTkLabel(
             item_frame,
             text=title_text,
-            font=ctk.CTkFont(size=12, weight="bold")
+            font=ctk.CTkFont(size=9, weight="bold")
         )
-        title_label.grid(row=0, column=0, columnspan=2, sticky="w", padx=10, pady=(5, 0))
+        title_label.grid(row=0, column=0, columnspan=2, sticky="w", padx=6, pady=(3, 0))
         
         # Detalles
         details = []
@@ -1016,10 +1231,10 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             details_label = ctk.CTkLabel(
                 item_frame,
                 text=details_text,
-                font=ctk.CTkFont(size=10),
+                font=ctk.CTkFont(size=8),
                 text_color="green"
             )
-            details_label.grid(row=1, column=0, columnspan=2, sticky="w", padx=10, pady=(0, 5))
+            details_label.grid(row=1, column=0, columnspan=2, sticky="w", padx=6, pady=(0, 3))
 
     def clear_restart_history(self):
         """Limpiar historial de reinicios"""
@@ -1045,6 +1260,9 @@ class AdvancedRestartPanel(ctk.CTkFrame):
                 "restart_hours": self.restart_hours_text.get("0.0", "end-1c").strip(),
                 "backup_before_restart": self.backup_before_restart_var.get(),
                 "saveworld_before_restart": self.saveworld_before_restart_var.get(),
+                "destroywilddinos_enabled": self.destroywilddinos_enabled_var.get(),
+                "destroywilddinos_days": {day: var.get() for day, var in self.destroywilddinos_day_vars.items()},
+                "destroywilddinos_warning": self.destroywilddinos_warning_var.get(),
                 "rcon_warnings_enabled": self.rcon_warnings_var.get(),
                 "warning_intervals": self.warning_intervals_entry.get(),
                 "warning_message": self.warning_message_text.get("0.0", "end-1c").strip()
@@ -1136,6 +1354,15 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             self.backup_before_restart_var.set(config.get("backup_before_restart", True))
             self.saveworld_before_restart_var.set(config.get("saveworld_before_restart", True))
             
+            # Cargar opciones de DestroyWildDinos
+            self.destroywilddinos_enabled_var.set(config.get("destroywilddinos_enabled", False))
+            
+            destroywilddinos_days = config.get("destroywilddinos_days", {})
+            for day, var in self.destroywilddinos_day_vars.items():
+                var.set(destroywilddinos_days.get(day, False))
+            
+            self.destroywilddinos_warning_var.set(config.get("destroywilddinos_warning", True))
+            
             # Cargar opciones de avisos RCON
             self.rcon_warnings_var.set(config.get("rcon_warnings_enabled", True))
             
@@ -1149,6 +1376,10 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             
             # Aplicar estado de los checkboxes
             self.on_update_mode_change()
+            self.on_destroywilddinos_enabled_change()
+            
+            # Aplicar estado del scheduler de reinicios
+            self.on_restart_enabled_change()
             
             self.logger.info(f"Configuración cargada para servidor: {server_name}")
             

@@ -97,9 +97,35 @@ class RconPanel(ctk.CTkFrame):
         )
         self.rcon_enable_switch.pack(side="left", padx=10)
         
+        # Opción para elegir tipo de mensaje
+        message_type_frame = ctk.CTkFrame(config_frame, fg_color="transparent")
+        message_type_frame.grid(row=3, column=0, columnspan=6, pady=5, sticky="ew")
+        
+        ctk.CTkLabel(message_type_frame, text="📢 Tipo de Mensaje:", 
+                    font=ctk.CTkFont(size=12, weight="bold")).pack(side="left", padx=(10, 10))
+        
+        self.message_type_var = ctk.StringVar(value="serverchat")
+        self.message_type_menu = ctk.CTkOptionMenu(
+            message_type_frame,
+            values=["serverchat", "broadcast"],
+            variable=self.message_type_var,
+            command=self.on_message_type_change
+        )
+        self.message_type_menu.pack(side="left", padx=10)
+        
+        # Información sobre el tipo de mensaje seleccionado
+        self.message_type_info = ctk.CTkLabel(
+            message_type_frame, 
+            text="✅ Recomendado para ASA (funciona correctamente)", 
+            font=ctk.CTkFont(size=10),
+            fg_color=("lightgreen", "darkgreen"),
+            corner_radius=3, padx=6, pady=2
+        )
+        self.message_type_info.pack(side="left", padx=(10, 5))
+        
         # Botones de configuración
         config_buttons_frame = ctk.CTkFrame(config_frame, fg_color="transparent")
-        config_buttons_frame.grid(row=3, column=0, columnspan=6, pady=5)
+        config_buttons_frame.grid(row=4, column=0, columnspan=6, pady=5)
         
         self.test_button = ctk.CTkButton(config_buttons_frame, text="🔍 Probar Conexión", 
                                         command=self.test_connection, width=120)
@@ -257,6 +283,13 @@ class RconPanel(ctk.CTkFrame):
                 self.rcon_enable_switch.deselect()
                 self.add_result("🔄 RCON deshabilitado desde configuración guardada")
             
+            # Cargar tipo de mensaje si existe el widget
+            if hasattr(self, 'message_type_option'):
+                message_type = self.config_manager.get("rcon", "message_type", "serverchat")
+                self.message_type_option.set(message_type)
+                # Actualizar la información visual
+                self.on_message_type_change(message_type)
+            
         except Exception as e:
             self.logger.error(f"Error al cargar configuración RCON: {e}")
     
@@ -303,6 +336,38 @@ class RconPanel(ctk.CTkFrame):
         except Exception as e:
             self.logger.error(f"Error al cambiar estado RCON: {e}")
     
+    def on_message_type_change(self, value):
+        """Manejar cambio en el tipo de mensaje"""
+        try:
+            if value == "serverchat":
+                self.message_type_info.configure(
+                    text="✅ Recomendado para ASA (funciona correctamente)",
+                    fg_color=("lightgreen", "darkgreen")
+                )
+            else:  # broadcast
+                self.message_type_info.configure(
+                    text="⚠️ Puede tener problemas en ASA (usar solo si funciona)",
+                    fg_color=("orange", "darkorange")
+                )
+            
+            # Guardar configuración automáticamente
+            self.save_rcon_config()
+            
+            self.logger.info(f"Tipo de mensaje RCON cambiado a: {value}")
+            
+        except Exception as e:
+            self.logger.error(f"Error al cambiar tipo de mensaje: {e}")
+    
+    def get_message_type(self):
+        """Obtener el tipo de mensaje configurado"""
+        try:
+            if hasattr(self, 'message_type_option'):
+                return self.message_type_option.get()
+            else:
+                return self.config_manager.get("rcon", "message_type", "serverchat")
+        except:
+            return "serverchat"  # Default seguro
+    
     def get_rcon_enabled(self):
         """Obtener si RCON está habilitado para argumentos de inicio"""
         try:
@@ -337,6 +402,12 @@ class RconPanel(ctk.CTkFrame):
             
             self.config_manager.set("rcon", "ip", self.rcon_ip)
             self.config_manager.set("rcon", "port", self.rcon_port)
+            
+            # Guardar tipo de mensaje si existe el widget
+            if hasattr(self, 'message_type_option'):
+                message_type = self.message_type_option.get()
+                self.config_manager.set("rcon", "message_type", message_type)
+            
             self.config_manager.save()
             
             # Actualizar password desde AdminPassword
@@ -385,8 +456,8 @@ class RconPanel(ctk.CTkFrame):
     def execute_rcon_command(self, command):
         """Ejecutar comando RCON usando el ejecutable en la carpeta rcon"""
         # Log del intento de ejecución
-        if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
-            self.main_window.add_log_message(f"🎮 RCON: Ejecutando '{command}'...")
+        if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+            self.main_window.root.after(0, lambda: self.main_window.add_log_message(f"🎮 RCON: Ejecutando '{command}'..."))
         
         try:
             # Buscar el ejecutable RCON en múltiples ubicaciones
@@ -413,8 +484,8 @@ class RconPanel(ctk.CTkFrame):
                 error_msg = "❌ No se encontró ejecutable RCON"
                 search_info = "Buscado en: " + ", ".join([str(p) for p in search_paths])
                 self.logger.error(f"RCON executable not found. {search_info}")
-                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message(f"🔌 RCON Error: No se encontró ejecutable RCON")
+                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message(f"🔌 RCON Error: No se encontró ejecutable RCON"))
                 return error_msg
             
             # Construir comando
@@ -445,8 +516,8 @@ class RconPanel(ctk.CTkFrame):
                     success_msg += f" - Respuesta: {response[:50]}{'...' if len(response) > 50 else ''}"
                 
                 # Log en área principal
-                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message(success_msg)
+                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message(success_msg))
                 
                 # Log en archivo
                 if hasattr(self, 'main_window') and hasattr(self.main_window, 'log_server_event'):
@@ -463,8 +534,8 @@ class RconPanel(ctk.CTkFrame):
                 fail_msg = f"❌ RCON: '{command}' falló - {error_msg}"
                 
                 # Log en área principal
-                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message(fail_msg)
+                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message(fail_msg))
                 
                 # Log en archivo
                 if hasattr(self, 'main_window') and hasattr(self.main_window, 'log_server_event'):
@@ -477,14 +548,14 @@ class RconPanel(ctk.CTkFrame):
                 
         except subprocess.TimeoutExpired:
             timeout_msg = f"⏱️ RCON Timeout: '{command}' tardó demasiado en ejecutarse"
-            if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
-                self.main_window.add_log_message(timeout_msg)
+            if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                self.main_window.root.after(0, lambda: self.main_window.add_log_message(timeout_msg))
             return "❌ Timeout: El comando tardó demasiado en ejecutarse"
         except Exception as e:
             self.logger.error(f"Error al ejecutar comando RCON: {e}")
             error_msg = f"🔌 RCON Error: '{command}' - Error de conexión: {str(e)}"
-            if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
-                self.main_window.add_log_message(error_msg)
+            if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                self.main_window.root.after(0, lambda: self.main_window.add_log_message(error_msg))
             return f"❌ Error al ejecutar comando: {e}"
     
     def execute_command(self, command):
@@ -523,7 +594,9 @@ class RconPanel(ctk.CTkFrame):
         message = dialog.get_input()
         
         if message:
-            self.execute_command(f'broadcast "{message}"')
+            message_type = self.get_message_type()
+            self.execute_command(f'{message_type} "{message}"')
+            self.add_result(f"📢 Mensaje enviado usando: {message_type}")
     
     def show_kick_dialog(self):
         """Mostrar diálogo para kickear jugador"""
@@ -778,7 +851,7 @@ class RconPanel(ctk.CTkFrame):
         # Tipo de comando
         ctk.CTkLabel(task_form_frame, text="Comando:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
         self.unified_command_type = ctk.CTkOptionMenu(task_form_frame, values=[
-            "broadcast", "saveworld", "listplayers", "kick", "ban", 
+            "broadcast", "serverchat", "saveworld", "listplayers", "kick", "ban", 
             "unban", "admincheat", "destroywilddinos", "time", "weather", "custom"
         ])
         self.unified_command_type.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
@@ -1440,7 +1513,16 @@ class RconPanel(ctk.CTkFrame):
     def execute_quick_task(self, command):
         """Ejecutar una tarea rápida"""
         try:
-            self.add_result(f"🚀 Tarea Rápida", f"Ejecutando: {command}")
+            # Verificar si es un comando broadcast y reemplazarlo con el tipo configurado
+            if command.startswith('broadcast '):
+                message_type = self.get_message_type()
+                # Extraer el mensaje del comando broadcast
+                message_part = command[10:]  # Remover 'broadcast '
+                command = f'{message_type} {message_part}'
+                self.add_result(f"🚀 Tarea Rápida", f"Ejecutando: {command} (usando {message_type})")
+            else:
+                self.add_result(f"🚀 Tarea Rápida", f"Ejecutando: {command}")
+            
             result = self.execute_rcon_command(command)
             if result:
                 self.add_result(f"✅ Completado", result)
@@ -1776,6 +1858,14 @@ class RconPanel(ctk.CTkFrame):
             full_command = params
         else:
             full_command = f"{command_type} {params}"
+        
+        # Si es un comando broadcast o serverchat, usar el tipo de mensaje configurado
+        if command_type == "broadcast":
+            message_type = self.get_message_type()
+            full_command = f"{message_type} {params}"
+        elif command_type == "serverchat":
+            # serverchat siempre usa serverchat, no necesita configuración
+            full_command = f"serverchat {params}"
         
         if task_type == "Ejecutar Ahora":
             # Ejecutar inmediatamente

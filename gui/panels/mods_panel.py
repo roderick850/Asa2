@@ -90,15 +90,15 @@ class ModsPanel(ctk.CTkFrame):
         """Crear todos los widgets del panel"""
         # Frame principal con scroll
         main_frame = ctk.CTkScrollableFrame(self)
-        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        main_frame.pack(fill="both", expand=True, padx=5, pady=5)
         
         # Título principal
         title_label = ctk.CTkLabel(
             main_frame, 
             text="🎮 Gestor de Mods - ARK Survival Ascended", 
-            font=ctk.CTkFont(size=24, weight="bold")
+            font=ctk.CTkFont(size=18, weight="bold")
         )
-        title_label.pack(pady=(0, 20))
+        title_label.pack(pady=(0, 10))
         
         # Frame de búsqueda mejorado
         self.create_search_frame(main_frame)
@@ -117,49 +117,51 @@ class ModsPanel(ctk.CTkFrame):
     
     def create_search_frame(self, parent):
         """Crear frame de búsqueda mejorado"""
-        search_frame = ctk.CTkFrame(parent, corner_radius=10)
-        search_frame.pack(fill="x", padx=10, pady=10)
+        search_frame = ctk.CTkFrame(parent, corner_radius=8)
+        search_frame.pack(fill="x", padx=5, pady=5)
         
         # Título de búsqueda
         search_title = ctk.CTkLabel(
             search_frame,
             text="🔍 Buscar Mods",
-            font=ctk.CTkFont(size=18, weight="bold")
+            font=ctk.CTkFont(size=14, weight="bold")
         )
-        search_title.pack(pady=10)
+        search_title.pack(pady=5)
         
         # Frame de entrada y botones
         input_frame = ctk.CTkFrame(search_frame, fg_color="transparent")
-        input_frame.pack(fill="x", padx=15, pady=10)
+        input_frame.pack(fill="x", padx=8, pady=5)
         
         # Entrada de búsqueda
         self.search_entry = ctk.CTkEntry(
             input_frame,
             placeholder_text="Buscar mods por nombre, descripción...",
-            height=40,
-            font=ctk.CTkFont(size=14)
+            height=32,
+            font=ctk.CTkFont(size=12)
         )
-        self.search_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        self.search_entry.pack(side="left", fill="x", expand=True, padx=(0, 5))
         
         # Botón de búsqueda
         search_button = ctk.CTkButton(
             input_frame,
             text="🔍 Buscar",
             command=self.search_mods,
-            height=40,
-            width=120,
+            height=32,
+            width=100,
+            font=ctk.CTkFont(size=11),
             fg_color="#2196F3",
             hover_color="#1976D2"
         )
-        search_button.pack(side="left", padx=(0, 10))
+        search_button.pack(side="left", padx=(0, 5))
         
         # Botón de mods populares
         popular_button = ctk.CTkButton(
             input_frame,
             text="🔥 Populares",
             command=self.load_popular_mods,
-            height=40,
-            width=120,
+            height=32,
+            width=100,
+            font=ctk.CTkFont(size=11),
             fg_color="#FF9800",
             hover_color="#F57C00"
         )
@@ -169,171 +171,177 @@ class ModsPanel(ctk.CTkFrame):
         self.search_status_label = ctk.CTkLabel(
             search_frame,
             text="",
-            font=ctk.CTkFont(size=12),
+            font=ctk.CTkFont(size=10),
             text_color=("gray", "lightgray")
         )
-        self.search_status_label.pack(pady=5)
+        self.search_status_label.pack(pady=3)
     
     def create_filters_frame(self, parent):
         """Crear frame de filtros y vista"""
-        filters_frame = ctk.CTkFrame(parent, corner_radius=10)
-        filters_frame.pack(fill="x", padx=10, pady=10)
+        filters_frame = ctk.CTkFrame(parent, corner_radius=8)
+        filters_frame.pack(fill="x", padx=5, pady=5)
         
         # Título de filtros
         filters_title = ctk.CTkLabel(
             filters_frame,
             text="🎯 Filtros y Vista",
-            font=ctk.CTkFont(size=16, weight="bold")
+            font=ctk.CTkFont(size=12, weight="bold")
         )
-        filters_title.pack(pady=10)
+        filters_title.pack(pady=5)
         
         # Frame de botones de filtro
         filter_buttons_frame = ctk.CTkFrame(filters_frame, fg_color="transparent")
-        filter_buttons_frame.pack(fill="x", padx=15, pady=10)
+        filter_buttons_frame.pack(fill="x", padx=8, pady=5)
         
         # Botones de filtro
         self.all_filter_btn = ctk.CTkButton(
             filter_buttons_frame,
             text="📋 Todos",
             command=lambda: self.set_filter("all"),
-            height=35,
-            width=100,
+            height=28,
+            width=80,
+            font=ctk.CTkFont(size=10),
             fg_color="#4CAF50",
             hover_color="#388E3C"
         )
-        self.all_filter_btn.pack(side="left", padx=5)
+        self.all_filter_btn.pack(side="left", padx=3)
         
         self.favorites_filter_btn = ctk.CTkButton(
             filter_buttons_frame,
             text="⭐ Favoritos",
             command=lambda: self.set_filter("favorites"),
-            height=35,
-            width=100,
+            height=28,
+            width=80,
+            font=ctk.CTkFont(size=10),
             fg_color="#FF9800",
             hover_color="#F57C00"
         )
-        self.favorites_filter_btn.pack(side="left", padx=5)
+        self.favorites_filter_btn.pack(side="left", padx=3)
         
         self.installed_filter_btn = ctk.CTkButton(
             filter_buttons_frame,
             text="📦 Instalados",
             command=lambda: self.set_filter("installed"),
-            height=35,
-            width=100,
+            height=28,
+            width=80,
+            font=ctk.CTkFont(size=10),
             fg_color="#2196F3",
             hover_color="#1976D2"
         )
-        self.installed_filter_btn.pack(side="left", padx=5)
+        self.installed_filter_btn.pack(side="left", padx=3)
         
         # Frame de vista y búsqueda local
         view_frame = ctk.CTkFrame(filters_frame, fg_color="transparent")
-        view_frame.pack(fill="x", padx=15, pady=10)
+        view_frame.pack(fill="x", padx=8, pady=5)
         
         # Botones de vista
         self.grid_view_btn = ctk.CTkButton(
             view_frame,
             text="🔲 Vista Cuadrícula",
             command=lambda: self.set_view("grid"),
-            height=35,
-            width=120,
+            height=28,
+            width=100,
+            font=ctk.CTkFont(size=10),
             fg_color="#9C27B0",
             hover_color="#7B1FA2"
         )
-        self.grid_view_btn.pack(side="left", padx=5)
+        self.grid_view_btn.pack(side="left", padx=3)
         
         self.list_view_btn = ctk.CTkButton(
             view_frame,
             text="📝 Vista Lista",
             command=lambda: self.set_view("list"),
-            height=35,
-            width=120,
+            height=28,
+            width=100,
+            font=ctk.CTkFont(size=10),
             fg_color="#607D8B",
             hover_color="#455A64"
         )
-        self.list_view_btn.pack(side="left", padx=5)
+        self.list_view_btn.pack(side="left", padx=3)
         
         # Búsqueda local
         local_search_frame = ctk.CTkFrame(view_frame, fg_color="transparent")
-        local_search_frame.pack(side="right", padx=5)
+        local_search_frame.pack(side="right", padx=3)
         
-        ctk.CTkLabel(local_search_frame, text="🔍 Filtro local:").pack(side="left", padx=5)
+        ctk.CTkLabel(local_search_frame, text="🔍 Filtro local:", font=ctk.CTkFont(size=10)).pack(side="left", padx=3)
         
         self.local_search_entry = ctk.CTkEntry(
             local_search_frame,
             placeholder_text="Filtrar mods...",
-            height=35,
-            width=200
+            height=28,
+            width=150,
+            font=ctk.CTkFont(size=10)
         )
-        self.local_search_entry.pack(side="left", padx=5)
+        self.local_search_entry.pack(side="left", padx=3)
         self.local_search_entry.bind("<KeyRelease>", self.on_local_search_change)
     
     def create_stats_frame(self, parent):
         """Crear frame de estadísticas rápidas"""
-        stats_frame = ctk.CTkFrame(parent, corner_radius=10)
-        stats_frame.pack(fill="x", padx=10, pady=10)
+        stats_frame = ctk.CTkFrame(parent, corner_radius=8)
+        stats_frame.pack(fill="x", padx=5, pady=5)
         
         # Título de estadísticas
         stats_title = ctk.CTkLabel(
             stats_frame,
             text="📊 Estadísticas Rápidas",
-            font=ctk.CTkFont(size=16, weight="bold")
+            font=ctk.CTkFont(size=12, weight="bold")
         )
-        stats_title.pack(pady=10)
+        stats_title.pack(pady=5)
         
         # Frame de estadísticas
         stats_content_frame = ctk.CTkFrame(stats_frame, fg_color="transparent")
-        stats_content_frame.pack(fill="x", padx=15, pady=10)
+        stats_content_frame.pack(fill="x", padx=8, pady=5)
         
         # Estadísticas en columnas
         self.favorites_count_label = ctk.CTkLabel(
             stats_content_frame,
             text="⭐ Favoritos: 0",
-            font=ctk.CTkFont(size=14, weight="bold"),
+            font=ctk.CTkFont(size=10, weight="bold"),
             fg_color="#FF9800",
-            corner_radius=8,
-            padx=15,
-            pady=8
+            corner_radius=6,
+            padx=10,
+            pady=5
         )
-        self.favorites_count_label.pack(side="left", padx=10)
+        self.favorites_count_label.pack(side="left", padx=5)
         
         self.installed_count_label = ctk.CTkLabel(
             stats_content_frame,
             text="📦 Instalados: 0",
-            font=ctk.CTkFont(size=14, weight="bold"),
+            font=ctk.CTkFont(size=10, weight="bold"),
             fg_color="#2196F3",
-            corner_radius=8,
-            padx=15,
-            pady=8
+            corner_radius=6,
+            padx=10,
+            pady=5
         )
-        self.installed_count_label.pack(side="left", padx=10)
+        self.installed_count_label.pack(side="left", padx=5)
         
         self.search_count_label = ctk.CTkLabel(
             stats_content_frame,
             text="🔍 Resultados: 0",
-            font=ctk.CTkFont(size=14, weight="bold"),
+            font=ctk.CTkFont(size=10, weight="bold"),
             fg_color="#4CAF50",
-            corner_radius=8,
-            padx=15,
-            pady=8
+            corner_radius=6,
+            padx=10,
+            pady=5
         )
-        self.search_count_label.pack(side="left", padx=10)
+        self.search_count_label.pack(side="left", padx=5)
     
     def create_mods_display_frame(self, parent):
         """Crear frame principal para mostrar mods"""
-        self.mods_display_frame = ctk.CTkFrame(parent, corner_radius=10)
-        self.mods_display_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.mods_display_frame = ctk.CTkFrame(parent, corner_radius=8)
+        self.mods_display_frame.pack(fill="both", expand=True, padx=5, pady=5)
         
         # Título dinámico
         self.mods_title_label = ctk.CTkLabel(
             self.mods_display_frame,
             text="📋 Mods Disponibles",
-            font=ctk.CTkFont(size=18, weight="bold")
+            font=ctk.CTkFont(size=14, weight="bold")
         )
-        self.mods_title_label.pack(pady=10)
+        self.mods_title_label.pack(pady=5)
         
         # Frame para el contenido de mods
         self.mods_content_frame = ctk.CTkFrame(self.mods_display_frame, fg_color="transparent")
-        self.mods_content_frame.pack(fill="both", expand=True, padx=15, pady=10)
+        self.mods_content_frame.pack(fill="both", expand=True, padx=8, pady=5)
         
         # Configurar grid para vista en cuadrícula
         self.mods_content_frame.grid_columnconfigure(0, weight=1)
@@ -343,95 +351,99 @@ class ModsPanel(ctk.CTkFrame):
     
     def create_installed_info_frame(self, parent):
         """Crear frame de información de mods instalados"""
-        installed_info_frame = ctk.CTkFrame(parent, corner_radius=10)
-        installed_info_frame.pack(fill="x", padx=10, pady=10)
+        installed_info_frame = ctk.CTkFrame(parent, corner_radius=8)
+        installed_info_frame.pack(fill="x", padx=5, pady=5)
         
         # Título
         info_title = ctk.CTkLabel(
             installed_info_frame,
             text="⚙️ Configuración del Servidor",
-            font=ctk.CTkFont(size=16, weight="bold")
+            font=ctk.CTkFont(size=12, weight="bold")
         )
-        info_title.pack(pady=10)
+        info_title.pack(pady=5)
         
         # Frame de contenido
         content_frame = ctk.CTkFrame(installed_info_frame, fg_color="transparent")
-        content_frame.pack(fill="x", padx=15, pady=10)
+        content_frame.pack(fill="x", padx=8, pady=5)
         
         # Información del servidor actual
         server_info_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        server_info_frame.pack(fill="x", pady=5)
+        server_info_frame.pack(fill="x", pady=3)
         
         ctk.CTkLabel(
             server_info_frame,
             text="🎮 Servidor:",
-            font=ctk.CTkFont(size=12, weight="bold")
-        ).pack(side="left", padx=5)
+            font=ctk.CTkFont(size=10, weight="bold")
+        ).pack(side="left", padx=3)
         
         self.server_info_label = ctk.CTkLabel(
             server_info_frame,
             text="No seleccionado",
-            font=ctk.CTkFont(size=12),
+            font=ctk.CTkFont(size=10),
             fg_color="#FF9800",
-            corner_radius=5,
-            padx=8,
+            corner_radius=4,
+            padx=6,
             pady=2
         )
-        self.server_info_label.pack(side="left", padx=5)
+        self.server_info_label.pack(side="left", padx=3)
         
         # Entry con los IDs de mods
         mods_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        mods_frame.pack(fill="x", pady=5)
+        mods_frame.pack(fill="x", pady=3)
         
         ctk.CTkLabel(
             mods_frame,
             text="📋 IDs de Mods:",
-            font=ctk.CTkFont(size=12, weight="bold")
-        ).pack(side="left", padx=5)
+            font=ctk.CTkFont(size=10, weight="bold")
+        ).pack(side="left", padx=3)
         
         self.mods_ids_entry = ctk.CTkEntry(
             mods_frame,
             placeholder_text="IDs separados por comas (ej: 956565,854554)",
-            height=32
+            height=28,
+            font=ctk.CTkFont(size=10)
         )
-        self.mods_ids_entry.pack(side="left", fill="x", expand=True, padx=10)
+        self.mods_ids_entry.pack(side="left", fill="x", expand=True, padx=5)
         
         # Botones de acción
         buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        buttons_frame.pack(fill="x", pady=5)
+        buttons_frame.pack(fill="x", pady=3)
         
         apply_button = ctk.CTkButton(
             buttons_frame,
             text="✅ Aplicar al Servidor",
             command=self.apply_mods_to_server,
-            height=35,
-            width=150,
+            height=28,
+            width=120,
+            font=ctk.CTkFont(size=10),
             fg_color="#4CAF50",
             hover_color="#388E3C"
         )
-        apply_button.pack(side="left", padx=5)
+        apply_button.pack(side="left", padx=3)
         
         clear_button = ctk.CTkButton(
             buttons_frame,
             text="🗑️ Limpiar Mods",
             command=self.clear_mods,
-            height=35,
-            width=120,
+            height=28,
+            width=100,
+            font=ctk.CTkFont(size=10),
             fg_color="#f44336",
             hover_color="#d32f2f"
         )
-        clear_button.pack(side="left", padx=5)
+        clear_button.pack(side="left", padx=3)
         
         refresh_button = ctk.CTkButton(
             buttons_frame,
             text="🔄 Actualizar",
             command=self.refresh_mods_display,
-            height=35,
-            width=120,
+            height=28,
+            width=100,
+            font=ctk.CTkFont(size=10),
             fg_color="#2196F3",
             hover_color="#1976D2"
         )
-        refresh_button.pack(side="left", padx=5)
+        refresh_button.pack(side="left", padx=3)
     
     def set_filter(self, filter_type):
         """Establecer filtro activo"""
@@ -595,7 +607,7 @@ class ModsPanel(ctk.CTkFrame):
     def create_compact_mod_card(self, mod):
         """Crear tarjeta compacta para vista de cuadrícula"""
         # Frame principal
-        mod_frame = ctk.CTkFrame(self.mods_content_frame, corner_radius=8, border_width=1)
+        mod_frame = ctk.CTkFrame(self.mods_content_frame, corner_radius=6, border_width=1)
         
         # Información del mod
         mod_id = mod.get("id", "")
@@ -605,32 +617,32 @@ class ModsPanel(ctk.CTkFrame):
         # Header con nombre
         name_label = ctk.CTkLabel(
             mod_frame,
-            text=mod_name[:25] + "..." if len(mod_name) > 25 else mod_name,
-            font=ctk.CTkFont(size=12, weight="bold"),
+            text=mod_name[:20] + "..." if len(mod_name) > 20 else mod_name,
+            font=ctk.CTkFont(size=10, weight="bold"),
             anchor="w"
         )
-        name_label.pack(anchor="w", padx=8, pady=(8, 2))
+        name_label.pack(anchor="w", padx=5, pady=(5, 1))
         
         # ID del mod
         id_label = ctk.CTkLabel(
             mod_frame,
             text=f"ID: {mod_id}",
-            font=ctk.CTkFont(size=10),
+            font=ctk.CTkFont(size=8),
             text_color=("gray", "lightgray")
         )
-        id_label.pack(anchor="w", padx=8, pady=2)
+        id_label.pack(anchor="w", padx=5, pady=1)
         
         # Estadísticas
         stats_frame = ctk.CTkFrame(mod_frame, fg_color="transparent")
-        stats_frame.pack(fill="x", padx=8, pady=2)
+        stats_frame.pack(fill="x", padx=5, pady=1)
         
         downloads_label = ctk.CTkLabel(
             stats_frame,
             text=f"📥 {download_count:,}",
-            font=ctk.CTkFont(size=9),
+            font=ctk.CTkFont(size=8),
             fg_color="#2196F3",
-            corner_radius=3,
-            padx=4,
+            corner_radius=2,
+            padx=3,
             pady=1
         )
         downloads_label.pack(side="left")
@@ -643,33 +655,34 @@ class ModsPanel(ctk.CTkFrame):
             fav_label = ctk.CTkLabel(
                 stats_frame,
                 text="⭐",
-                font=ctk.CTkFont(size=12)
+                font=ctk.CTkFont(size=10)
             )
-            fav_label.pack(side="right", padx=2)
+            fav_label.pack(side="right", padx=1)
         
         if is_installed:
             inst_label = ctk.CTkLabel(
                 stats_frame,
                 text="📦",
-                font=ctk.CTkFont(size=12)
+                font=ctk.CTkFont(size=10)
             )
-            inst_label.pack(side="right", padx=2)
+            inst_label.pack(side="right", padx=1)
         
         # Botones de acción
         buttons_frame = ctk.CTkFrame(mod_frame, fg_color="transparent")
-        buttons_frame.pack(fill="x", padx=8, pady=(5, 8))
+        buttons_frame.pack(fill="x", padx=5, pady=(3, 5))
         
         # Botón de favorito
         fav_btn = ctk.CTkButton(
             buttons_frame,
             text="⭐" if not is_favorite else "💛",
             command=lambda m=mod: self.toggle_favorite(m),
-            width=30,
-            height=25,
+            width=24,
+            height=20,
+            font=ctk.CTkFont(size=8),
             fg_color="#FF9800" if is_favorite else "#607D8B",
             hover_color="#F57C00" if is_favorite else "#455A64"
         )
-        fav_btn.pack(side="left", padx=2)
+        fav_btn.pack(side="left", padx=1)
         
         # Botón de instalar/desinstalar
         if is_installed:
@@ -677,46 +690,49 @@ class ModsPanel(ctk.CTkFrame):
                 buttons_frame,
                 text="🗑️",
                 command=lambda m=mod: self.uninstall_mod(m),
-                width=30,
-                height=25,
+                width=24,
+                height=20,
+                font=ctk.CTkFont(size=8),
                 fg_color="#f44336",
                 hover_color="#d32f2f"
             )
-            install_btn.pack(side="left", padx=2)
+            install_btn.pack(side="left", padx=1)
         else:
             install_btn = ctk.CTkButton(
                 buttons_frame,
                 text="📥",
                 command=lambda m=mod: self.install_mod(m),
-                width=30,
-                height=25,
+                width=24,
+                height=20,
+                font=ctk.CTkFont(size=8),
                 fg_color="#4CAF50",
                 hover_color="#388E3C"
             )
-            install_btn.pack(side="left", padx=2)
+            install_btn.pack(side="left", padx=1)
         
         # Botón de información
         info_btn = ctk.CTkButton(
             buttons_frame,
             text="ℹ️",
             command=lambda m=mod: self.show_mod_info(m),
-            width=30,
-            height=25,
+            width=24,
+            height=20,
+            font=ctk.CTkFont(size=8),
             fg_color="#9C27B0",
             hover_color="#7B1FA2"
         )
-        info_btn.pack(side="left", padx=2)
+        info_btn.pack(side="left", padx=1)
         
         return mod_frame
     
     def create_list_mod_card(self, mod):
         """Crear tarjeta de lista para vista de lista"""
         # Frame principal
-        mod_frame = ctk.CTkFrame(self.mods_content_frame, corner_radius=8, border_width=1)
+        mod_frame = ctk.CTkFrame(self.mods_content_frame, corner_radius=6, border_width=1)
         
         # Frame de contenido horizontal
         content_frame = ctk.CTkFrame(mod_frame, fg_color="transparent")
-        content_frame.pack(fill="x", padx=10, pady=8)
+        content_frame.pack(fill="x", padx=6, pady=5)
         
         # Información del mod
         mod_id = mod.get("id", "")
@@ -732,50 +748,50 @@ class ModsPanel(ctk.CTkFrame):
         name_label = ctk.CTkLabel(
             info_frame,
             text=f"🎮 {mod_name}",
-            font=ctk.CTkFont(size=14, weight="bold"),
+            font=ctk.CTkFont(size=11, weight="bold"),
             anchor="w"
         )
         name_label.pack(anchor="w")
         
         # Descripción
         if mod_summary:
-            desc_text = mod_summary[:100] + "..." if len(mod_summary) > 100 else mod_summary
+            desc_text = mod_summary[:80] + "..." if len(mod_summary) > 80 else mod_summary
             desc_label = ctk.CTkLabel(
                 info_frame,
                 text=desc_text,
-                font=ctk.CTkFont(size=11),
+                font=ctk.CTkFont(size=9),
                 anchor="w",
                 text_color=("gray", "lightgray")
             )
-            desc_label.pack(anchor="w", pady=2)
+            desc_label.pack(anchor="w", pady=1)
         
         # Estadísticas
         stats_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
-        stats_frame.pack(anchor="w", pady=5)
+        stats_frame.pack(anchor="w", pady=3)
         
         # ID del mod
         id_label = ctk.CTkLabel(
             stats_frame,
             text=f"ID: {mod_id}",
-            font=ctk.CTkFont(size=10, weight="bold"),
+            font=ctk.CTkFont(size=8, weight="bold"),
             fg_color="#607D8B",
-            corner_radius=3,
-            padx=6,
-            pady=2
+            corner_radius=2,
+            padx=4,
+            pady=1
         )
-        id_label.pack(side="left", padx=(0, 5))
+        id_label.pack(side="left", padx=(0, 3))
         
         # Descargas
         downloads_label = ctk.CTkLabel(
             stats_frame,
-            text=f"📥 {download_count:,} descargas",
-            font=ctk.CTkFont(size=10),
+            text=f"📥 {download_count:,}",
+            font=ctk.CTkFont(size=8),
             fg_color="#2196F3",
-            corner_radius=3,
-            padx=6,
-            pady=2
+            corner_radius=2,
+            padx=4,
+            pady=1
         )
-        downloads_label.pack(side="left", padx=(0, 5))
+        downloads_label.pack(side="left", padx=(0, 3))
         
         # Estado del mod
         is_favorite = any(fav.get("id") == str(mod_id) for fav in self.favorite_mods)
@@ -784,78 +800,82 @@ class ModsPanel(ctk.CTkFrame):
         if is_favorite:
             fav_status = ctk.CTkLabel(
                 stats_frame,
-                text="⭐ Favorito",
-                font=ctk.CTkFont(size=10),
+                text="⭐",
+                font=ctk.CTkFont(size=8),
                 fg_color="#FF9800",
-                corner_radius=3,
-                padx=6,
-                pady=2
+                corner_radius=2,
+                padx=4,
+                pady=1
             )
-            fav_status.pack(side="left", padx=(0, 5))
+            fav_status.pack(side="left", padx=(0, 3))
         
         if is_installed:
             inst_status = ctk.CTkLabel(
                 stats_frame,
-                text="📦 Instalado",
-                font=ctk.CTkFont(size=10),
+                text="📦",
+                font=ctk.CTkFont(size=8),
                 fg_color="#4CAF50",
-                corner_radius=3,
-                padx=6,
-                pady=2
+                corner_radius=2,
+                padx=4,
+                pady=1
             )
-            inst_status.pack(side="left", padx=(0, 5))
+            inst_status.pack(side="left", padx=(0, 3))
         
         # Columna derecha - Botones
         buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        buttons_frame.pack(side="right", padx=(10, 0))
+        buttons_frame.pack(side="right", padx=(6, 0))
         
         # Botón de favorito
         fav_btn = ctk.CTkButton(
             buttons_frame,
-            text="⭐ Favorito" if not is_favorite else "💛 Quitar",
+            text="⭐" if not is_favorite else "💛",
             command=lambda m=mod: self.toggle_favorite(m),
-            width=100,
-            height=30,
+            width=24,
+            height=20,
+            font=ctk.CTkFont(size=8),
             fg_color="#FF9800" if is_favorite else "#607D8B",
             hover_color="#F57C00" if is_favorite else "#455A64"
         )
-        fav_btn.pack(pady=2)
+        fav_btn.pack(pady=1)
         
         # Botón de instalar/desinstalar
         if is_installed:
             install_btn = ctk.CTkButton(
                 buttons_frame,
-                text="🗑️ Desinstalar",
+                text="🗑️",
                 command=lambda m=mod: self.uninstall_mod(m),
-                width=100,
-                height=30,
+                width=24,
+                height=20,
+                font=ctk.CTkFont(size=8),
                 fg_color="#f44336",
                 hover_color="#d32f2f"
             )
-            install_btn.pack(pady=2)
+            install_btn.pack(pady=1)
         else:
             install_btn = ctk.CTkButton(
                 buttons_frame,
-                text="📥 Instalar",
+                text="📥",
                 command=lambda m=mod: self.install_mod(m),
-                width=100,
-                height=30,
+                width=24,
+                height=20,
+                font=ctk.CTkFont(size=8),
                 fg_color="#4CAF50",
                 hover_color="#388E3C"
             )
-            install_btn.pack(pady=2)
+            install_btn.pack(pady=1)
         
         # Botón de información
         info_btn = ctk.CTkButton(
             buttons_frame,
-            text="ℹ️ Info",
+            text="ℹ️",
             command=lambda m=mod: self.show_mod_info(m),
-            width=100,
-            height=30,
+            width=24,
+            height=20,
+            font=ctk.CTkFont(size=8),
             fg_color="#9C27B0",
             hover_color="#7B1FA2"
         )
-        info_btn.pack(pady=2)
+        info_btn.pack(pady=1)
         
         return mod_frame
     

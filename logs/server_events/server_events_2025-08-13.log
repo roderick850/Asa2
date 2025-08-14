@@ -148,3 +148,21 @@
 2025-08-13 19:06:02 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
 2025-08-13 19:07:58 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
 2025-08-13 19:09:27 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 19:15:06 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 19:23:26 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 20:20:53 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 20:25:21 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 21:03:38 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 21:04:17 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 21:05:41 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 22:52:55 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 23:15:46 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: GetServerInfo
+2025-08-13 23:16:07 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 23:17:04 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: saveworld
+2025-08-13 23:17:35 | INFO | 🔄 SERVIDOR REINICIADO | Servidor: Prueba | Motivo: Manual - Botón Reiniciar | Usuario reinició servidor desde interfaz | Mapa: Ragnarok
+2025-08-13 23:17:37 | INFO | 🔄 SERVIDOR REINICIADO | Servidor: Prueba | Motivo: Manual - Botón Reiniciar | Usuario reinició servidor desde interfaz | Mapa: Ragnarok
+2025-08-13 23:48:06 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-13 23:50:40 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: serverchat "hola"
+2025-08-13 23:52:04 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: ShowWhitelist
+2025-08-13 23:52:07 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: ShowBanList
+2025-08-13 23:52:20 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: GetChatLog

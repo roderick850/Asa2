@@ -456,23 +456,33 @@ class ServerPanel:
                     # Silenciar errores de UI para evitar spam en logs
                     pass
             
-            # Programar la actualización en el hilo principal
+            # Programar todas las actualizaciones en el hilo principal
+            def update_all_ui():
+                try:
+                    # Actualizar widgets locales
+                    update_ui()
+                    
+                    # Actualizar ventana principal de forma segura
+                    if hasattr(self.main_window, 'update_uptime'):
+                        self.main_window.update_uptime(uptime)
+                    
+                    if hasattr(self.main_window, 'update_cpu_usage'):
+                        self.main_window.update_cpu_usage(stats['cpu_percent'])
+                    
+                    if hasattr(self.main_window, 'update_memory_usage'):
+                        self.main_window.update_memory_usage(stats['memory_mb'])
+                except Exception:
+                    # Silenciar errores de UI
+                    pass
+            
+            # Programar la actualización completa en el hilo principal
             if self.main_window and hasattr(self.main_window, 'root') and hasattr(self.main_window.root, 'after') and hasattr(self.main_window.root, 'winfo_exists'):
                 try:
                     if self.main_window.root.winfo_exists():
-                        self.main_window.root.after(0, update_ui)
+                        self.main_window.root.after(0, update_all_ui)
                 except Exception:
                     # Ventana ya no existe, parar el monitoreo
                     pass
-            
-            if hasattr(self.main_window, 'update_uptime'):
-                self.main_window.update_uptime(uptime)
-            
-            if hasattr(self.main_window, 'update_cpu_usage'):
-                self.main_window.update_cpu_usage(stats['cpu_percent'])
-            
-            if hasattr(self.main_window, 'update_memory_usage'):
-                self.main_window.update_memory_usage(stats['memory_mb'])
             
             # Mostrar información del servidor seleccionado si hay uno
             if hasattr(self, 'selected_server') and self.selected_server:
@@ -1087,8 +1097,21 @@ class ServerPanel:
             self.broadcast_message(message)
     
     def broadcast_message(self, message):
-        """Envía un mensaje broadcast"""
-        self.server_manager.broadcast_message(message, self.add_status_message)
+        """Envía un mensaje broadcast usando RCON"""
+        try:
+            if hasattr(self.main_window, 'rcon_panel'):
+                # Obtener el tipo de mensaje configurado
+                message_type = self.main_window.rcon_panel.get_message_type()
+                rcon_command = f'{message_type} "{message}"'
+                success = self.main_window.rcon_panel.execute_rcon_command(rcon_command)
+                if success:
+                    self.add_status_message(f"📢 Mensaje enviado usando {message_type}: {message}", "success")
+                else:
+                    self.add_status_message(f"⚠️ Error al enviar mensaje via {message_type}", "error")
+            else:
+                self.add_status_message("❌ Panel RCON no disponible", "error")
+        except Exception as e:
+            self.add_status_message(f"❌ Error enviando mensaje: {e}", "error")
     
     def kick_all_players(self):
         """Expulsa a todos los jugadores"""

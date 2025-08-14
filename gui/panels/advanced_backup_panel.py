@@ -882,26 +882,26 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         """Ejecutar saveworld y luego iniciar backup después de 5 segundos"""
         try:
             # Ejecutar saveworld via RCON
-            if hasattr(self.main_window, 'add_log_message'):
-                self.main_window.add_log_message("💾 Ejecutando saveworld antes del backup...")
+            if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                self.main_window.root.after(0, lambda: self.main_window.add_log_message("💾 Ejecutando saveworld antes del backup..."))
             
             saveworld_success = False
             if hasattr(self.main_window, 'rcon_panel'):
                 result = self.main_window.rcon_panel.execute_rcon_command("saveworld")
                 if result and not result.startswith("❌"):
                     saveworld_success = True
-                    if hasattr(self.main_window, 'add_log_message'):
-                        self.main_window.add_log_message("✅ Saveworld ejecutado correctamente")
+                    if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                        self.main_window.root.after(0, lambda: self.main_window.add_log_message("✅ Saveworld ejecutado correctamente"))
                 else:
-                    if hasattr(self.main_window, 'add_log_message'):
-                        self.main_window.add_log_message("⚠️ Error en saveworld, continuando con backup...")
+                    if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                        self.main_window.root.after(0, lambda: self.main_window.add_log_message("⚠️ Error en saveworld, continuando con backup..."))
             else:
-                if hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message("⚠️ RCON no disponible, continuando con backup...")
+                if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message("⚠️ RCON no disponible, continuando con backup..."))
             
             # Esperar 5 segundos antes del backup
-            if hasattr(self.main_window, 'add_log_message'):
-                self.main_window.add_log_message("⏳ Esperando 5 segundos antes del backup...")
+            if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                self.main_window.root.after(0, lambda: self.main_window.add_log_message("⏳ Esperando 5 segundos antes del backup..."))
             
             # Programar el backup después de 5 segundos
             # Usar el hilo principal de Tkinter para programar el backup
@@ -912,8 +912,8 @@ class AdvancedBackupPanel(ctk.CTkFrame):
             
         except Exception as e:
             self.logger.error(f"Error en saveworld antes del backup: {e}")
-            if hasattr(self.main_window, 'add_log_message'):
-                self.main_window.add_log_message(f"❌ Error en saveworld: {e}, continuando con backup...")
+            if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                self.main_window.root.after(0, lambda: self.main_window.add_log_message(f"❌ Error en saveworld: {e}, continuando con backup..."))
             # Continuar con backup aunque falle saveworld
             self._start_backup_worker(is_manual)
     
@@ -969,13 +969,13 @@ class AdvancedBackupPanel(ctk.CTkFrame):
             current_step = 0
             
             # Log inicio del proceso de backup
-            if hasattr(self.main_window, 'add_log_message'):
-                self.main_window.add_log_message(f"📁 Iniciando backup de servidor: {server_name}")
+            if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                self.main_window.root.after(0, lambda: self.main_window.add_log_message(f"📁 Iniciando backup de servidor: {server_name}"))
             
             # Backup de archivos de guardado
             if self.include_saves_var.get():
-                if hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message("💾 Copiando archivos de guardado...")
+                if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message("💾 Copiando archivos de guardado..."))
                 # Usar el hilo principal de Tkinter para actualizar la UI
                 if hasattr(self.main_window, 'root'):
                     self.main_window.root.after(0, lambda: self.progress_label.configure(text="Copiando archivos de guardado..."))
@@ -988,13 +988,13 @@ class AdvancedBackupPanel(ctk.CTkFrame):
                     self.main_window.root.after(0, lambda: self.progress_bar.set(current_step / total_steps * 0.8))
                 else:
                     self.after(0, lambda: self.progress_bar.set(current_step / total_steps * 0.8))
-                if hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message("✅ Archivos de guardado copiados")
+                if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message("✅ Archivos de guardado copiados"))
             
             # Backup de configuraciones
             if self.include_configs_var.get():
-                if hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message("⚙️ Copiando configuraciones...")
+                if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message("⚙️ Copiando configuraciones..."))
                 # Usar el hilo principal de Tkinter para actualizar la UI
                 if hasattr(self.main_window, 'root'):
                     self.main_window.root.after(0, lambda: self.progress_label.configure(text="Copiando configuraciones..."))
@@ -1007,13 +1007,13 @@ class AdvancedBackupPanel(ctk.CTkFrame):
                     self.main_window.root.after(0, lambda: self.progress_bar.set(current_step / total_steps * 0.8))
                 else:
                     self.after(0, lambda: self.progress_bar.set(current_step / total_steps * 0.8))
-                if hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message("✅ Configuraciones copiadas")
+                if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message("✅ Configuraciones copiadas"))
             
             # Backup de logs
             if self.include_logs_var.get():
-                if hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message("📋 Copiando logs del servidor...")
+                if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message("📋 Copiando logs del servidor..."))
                 # Usar el hilo principal de Tkinter para actualizar la UI
                 if hasattr(self.main_window, 'root'):
                     self.main_window.root.after(0, lambda: self.progress_label.configure(text="Copiando logs..."))
@@ -1026,13 +1026,13 @@ class AdvancedBackupPanel(ctk.CTkFrame):
                     self.main_window.root.after(0, lambda: self.progress_bar.set(current_step / total_steps * 0.8))
                 else:
                     self.after(0, lambda: self.progress_bar.set(current_step / total_steps * 0.8))
-                if hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message("✅ Logs del servidor copiados")
+                if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message("✅ Logs del servidor copiados"))
             
             # Comprimir si está habilitado
             if self.compress_var.get():
-                if hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message("🗜️ Comprimiendo backup...")
+                if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message("🗜️ Comprimiendo backup..."))
                 # Usar el hilo principal de Tkinter para actualizar la UI
                 if hasattr(self.main_window, 'root'):
                     self.main_window.root.after(0, lambda: self.progress_label.configure(text="Comprimiendo backup..."))
@@ -1042,23 +1042,23 @@ class AdvancedBackupPanel(ctk.CTkFrame):
                 self._compress_backup(actual_backup_path, zip_path)
                 shutil.rmtree(actual_backup_path)  # Eliminar carpeta temporal
                 final_path = zip_path
-                if hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message("✅ Backup comprimido correctamente")
+                if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message("✅ Backup comprimido correctamente"))
             else:
                 final_path = backup_path
             
             # Verificar integridad si está habilitado
             if self.verify_backup_var.get():
-                if hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message("🔍 Verificando integridad del backup...")
+                if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message("🔍 Verificando integridad del backup..."))
                 # Usar el hilo principal de Tkinter para actualizar la UI
                 if hasattr(self.main_window, 'root'):
                     self.main_window.root.after(0, lambda: self.progress_label.configure(text="Verificando integridad..."))
                 else:
                     self.after(0, lambda: self.progress_label.configure(text="Verificando integridad..."))
                 self._verify_backup(final_path)
-                if hasattr(self.main_window, 'add_log_message'):
-                    self.main_window.add_log_message("✅ Integridad del backup verificada")
+                if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                    self.main_window.root.after(0, lambda: self.main_window.add_log_message("✅ Integridad del backup verificada"))
             
             # Registrar backup exitoso
             backup_info = {
@@ -1073,8 +1073,8 @@ class AdvancedBackupPanel(ctk.CTkFrame):
             
             # Calcular tamaño formateado
             size_mb = backup_info["size"] / (1024 * 1024)
-            if hasattr(self.main_window, 'add_log_message'):
-                self.main_window.add_log_message(f"✅ Backup completado exitosamente - Tamaño: {size_mb:.1f} MB")
+            if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                self.main_window.root.after(0, lambda: self.main_window.add_log_message(f"✅ Backup completado exitosamente - Tamaño: {size_mb:.1f} MB"))
             
             self.backup_history.append(backup_info)
             self.save_backup_history()
@@ -1091,8 +1091,8 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         except Exception as e:
             error_msg = str(e)
             self.logger.error(f"Error durante backup: {error_msg}")
-            if hasattr(self.main_window, 'add_log_message'):
-                self.main_window.add_log_message(f"❌ Error en backup: {error_msg}")
+            if hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
+                self.main_window.root.after(0, lambda: self.main_window.add_log_message(f"❌ Error en backup: {error_msg}"))
             # Usar el hilo principal de Tkinter para actualizar la UI
             if hasattr(self.main_window, 'root'):
                 self.main_window.root.after(0, lambda: self._update_backup_ui_error(error_msg, is_manual))

@@ -524,93 +524,93 @@ class IniConfigPanel(ctk.CTkFrame):
         """Crear todos los widgets del panel"""
         # Frame principal con scroll
         self.main_scrollable_frame = ctk.CTkScrollableFrame(self)
-        self.main_scrollable_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.main_scrollable_frame.pack(fill="both", expand=True, padx=5, pady=5)
         
         # Título principal
         title_frame = ctk.CTkFrame(self.main_scrollable_frame, fg_color="transparent")
-        title_frame.pack(fill="x", pady=(0, 20))
+        title_frame.pack(fill="x", pady=(0, 10))
         
         title_label = ctk.CTkLabel(
             title_frame,
             text="⚙️ Configuración de Archivos INI",
-            font=ctk.CTkFont(size=20, weight="bold")
+            font=ctk.CTkFont(size=16, weight="bold")
         )
         title_label.pack(side="left")
         
         # Botones de control
         control_frame = ctk.CTkFrame(self.main_scrollable_frame, fg_color="transparent")
-        control_frame.pack(fill="x", pady=(0, 20))
+        control_frame.pack(fill="x", pady=(0, 10))
         
         self.reload_button = ctk.CTkButton(
             control_frame,
             text="🔄 Recargar Archivos",
             command=self.reload_ini_files,
-            width=150,
-            height=35
+            width=120,
+            height=28
         )
-        self.reload_button.pack(side="left", padx=(0, 10))
+        self.reload_button.pack(side="left", padx=(0, 5))
         
         self.force_reload_button = ctk.CTkButton(
             control_frame,
             text="🔄 Forzar Recarga",
             command=self.force_reload_ini,
-            width=150,
-            height=35,
+            width=120,
+            height=28,
             fg_color=("orange", "darkorange")
         )
-        self.force_reload_button.pack(side="left", padx=(0, 10))
+        self.force_reload_button.pack(side="left", padx=(0, 5))
         
         self.save_all_button = ctk.CTkButton(
             control_frame,
             text="💾 Guardar Todos los Cambios",
             command=self.save_all_changes,
-            width=200,
-            height=35,
+            width=160,
+            height=28,
             fg_color=("green", "darkgreen")
         )
-        self.save_all_button.pack(side="left", padx=(0, 10))
+        self.save_all_button.pack(side="left", padx=(0, 5))
         
         self.discard_button = ctk.CTkButton(
             control_frame,
             text="❌ Descartar Cambios",
             command=self.discard_changes,
-            width=150,
-            height=35,
+            width=120,
+            height=28,
             fg_color=("red", "darkred")
         )
-        self.discard_button.pack(side="left", padx=(0, 10))
+        self.discard_button.pack(side="left", padx=(0, 5))
         
         self.create_game_ini_button = ctk.CTkButton(
             control_frame,
             text="📄 Crear Game.ini",
             command=self.create_game_ini_file,
-            width=150,
-            height=35,
+            width=120,
+            height=28,
             fg_color=("#8B4B9B", "#6A3A7A")
         )
-        self.create_game_ini_button.pack(side="left", padx=(0, 10))
+        self.create_game_ini_button.pack(side="left", padx=(0, 5))
         
         self.create_gus_fields_button = ctk.CTkButton(
             control_frame,
             text="📋 Agregar Campos GUS",
             command=self.create_gameusersettings_missing_fields,
-            width=180,
-            height=35,
+            width=140,
+            height=28,
             fg_color=("#4A90E2", "#357ABD")
         )
-        self.create_gus_fields_button.pack(side="left", padx=(0, 10))
+        self.create_gus_fields_button.pack(side="left", padx=(0, 5))
         
         # Indicador de estado
         self.status_label = ctk.CTkLabel(
             control_frame,
             text="✅ Archivos cargados correctamente",
-            font=ctk.CTkFont(size=12),
+            font=ctk.CTkFont(size=10),
             fg_color=("lightgreen", "darkgreen"),
-            corner_radius=5,
-            padx=10,
-            pady=5
+            corner_radius=3,
+            padx=6,
+            pady=3
         )
-        self.status_label.pack(side="right", padx=(10, 0))
+        self.status_label.pack(side="right", padx=(5, 0))
         
         # Crear pestañas internas
         self.create_internal_tabs()
@@ -622,56 +622,58 @@ class IniConfigPanel(ctk.CTkFrame):
         self.ini_info_label = ctk.CTkLabel(
             info_frame,
             text="📁 Información de archivos INI",
-            font=ctk.CTkFont(size=12, weight="bold")
+            font=ctk.CTkFont(size=9, weight="bold")
         )
-        self.ini_info_label.pack(pady=5)
+        self.ini_info_label.pack(pady=2)
         
         self.ini_status_label = ctk.CTkLabel(
             info_frame,
             text="⏳ Cargando información...",
-            font=ctk.CTkFont(size=11)
+            font=ctk.CTkFont(size=8)
         )
-        self.ini_status_label.pack(pady=2)
-        info_frame.pack(fill="x", pady=(0, 20))
+        self.ini_status_label.pack(pady=1)
+        info_frame.pack(fill="x", pady=(0, 5))
         
         info_label = ctk.CTkLabel(
             info_frame,
             text="ℹ️ Los cambios se guardan automáticamente. Usa 'Guardar Todos los Cambios' para asegurar la persistencia.",
-            font=ctk.CTkFont(size=11),
+            font=ctk.CTkFont(size=8),
             text_color=("gray50", "gray70")
         )
-        info_label.pack(pady=10)
+        info_label.pack(pady=3)
         
     def create_internal_tabs(self):
         """Crear las pestañas internas para GUS y Game.ini"""
         # Frame para las pestañas
         self.tabs_frame = ctk.CTkFrame(self.main_scrollable_frame)
-        self.tabs_frame.pack(fill="x", pady=(0, 20))
+        self.tabs_frame.pack(fill="x", pady=(0, 10))
         
         # Botones de pestañas
         self.gus_tab_button = ctk.CTkButton(
             self.tabs_frame,
             text="📋 GameUserSettings.ini",
             command=lambda: self.switch_tab("gus"),
-            width=200,
-            height=35,
+            width=180,
+            height=28,
+            font=ctk.CTkFont(size=11),
             fg_color=("blue", "darkblue")
         )
-        self.gus_tab_button.pack(side="left", padx=(0, 5))
+        self.gus_tab_button.pack(side="left", padx=(0, 3))
         
         self.game_tab_button = ctk.CTkButton(
             self.tabs_frame,
             text="🎮 Game.ini",
             command=lambda: self.switch_tab("game"),
-            width=200,
-            height=35,
+            width=120,
+            height=28,
+            font=ctk.CTkFont(size=11),
             fg_color=("gray", "darkgray")
         )
-        self.game_tab_button.pack(side="left", padx=(0, 5))
+        self.game_tab_button.pack(side="left", padx=(0, 3))
         
         # Frame para el contenido de las pestañas
         self.content_frame = ctk.CTkFrame(self.main_scrollable_frame)
-        self.content_frame.pack(fill="x", pady=(0, 20))
+        self.content_frame.pack(fill="x", pady=(0, 10))
         
         # Crear contenido de ambas pestañas
         self.create_gus_content()
@@ -840,7 +842,7 @@ class IniConfigPanel(ctk.CTkFrame):
         
         # Frame para los acordeones
         self.gus_accordions_frame = ctk.CTkFrame(self.gus_content_frame)
-        self.gus_accordions_frame.pack(fill="x", pady=(0, 20))
+        self.gus_accordions_frame.pack(fill="x", pady=(0, 10))
         
         # Crear acordeones
         self.gus_accordion_widgets = {}
@@ -848,11 +850,11 @@ class IniConfigPanel(ctk.CTkFrame):
         for i, (category, info) in enumerate(self.gus_categories.items()):
             # Crear frame del acordeón
             accordion_frame = ctk.CTkFrame(self.gus_accordions_frame)
-            accordion_frame.pack(fill="x", pady=(0, 10))
+            accordion_frame.pack(fill="x", pady=(0, 5))
             
             # Header del acordeón
             header_frame = ctk.CTkFrame(accordion_frame, fg_color="transparent")
-            header_frame.pack(fill="x", padx=10, pady=5)
+            header_frame.pack(fill="x", padx=5, pady=3)
             
             # Botón de expansión
             expand_button = ctk.CTkButton(
@@ -863,7 +865,8 @@ class IniConfigPanel(ctk.CTkFrame):
                 text_color=("black", "white"),
                 hover_color=("gray80", "gray30"),
                 anchor="w",
-                height=40
+                height=30,
+                font=ctk.CTkFont(size=11)
             )
             expand_button.pack(side="left", fill="x", expand=True)
             
@@ -871,18 +874,18 @@ class IniConfigPanel(ctk.CTkFrame):
             desc_label = ctk.CTkLabel(
                 header_frame,
                 text=info['description'],
-                font=ctk.CTkFont(size=11),
+                font=ctk.CTkFont(size=9),
                 text_color=("gray50", "gray70")
             )
-            desc_label.pack(side="right", padx=(10, 0))
+            desc_label.pack(side="right", padx=(5, 0))
             
             # Contenido del acordeón (inicialmente oculto)
             content_frame = ctk.CTkFrame(accordion_frame, fg_color="transparent")
-            content_frame.pack(fill="x", padx=10, pady=(0, 10))
+            content_frame.pack(fill="x", padx=5, pady=(0, 5))
             
             # Frame para los campos del formulario
             form_frame = ctk.CTkFrame(content_frame)
-            form_frame.pack(fill="x", padx=10, pady=10)
+            form_frame.pack(fill="x", padx=5, pady=5)
             
             # Crear campos del formulario
             self.create_gus_form_fields(form_frame, category)
@@ -1401,10 +1404,10 @@ class IniConfigPanel(ctk.CTkFrame):
             label = ctk.CTkLabel(
                 form_frame,
                 text=field_label,
-                font=ctk.CTkFont(size=11),
+                font=ctk.CTkFont(size=9),
                 anchor="w"
             )
-            label.grid(row=grid_row, column=grid_col, padx=(10, 5), pady=3, sticky="w")
+            label.grid(row=grid_row, column=grid_col, padx=(5, 3), pady=1, sticky="w")
             
             # Campo de entrada según el tipo
             if field_type == "bool":
@@ -1416,26 +1419,27 @@ class IniConfigPanel(ctk.CTkFrame):
                     variable=var,
                     command=lambda name=field_name, var=var: self.on_field_change(name, var.get())
                 )
-                field_widget.grid(row=grid_row, column=grid_col + 1, padx=5, pady=3, sticky="w")
+                field_widget.grid(row=grid_row, column=grid_col + 1, padx=3, pady=1, sticky="w")
                 
             elif field_type == "int":
                 # Campo numérico con incrementadores
                 field_widget = ctk.CTkEntry(
                     form_frame,
                     placeholder_text="0",
-                    width=120
+                    width=90,
+                    height=24
                 )
-                field_widget.grid(row=grid_row, column=grid_col + 1, padx=5, pady=3, sticky="w")
+                field_widget.grid(row=grid_row, column=grid_col + 1, padx=3, pady=1, sticky="w")
                 
                 # Botones de incremento/decremento
                 inc_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
-                inc_frame.grid(row=grid_row, column=grid_col + 2, padx=(2, 10), pady=3)
+                inc_frame.grid(row=grid_row, column=grid_col + 2, padx=(1, 5), pady=1)
                 
                 inc_btn = ctk.CTkButton(
                     inc_frame,
                     text="+",
-                    width=25,
-                    height=22,
+                    width=20,
+                    height=18,
                     command=lambda w=field_widget: self.increment_value(w, 1)
                 )
                 inc_btn.pack(side="left", padx=(0, 1))
@@ -1443,8 +1447,8 @@ class IniConfigPanel(ctk.CTkFrame):
                 dec_btn = ctk.CTkButton(
                     inc_frame,
                     text="-",
-                    width=25,
-                    height=22,
+                    width=20,
+                    height=18,
                     command=lambda w=field_widget: self.increment_value(w, -1)
                 )
                 dec_btn.pack(side="left")
@@ -1457,19 +1461,20 @@ class IniConfigPanel(ctk.CTkFrame):
                 field_widget = ctk.CTkEntry(
                     form_frame,
                     placeholder_text="0.0",
-                    width=120
+                    width=90,
+                    height=24
                 )
-                field_widget.grid(row=grid_row, column=grid_col + 1, padx=5, pady=3, sticky="w")
+                field_widget.grid(row=grid_row, column=grid_col + 1, padx=3, pady=1, sticky="w")
                 
                 # Botones de incremento/decremento para flotantes también
                 inc_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
-                inc_frame.grid(row=grid_row, column=grid_col + 2, padx=(2, 10), pady=3)
+                inc_frame.grid(row=grid_row, column=grid_col + 2, padx=(1, 5), pady=1)
                 
                 inc_btn = ctk.CTkButton(
                     inc_frame,
                     text="+",
-                    width=25,
-                    height=22,
+                    width=20,
+                    height=18,
                     command=lambda w=field_widget: self.increment_value(w, 0.1)
                 )
                 inc_btn.pack(side="left", padx=(0, 1))
@@ -1477,8 +1482,8 @@ class IniConfigPanel(ctk.CTkFrame):
                 dec_btn = ctk.CTkButton(
                     inc_frame,
                     text="-",
-                    width=25,
-                    height=22,
+                    width=20,
+                    height=18,
                     command=lambda w=field_widget: self.increment_value(w, -0.1)
                 )
                 dec_btn.pack(side="left")
@@ -1491,9 +1496,10 @@ class IniConfigPanel(ctk.CTkFrame):
                 field_widget = ctk.CTkEntry(
                     form_frame,
                     placeholder_text="Valor",
-                    width=150
+                    width=110,
+                    height=24
                 )
-                field_widget.grid(row=grid_row, column=grid_col + 1, padx=5, pady=3, sticky="w")
+                field_widget.grid(row=grid_row, column=grid_col + 1, padx=3, pady=1, sticky="w")
                 
                 # Binding para cambios
                 field_widget.bind("<KeyRelease>", lambda e, name=field_name, w=field_widget: self.on_field_change(name, w.get()))

@@ -28,7 +28,7 @@ from .panels.ini_config_panel import IniConfigPanel
 
 class MainWindow:
 
-    APP_VERSION = "2.2"
+    APP_VERSION = "2.3"
     
     def __init__(self, root, config_manager, logger):
         """Inicializar la ventana principal"""
@@ -356,7 +356,8 @@ class MainWindow:
         app_version_container = ctk.CTkFrame(col3_frame, fg_color="transparent")
         app_version_container.pack(fill="x", pady=2)
         ctk.CTkLabel(app_version_container, text="Versión App:", font=("Arial", 10)).pack()
-        self.app_version_label = ctk.CTkLabel(app_version_container, text="v1.0.0", fg_color=("blue", "blue"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
+        self.app_version_label = ctk.CTkLabel(app_version_container, text=f"{self.APP_VERSION}", fg_color=("blue", "blue"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
+
         self.app_version_label.pack(pady=(2, 0))
         
         # Versión del Servidor
@@ -1095,7 +1096,7 @@ class MainWindow:
                     return f"v{f.read().strip()}"
             return "v1.0.0"
         except:
-            return "v1.0.0"
+            return f"v{self.APP_VERSION}"
     
     def get_server_version(self):
         """Obtener versión del servidor ARK"""
@@ -1602,10 +1603,9 @@ class MainWindow:
             if update_server:
                 self.add_log_message("🔄 Iniciando reinicio con actualización...")
                 self.add_log_message("📥 Descargando actualizaciones del servidor...")
-                # Ejecutar actualización real
+                # Ejecutar actualización real con callback
                 if hasattr(self, 'server_panel'):
-                    self.server_panel.update_server()
-                self.root.after(3000, lambda: self._finalize_restart_with_update())
+                    self._update_server_with_callback()
             else:
                 self.add_log_message("🔄 Iniciando reinicio sin actualización...")
                 if hasattr(self, 'server_panel'):
@@ -1615,10 +1615,50 @@ class MainWindow:
             self.logger.error(f"Error al completar reinicio: {e}")
             self.add_log_message(f"❌ Error al reiniciar servidor: {e}")
     
+    def _update_server_with_callback(self):
+        """Actualizar servidor y esperar a que termine antes de reiniciar"""
+        try:
+            if not hasattr(self, 'server_panel') or not self.server_panel:
+                self.add_log_message("❌ Error: Panel de servidor no disponible")
+                return
+            
+            # Obtener el servidor seleccionado
+            if not hasattr(self.server_panel, 'selected_server') or not self.server_panel.selected_server:
+                self.add_log_message("❌ Error: Debe seleccionar un servidor primero")
+                return
+            
+            server_name = self.server_panel.selected_server
+            
+            # Crear callback personalizado para manejar la finalización de la actualización
+            def update_callback(message_type, message):
+                try:
+                    if message_type == "success" and ("completada" in message.lower() or "success" in message.lower()):
+                        # La actualización terminó exitosamente
+                        self.root.after(1000, self._finalize_restart_with_update)
+                    elif message_type == "error":
+                        # Error en la actualización, pero continuar con reinicio
+                        self.add_log_message(f"⚠️ Error en actualización: {message}")
+                        self.add_log_message("🔄 Continuando con reinicio sin actualización...")
+                        self.root.after(1000, self._finalize_restart_with_update)
+                    # Para otros tipos de mensaje (info, progress), solo mostrar
+                    elif message:
+                        self.add_log_message(f"📥 {message}")
+                except Exception as e:
+                    self.logger.error(f"Error en callback de actualización: {e}")
+            
+            # Ejecutar actualización con callback personalizado
+            self.server_panel.server_manager.update_server(update_callback, server_name)
+            
+        except Exception as e:
+            self.logger.error(f"Error al actualizar servidor: {e}")
+            self.add_log_message(f"❌ Error al actualizar servidor: {e}")
+            # En caso de error, continuar con reinicio
+            self.root.after(1000, self._finalize_restart_with_update)
+    
     def _finalize_restart_with_update(self):
         """Finalizar reinicio después de actualización"""
         try:
-            self.add_log_message("✅ Actualización completada")
+            self.add_log_message("✅ Actualización completada, reiniciando servidor...")
             if hasattr(self, 'server_panel'):
                 self.server_panel.restart_server()
         except Exception as e:

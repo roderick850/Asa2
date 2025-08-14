@@ -298,7 +298,17 @@ class PlayersPanel(ctk.CTkFrame):
             
             if message:
                 self.logger.info(f"Enviando mensaje: {message}")
-                # Comando: broadcast "mensaje"
+                if hasattr(self.main_window, 'rcon_panel'):
+                    # Obtener el tipo de mensaje configurado
+                    message_type = self.main_window.rcon_panel.get_message_type()
+                    rcon_command = f'{message_type} "{message}"'
+                    success = self.main_window.rcon_panel.execute_rcon_command(rcon_command)
+                    if success:
+                        self.logger.info(f"Mensaje enviado usando {message_type}: {message}")
+                    else:
+                        self.logger.warning(f"Error al enviar mensaje via {message_type}")
+                else:
+                    self.logger.error("Panel RCON no disponible")
         except Exception as e:
             self.logger.error(f"Error al enviar mensaje: {e}")
     
