@@ -757,35 +757,44 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             self._execute_restart_sequence(restart_info)
             return
         
-        # Tomar el primer intervalo
-        next_interval = intervals[0]
-        remaining_intervals = intervals[1:]
+        # Programar todos los avisos desde el inicio
+        total_time = max(intervals)  # El tiempo total hasta el reinicio es el intervalo más grande
         
-        # Crear mensaje con tiempo específico
-        message = message_template.replace("{time}", str(next_interval))
-        
-        # Enviar aviso inmediatamente
-        self._send_rcon_message(message)
-        
-        # Verificar si necesitamos ejecutar DestroyWildDinos en 5 minutos
-        if next_interval == 5 and self._should_execute_destroywilddinos_today():
-            self._execute_destroywilddinos()
-        
-        # Programar siguiente aviso o reinicio
-        if remaining_intervals:
-            # Calcular tiempo hasta el siguiente aviso
-            delay_minutes = next_interval - remaining_intervals[0]
+        for i, interval in enumerate(intervals):
+            # Calcular cuándo enviar este aviso (tiempo total - intervalo del aviso)
+            delay_minutes = total_time - interval
             delay_seconds = delay_minutes * 60 * 1000  # Convertir a milisegundos
             
-            self.logger.info(f"Próximo aviso en {delay_minutes} minutos")
-            self.after(delay_seconds, lambda: self._schedule_warnings(remaining_intervals, message_template, restart_info))
-        else:
-            # Este es el último aviso, programar reinicio
-            delay_seconds = next_interval * 60 * 1000  # Convertir a milisegundos
+            # Crear mensaje con tiempo específico
+            message = message_template.replace("{time}", str(interval))
             
-            self.logger.info(f"Reinicio programado en {next_interval} minutos")
-            self.after(delay_seconds, lambda: self._execute_restart_sequence_after_warnings(restart_info))
+            if delay_minutes == 0:
+                # Enviar inmediatamente si es el primer aviso
+                self._send_rcon_message(message)
+                self.logger.info(f"Aviso RCON enviado: {interval} minutos hasta reinicio")
+            else:
+                # Programar aviso para más tarde
+                self.after(delay_seconds, lambda msg=message, mins=interval: self._send_scheduled_warning(msg, mins))
+                self.logger.info(f"Aviso RCON programado para {delay_minutes} minutos: {interval} minutos hasta reinicio")
+            
+            # Verificar si necesitamos ejecutar DestroyWildDinos en 5 minutos
+            if interval == 5 and self._should_execute_destroywilddinos_today():
+                destroy_delay = (total_time - 5) * 60 * 1000
+                if destroy_delay == 0:
+                    self._execute_destroywilddinos()
+                else:
+                    self.after(destroy_delay, self._execute_destroywilddinos)
+        
+        # Programar el reinicio para después del último aviso
+        final_delay = total_time * 60 * 1000
+        self.logger.info(f"Reinicio programado en {total_time} minutos")
+        self.after(final_delay, lambda: self._execute_restart_sequence_after_warnings(restart_info))
 
+    def _send_scheduled_warning(self, message, minutes):
+        """Enviar un aviso programado"""
+        self._send_rcon_message(message)
+        self.logger.info(f"Aviso RCON enviado: {minutes} minutos hasta reinicio")
+    
     def _execute_restart_sequence_after_warnings(self, restart_info):
         """Ejecutar reinicio después de los avisos"""
         restart_info["warnings_sent"] = True
