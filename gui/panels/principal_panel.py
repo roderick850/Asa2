@@ -741,11 +741,15 @@ class PrincipalPanel:
             selected_server = self.selected_server
             
         server_map_key = f"{selected_server}_{selected_map}" if selected_server and selected_map else "default"
+        
+        # Obtener mod_ids específicos del servidor/mapa actual
+        # Solo usar la configuración específica, sin fallback a configuración general
         mod_ids = self.config_manager.get("server", f"mod_ids_{server_map_key}", "").strip()
         
-        # Fallback a la configuración general si no hay específica
-        if not mod_ids:
-            mod_ids = self.config_manager.get("server", "mod_ids", "").strip()
+        # Log para debugging
+        if self.logger.should_log_debug():
+            self.logger.info(f"DEBUG: Buscando mods para clave: mod_ids_{server_map_key}")
+            self.logger.info(f"DEBUG: Mods encontrados: '{mod_ids}'")
         
         # 3. Construir la lista final con argumentos separados
         # El primer argumento debe ser el mapa con todos sus parámetros concatenados
@@ -780,7 +784,7 @@ class PrincipalPanel:
         # RCON
         if hasattr(self.main_window, 'rcon_panel') and self.main_window.rcon_panel.get_rcon_enabled():
             rcon_port = self.main_window.rcon_panel.get_rcon_port()
-            map_arg += "?EnableRCON=True"
+            map_arg += "?RCONEnabled=True"
             map_arg += f"?RCONPort={rcon_port}"
         
         # Construir la lista final

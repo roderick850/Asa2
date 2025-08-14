@@ -1259,8 +1259,11 @@ class ModsPanel(ctk.CTkFrame):
                 if self.logger:
                     self.logger.info(f"Mods aplicados a {self.current_server} - {self.current_map}: {','.join(mod_ids)}")
             else:
-                # Fallback a configuración general si no hay contexto específico
+                # Solo aplicar a configuración general si no hay contexto específico
+                # Esto debería ser raro, normalmente siempre hay un servidor/mapa seleccionado
                 if self.config_manager:
+                    if self.logger:
+                        self.logger.warning("No hay contexto de servidor/mapa específico, aplicando a configuración general")
                     self.config_manager.set("server", "mod_ids", ",".join(mod_ids))
                     
                 if self.logger:
@@ -1297,8 +1300,11 @@ class ModsPanel(ctk.CTkFrame):
                 if self.logger:
                     self.logger.info(f"Mods aplicados automáticamente a {self.current_server} - {self.current_map}: {','.join(mod_ids)}")
             else:
-                # Fallback a configuración general si no hay contexto específico
+                # Solo aplicar a configuración general si no hay contexto específico
+                # Esto debería ser raro, normalmente siempre hay un servidor/mapa seleccionado
                 if self.config_manager:
+                    if self.logger:
+                        self.logger.warning("No hay contexto de servidor/mapa específico, aplicando automáticamente a configuración general")
                     self.config_manager.set("server", "mod_ids", ",".join(mod_ids))
                     
                 if self.logger:
@@ -1337,8 +1343,11 @@ class ModsPanel(ctk.CTkFrame):
                     if self.logger:
                         self.logger.info(f"Configuración de mods limpiada para {self.current_server} - {self.current_map}")
                 else:
-                    # Fallback a configuración general si no hay contexto específico
+                    # Solo limpiar configuración general si no hay contexto específico
+                    # Esto debería ser raro, normalmente siempre hay un servidor/mapa seleccionado
                     if self.config_manager:
+                        if self.logger:
+                            self.logger.warning("No hay contexto de servidor/mapa específico, limpiando configuración general")
                         self.config_manager.set("server", "mod_ids", "")
                         
                     if self.logger:
@@ -1372,8 +1381,11 @@ class ModsPanel(ctk.CTkFrame):
                 if self.logger:
                     self.logger.info(f"Configuración de mods limpiada automáticamente para {self.current_server} - {self.current_map}")
             else:
-                # Fallback a configuración general si no hay contexto específico
+                # Solo limpiar configuración general si no hay contexto específico
+                # Esto debería ser raro, normalmente siempre hay un servidor/mapa seleccionado
                 if self.config_manager:
+                    if self.logger:
+                        self.logger.warning("No hay contexto de servidor/mapa específico, limpiando automáticamente configuración general")
                     self.config_manager.set("server", "mod_ids", "")
                     
                 if self.logger:

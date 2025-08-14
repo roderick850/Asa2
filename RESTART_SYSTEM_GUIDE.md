@@ -262,7 +262,7 @@ Las actualizaciones se ejecutan **automáticamente durante los reinicios program
 **Solución**:
 
 1. Verifica configuración RCON en pestaña correspondiente
-2. Asegúrate de que RCONEnable=True en el servidor
+2. Asegúrate de que RCONEnabled=True en el servidor
 3. Verifica IP y puerto RCON
 
 ### **❌ "Error al crear backup"**

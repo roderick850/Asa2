@@ -334,7 +334,7 @@ class AdvancedRestartPanel(ctk.CTkFrame):
         
         self.warning_message_text = ctk.CTkTextbox(self.options_scroll, height=45, font=ctk.CTkFont(size=9))
         self.warning_message_text.grid(row=10, column=0, columnspan=3, padx=6, pady=3, sticky="ew")
-        self.warning_message_text.insert("0.0", "⚠️ ATENCIÓN: El servidor se reiniciará en {time} minuto(s). Por favor, encuentra un lugar seguro.")
+        self.warning_message_text.insert("0.0", "⚠️ ATENCION: El servidor se reiniciara en {time} minuto(s). Por favor, encuentra un lugar seguro.")
         
         message_info = ctk.CTkLabel(
             self.options_scroll,
@@ -736,7 +736,7 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             # Obtener mensaje personalizado
             message_template = self.warning_message_text.get("0.0", "end-1c").strip()
             if not message_template:
-                message_template = "⚠️ ATENCIÓN: El servidor se reiniciará en {time} minuto(s). Por favor, encuentra un lugar seguro."
+                message_template = "⚠️ ATENCION: El servidor se reiniciara en {time} minuto(s). Por favor, encuentra un lugar seguro."
             
             self.logger.info(f"Enviando avisos RCON: {intervals} minutos antes del reinicio")
             self.show_message(f"📢 AVISOS PROGRAMADOS: Enviando mensajes RCON {intervals} minutos antes del reinicio")

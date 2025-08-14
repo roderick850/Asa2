@@ -92,7 +92,7 @@ class RconPanel(ctk.CTkFrame):
         
         self.rcon_enable_switch = ctk.CTkSwitch(
             rcon_enable_frame,
-            text=f"Agregar ?RCONEnable=True?RCONPort={self.rcon_port}",
+            text=f"Agregar ?RCONEnabled=True?RCONPort={self.rcon_port}",
             command=self.on_rcon_switch_change
         )
         self.rcon_enable_switch.pack(side="left", padx=10)
