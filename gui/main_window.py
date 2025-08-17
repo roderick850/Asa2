@@ -1094,7 +1094,7 @@ class MainWindow:
             if os.path.exists(version_file):
                 with open(version_file, 'r') as f:
                     return f"v{f.read().strip()}"
-            return "v1.0.0"
+            return f"{self.APP_VERSION}"
         except:
             return f"v{self.APP_VERSION}"
     
