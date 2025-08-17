@@ -1186,6 +1186,14 @@ class MainWindow:
         """Maneja la selección de un servidor"""
         self.selected_server = server_name
         
+        # Actualizar server_path en config_manager para que el panel INI use la ruta correcta
+        if server_name:
+            root_path = self.config_manager.get("server", "root_path", "")
+            if root_path:
+                server_path = os.path.join(root_path, server_name)
+                self.config_manager.set("server", "server_path", server_path)
+                self.logger.info(f"🔄 Ruta del servidor actualizada: {server_path}")
+        
         # Actualizar el logger del servidor
         if hasattr(self, 'server_event_logger'):
             self.server_event_logger.update_server_name(server_name)
