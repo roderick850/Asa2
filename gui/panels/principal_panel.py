@@ -83,7 +83,21 @@ class PrincipalPanel:
         # MaxPlayers
         ctk.CTkLabel(col1_frame, text="MaxPlayers:", font=("Arial", 11, "bold")).pack(anchor="w", pady=(0, 2))
         self.max_players_entry = ctk.CTkEntry(col1_frame, placeholder_text="70", width=200, height=28)
-        self.max_players_entry.pack(fill="x", pady=(0, 6))
+        self.max_players_entry.pack(fill="x", pady=(0, 3))
+        
+        # Switch para MaxPlayers como argumento
+        self.maxplayers_as_arg_var = ctk.BooleanVar(value=False)
+        maxplayers_switch_frame = ctk.CTkFrame(col1_frame, fg_color="transparent")
+        maxplayers_switch_frame.pack(fill="x", pady=(0, 6))
+        
+        self.maxplayers_switch = ctk.CTkSwitch(
+            maxplayers_switch_frame,
+            text="Como argumento -WinLiveMaxPlayers",
+            variable=self.maxplayers_as_arg_var,
+            font=("Arial", 9),
+            command=self.on_maxplayers_switch_change
+        )
+        self.maxplayers_switch.pack(anchor="w")
         
         # QueryPort
         ctk.CTkLabel(col1_frame, text="QueryPort:", font=("Arial", 11, "bold")).pack(anchor="w", pady=(0, 2))
@@ -214,9 +228,31 @@ class PrincipalPanel:
             custom_args = self.config_manager.get("server", "custom_args", "")
             if custom_args:
                 self.custom_args_text.insert("1.0", custom_args)
+            
+            # Cargar estado del switch de MaxPlayers como argumento
+            if hasattr(self, 'maxplayers_as_arg_var'):
+                maxplayers_as_arg = self.config_manager.get("server", "maxplayers_as_arg", False)
+                if isinstance(maxplayers_as_arg, str):
+                    maxplayers_as_arg = maxplayers_as_arg.lower() == 'true'
+                self.maxplayers_as_arg_var.set(maxplayers_as_arg)
                 
         except Exception as e:
             self.logger.error(f"Error al cargar configuración: {e}")
+    
+    def on_maxplayers_switch_change(self):
+        """Callback cuando cambia el estado del switch de MaxPlayers"""
+        try:
+            # Guardar automáticamente el estado del switch
+            maxplayers_as_arg = self.maxplayers_as_arg_var.get()
+            self.config_manager.set("server", "maxplayers_as_arg", maxplayers_as_arg)
+            self.config_manager.save()
+            
+            if self.logger:
+                self.logger.info(f"Estado del switch MaxPlayers guardado automáticamente: {maxplayers_as_arg}")
+                
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al guardar estado del switch MaxPlayers: {e}")
     
     def save_configuration(self):
         """Guardar la configuración actual"""
@@ -235,6 +271,10 @@ class PrincipalPanel:
             # Guardar argumentos personalizados
             custom_args = self.custom_args_text.get("1.0", "end-1c")
             self.config_manager.set("server", "custom_args", custom_args)
+            
+            # Guardar estado del switch de MaxPlayers como argumento
+            if hasattr(self, 'maxplayers_as_arg_var'):
+                self.config_manager.set("server", "maxplayers_as_arg", self.maxplayers_as_arg_var.get())
             
             # Guardar en archivo
             self.config_manager.save()
@@ -290,25 +330,37 @@ class PrincipalPanel:
             message = self.message_entry.get()
             duration = self.duration_entry.get()
             
+            # Verificar si MaxPlayers debe guardarse en INI o usarse como argumento
+            save_maxplayers_to_ini = True
+            if hasattr(self, 'maxplayers_as_arg_var') and self.maxplayers_as_arg_var.get():
+                save_maxplayers_to_ini = False
+                self.logger.info("MaxPlayers se usará como argumento -WinLiveMaxPlayers, no se guardará en GameUserSettings.ini")
+            
+            # Construir secciones a actualizar
+            sections_to_update = {
+                'ServerSettings': {
+                    'ServerPassword': server_password if server_password else None,
+                    'ServerAdminPassword': admin_password if admin_password else None
+                },
+                'SessionSettings': {
+                    'SessionName': session_name if session_name else None
+                },
+                'MessageOfTheDay': {
+                    'Message': message if message else None,
+                    'Duration': duration if duration else None
+                }
+            }
+            
+            # Solo agregar MaxPlayers a la sección si NO se usa como argumento
+            if save_maxplayers_to_ini:
+                sections_to_update['/Script/Engine.GameSession'] = {
+                    'MaxPlayers': max_players if max_players else None
+                }
+            
             # Usar método personalizado para preservar el archivo existente
             self._update_ini_file_preserving_content(
                 gameusersettings_path,
-                {
-                    'ServerSettings': {
-                        'ServerPassword': server_password if server_password else None,
-                        'ServerAdminPassword': admin_password if admin_password else None
-                    },
-                    'SessionSettings': {
-                        'SessionName': session_name if session_name else None
-                    },
-                    '/Script/Engine.GameSession': {
-                        'MaxPlayers': max_players if max_players else None
-                    },
-                    'MessageOfTheDay': {
-                        'Message': message if message else None,
-                        'Duration': duration if duration else None
-                    }
-                }
+                sections_to_update
             )
             
             if self.logger:
@@ -514,6 +566,24 @@ class PrincipalPanel:
                 if config.has_option('MessageOfTheDay', 'Duration'):
                     self.duration_entry.delete(0, "end")
                     self.duration_entry.insert(0, config.get('MessageOfTheDay', 'Duration'))
+            
+            # Cargar el estado del switch de maxplayers desde la configuración guardada
+            try:
+                maxplayers_as_arg = self.config_manager.get("server", "maxplayers_as_arg", False)
+                if isinstance(maxplayers_as_arg, str):
+                    maxplayers_as_arg = maxplayers_as_arg.lower() == 'true'
+                
+                if maxplayers_as_arg:
+                    self.maxplayers_switch.select()
+                else:
+                    self.maxplayers_switch.deselect()
+                    
+                if self.logger:
+                    self.logger.info(f"Estado del switch MaxPlayers cargado: {maxplayers_as_arg}")
+            except Exception as e:
+                if self.logger:
+                    self.logger.warning(f"Error al cargar estado del switch MaxPlayers: {e}")
+                self.maxplayers_switch.deselect()  # Valor por defecto
             
             if self.logger:
                 self.logger.info(f"Configuración cargada desde GameUserSettings.ini: {gameusersettings_path}")
@@ -793,6 +863,13 @@ class PrincipalPanel:
         # 4. Agregar mods si existen
         if mod_ids:
             args.append(f"-mods={mod_ids}")
+        
+        # 5. Agregar MaxPlayers como argumento si el switch está activado
+        if hasattr(self, 'maxplayers_as_arg_var') and self.maxplayers_as_arg_var.get():
+            max_players = self.max_players_entry.get() or "70"
+            args.append(f"-WinLiveMaxPlayers={max_players}")
+            if self.logger.should_log_debug():
+                self.logger.info(f"DEBUG: MaxPlayers agregado como argumento: -WinLiveMaxPlayers={max_players}")
         
         if self.logger.should_log_debug():
             self.logger.info(f"DEBUG: Argumentos finales generados: {args}")

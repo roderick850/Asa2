@@ -149,6 +149,7 @@ class ConfigManager:
             
             modified_lines = []
             current_section = None
+            processed_keys = {}  # Rastrear claves procesadas por sección
             
             for i, line in enumerate(self.original_file_content):
                 original_line = line
@@ -156,7 +157,12 @@ class ConfigManager:
                 
                 # Líneas de sección
                 if stripped_line.startswith('[') and stripped_line.endswith(']'):
+                    # Antes de cambiar de sección, agregar claves nuevas de la sección anterior
+                    if current_section and self.config.has_section(current_section):
+                        self._add_new_keys_to_section(modified_lines, current_section, processed_keys.get(current_section, set()))
+                    
                     current_section = stripped_line[1:-1]
+                    processed_keys[current_section] = set()
                     modified_lines.append(original_line)
                     # print(f"🔍 DEBUG: Línea {i+1}: Sección [{current_section}]")
                     continue
@@ -183,12 +189,14 @@ class ConfigManager:
                         if self.config.has_option(current_section, original_key):
                             found_key = original_key
                             found_value = self.config.get(current_section, original_key)
+                            processed_keys[current_section].add(original_key)
                         else:
                             # Buscar case-insensitive
                             for config_key in self.config.options(current_section):
                                 if config_key.lower() == original_key.lower():
                                     found_key = config_key
                                     found_value = self.config.get(current_section, config_key)
+                                    processed_keys[current_section].add(config_key)
                                     break
                     
                     if found_key and found_value is not None:
@@ -203,6 +211,17 @@ class ConfigManager:
                 else:
                     modified_lines.append(original_line)
             
+            # Agregar claves nuevas de la última sección
+            if current_section and self.config.has_section(current_section):
+                self._add_new_keys_to_section(modified_lines, current_section, processed_keys.get(current_section, set()))
+            
+            # Agregar secciones completamente nuevas
+            for section_name in self.config.sections():
+                if section_name not in processed_keys:
+                    modified_lines.append(f"\n[{section_name}]\n")
+                    for key, value in self.config.items(section_name):
+                        modified_lines.append(f"{key}={value}\n")
+            
             # Escribir el archivo modificado
             # print(f"🔍 DEBUG: Escribiendo archivo con {len(modified_lines)} líneas")
             with open(self.config_file, 'w', encoding='utf-8') as f:
@@ -214,6 +233,20 @@ class ConfigManager:
             print(f"❌ Error preservando formato: {e}")
             # Fallback a formato estándar
             self._save_standard_format()
+    
+    def _add_new_keys_to_section(self, modified_lines, section_name, processed_keys):
+        """Agregar claves nuevas al final de una sección"""
+        if not self.config.has_section(section_name):
+            return
+            
+        new_keys_added = False
+        for key, value in self.config.items(section_name):
+            if key not in processed_keys:
+                modified_lines.append(f"{key}={value}\n")
+                new_keys_added = True
+                # print(f"🔍 DEBUG: Agregada clave nueva '{key}={value}' a sección [{section_name}]")
+        
+        return new_keys_added
     
     def _save_standard_format(self):
         """Guardar con formato estándar (fallback)"""
