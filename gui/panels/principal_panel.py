@@ -18,6 +18,11 @@ class PrincipalPanel:
         self.config_manager = config_manager
         self.logger = logger
         self.main_window = main_window
+        
+        # Sistema de configuración por servidor
+        self.server_configs = {}
+        self.current_server = None
+        self.load_all_server_configs()
         self.server_manager = None
         
         # Inicializar server_manager si está disponible
@@ -247,6 +252,10 @@ class PrincipalPanel:
             self.config_manager.set("server", "maxplayers_as_arg", maxplayers_as_arg)
             self.config_manager.save()
             
+            # Guardar automáticamente en configuración específica del servidor
+            if self.current_server:
+                self.save_server_config(self.current_server)
+            
             if self.logger:
                 self.logger.info(f"Estado del switch MaxPlayers guardado automáticamente: {maxplayers_as_arg}")
                 
@@ -278,6 +287,10 @@ class PrincipalPanel:
             
             # Guardar en archivo
             self.config_manager.save()
+            
+            # Guardar en configuración específica del servidor
+            if self.current_server:
+                self.save_server_config(self.current_server)
             
             # Guardar en GameUserSettings.ini
             self.save_to_gameusersettings()
@@ -878,11 +891,21 @@ class PrincipalPanel:
     
     def update_server_info(self, server_name, map_name):
         """Actualizar información del servidor seleccionado"""
+        # Guardar configuración del servidor anterior si existe
+        if self.current_server and self.current_server != server_name:
+            self.save_server_config(self.current_server)
+        
+        # Actualizar servidor actual
+        self.current_server = server_name
         self.selected_server = server_name
         self.selected_map = map_name
         
-        # Cargar configuración específica del servidor desde GameUserSettings.ini
-        self.load_from_gameusersettings()
+        # Cargar configuración específica del servidor
+        if server_name:
+            # Primero intentar cargar desde configuración guardada
+            self.load_server_config(server_name)
+            # Luego cargar desde GameUserSettings.ini (esto puede sobrescribir algunos valores)
+            self.load_from_gameusersettings()
     
     def get_public_ip(self):
         """Obtener IP pública automáticamente"""
@@ -1012,3 +1035,121 @@ class PrincipalPanel:
     def add_status_message(self, message, message_type="info"):
         """Agregar mensaje de estado"""
         self.show_message(message, message_type)
+    
+    # ===== SISTEMA DE CONFIGURACIÓN POR SERVIDOR =====
+    
+    def load_all_server_configs(self):
+        """Cargar todas las configuraciones de servidores"""
+        try:
+            config_file = "data/principal_server_configs.json"
+            if os.path.exists(config_file):
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    self.server_configs = json.load(f)
+            else:
+                self.server_configs = {}
+                
+        except Exception as e:
+            self.logger.error(f"Error al cargar configuraciones de servidores: {e}")
+            self.server_configs = {}
+    
+    def save_all_server_configs(self):
+        """Guardar todas las configuraciones de servidores"""
+        try:
+            os.makedirs("data", exist_ok=True)
+            with open("data/principal_server_configs.json", 'w', encoding='utf-8') as f:
+                json.dump(self.server_configs, f, indent=2, ensure_ascii=False)
+                
+        except Exception as e:
+            self.logger.error(f"Error al guardar configuraciones de servidores: {e}")
+    
+    def save_server_config(self, server_name=None):
+        """Guardar configuración específica del servidor"""
+        if not server_name:
+            server_name = self.current_server
+        
+        if not server_name:
+            return
+        
+        try:
+            config = {
+                "session_name": getattr(self, 'session_name_entry', None) and self.session_name_entry.get() or "",
+                "server_password": getattr(self, 'server_password_entry', None) and self.server_password_entry.get() or "",
+                "admin_password": getattr(self, 'admin_password_entry', None) and self.admin_password_entry.get() or "",
+                "max_players": getattr(self, 'max_players_entry', None) and self.max_players_entry.get() or "70",
+                "query_port": getattr(self, 'query_port_entry', None) and self.query_port_entry.get() or "27015",
+                "port": getattr(self, 'port_entry', None) and self.port_entry.get() or "7777",
+                "multihome": getattr(self, 'multihome_entry', None) and self.multihome_entry.get() or "",
+                "message": getattr(self, 'message_entry', None) and self.message_entry.get() or "",
+                "duration": getattr(self, 'duration_entry', None) and self.duration_entry.get() or "1440",
+                "custom_args": getattr(self, 'custom_args_text', None) and self.custom_args_text.get("1.0", "end-1c") or "",
+                "maxplayers_as_arg": getattr(self, 'maxplayers_as_arg_var', None) and self.maxplayers_as_arg_var.get() or False
+            }
+            
+            self.server_configs[server_name] = config
+            self.save_all_server_configs()
+            
+            self.logger.info(f"Configuración guardada para servidor: {server_name}")
+            
+        except Exception as e:
+            self.logger.error(f"Error al guardar configuración del servidor {server_name}: {e}")
+    
+    def load_server_config(self, server_name):
+        """Cargar configuración específica del servidor"""
+        if not server_name or server_name not in self.server_configs:
+            return
+        
+        try:
+            config = self.server_configs[server_name]
+            
+            # Cargar valores en los campos
+            if hasattr(self, 'session_name_entry'):
+                self.session_name_entry.delete(0, 'end')
+                self.session_name_entry.insert(0, config.get("session_name", ""))
+            
+            if hasattr(self, 'server_password_entry'):
+                self.server_password_entry.delete(0, 'end')
+                self.server_password_entry.insert(0, config.get("server_password", ""))
+            
+            if hasattr(self, 'admin_password_entry'):
+                self.admin_password_entry.delete(0, 'end')
+                self.admin_password_entry.insert(0, config.get("admin_password", ""))
+            
+            if hasattr(self, 'max_players_entry'):
+                self.max_players_entry.delete(0, 'end')
+                self.max_players_entry.insert(0, config.get("max_players", "70"))
+            
+            if hasattr(self, 'query_port_entry'):
+                self.query_port_entry.delete(0, 'end')
+                self.query_port_entry.insert(0, config.get("query_port", "27015"))
+            
+            if hasattr(self, 'port_entry'):
+                self.port_entry.delete(0, 'end')
+                self.port_entry.insert(0, config.get("port", "7777"))
+            
+            if hasattr(self, 'multihome_entry'):
+                self.multihome_entry.delete(0, 'end')
+                self.multihome_entry.insert(0, config.get("multihome", ""))
+            
+            if hasattr(self, 'message_entry'):
+                self.message_entry.delete(0, 'end')
+                self.message_entry.insert(0, config.get("message", ""))
+            
+            if hasattr(self, 'duration_entry'):
+                self.duration_entry.delete(0, 'end')
+                self.duration_entry.insert(0, config.get("duration", "1440"))
+            
+            if hasattr(self, 'custom_args_text'):
+                self.custom_args_text.delete("1.0", 'end')
+                self.custom_args_text.insert("1.0", config.get("custom_args", ""))
+            
+            # Cargar estado del switch MaxPlayers
+            if hasattr(self, 'maxplayers_as_arg_var'):
+                maxplayers_value = config.get("maxplayers_as_arg", False)
+                if isinstance(maxplayers_value, str):
+                    maxplayers_value = maxplayers_value.lower() == 'true'
+                self.maxplayers_as_arg_var.set(maxplayers_value)
+            
+            self.logger.info(f"Configuración cargada para servidor: {server_name}")
+            
+        except Exception as e:
+            self.logger.error(f"Error al cargar configuración del servidor {server_name}: {e}")
