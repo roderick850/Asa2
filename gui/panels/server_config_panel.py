@@ -63,7 +63,10 @@ class ServerConfigPanel(ctk.CTkFrame):
         self.pack(fill="both", expand=True)
         
         # Cargar configuración inicial después de un breve delay
-        self.after(100, self.load_current_server_configs)
+        try:
+            self.after(100, self.load_current_server_configs)
+        except Exception as e:
+            self.logger.error(f"Error al programar carga de configuraciones: {e}")
     
     def create_widgets(self):
         """Crear la estructura básica del panel"""
@@ -679,7 +682,10 @@ class ServerConfigPanel(ctk.CTkFrame):
             self.last_search_text = current_text
             
             # Programar nueva búsqueda después de 500ms para dar tiempo al usuario
-            self.search_timeout_id = self.after(500, self._execute_search)
+            try:
+                self.search_timeout_id = self.after(500, self._execute_search)
+            except Exception as e:
+                self.logger.error(f"Error al programar búsqueda: {e}")
     
     def _execute_search(self):
         """Ejecutar la búsqueda real después del debounce"""

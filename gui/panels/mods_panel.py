@@ -37,6 +37,10 @@ class ModsPanel(ctk.CTkFrame):
         self.current_filter = "all"  # "all", "favorites", "installed", "search"
         self.search_filter = ""
         
+        # Variable para controlar mensajes de inicio
+        self.show_startup_messages = True
+        self.load_startup_messages_setting()
+        
         # Empaquetar el frame principal
         self.pack(fill="both", expand=True)
         
@@ -46,7 +50,27 @@ class ModsPanel(ctk.CTkFrame):
         self.load_installed_mods()
         
         # Actualizar UI inicial después de cargar datos
-        self.after(100, self.refresh_initial_tabs)
+        self._safe_schedule_ui_update(lambda: self.after(100, self.refresh_initial_tabs))
+    
+    def _safe_schedule_ui_update(self, callback):
+        """Programar actualización de UI de forma segura verificando que la ventana principal y el widget existan"""
+        try:
+            # Verificar si la ventana principal existe y no está destruida
+            if (hasattr(self, 'main_window') and self.main_window and 
+                hasattr(self.main_window, 'root') and self.main_window.root and 
+                self.main_window.root.winfo_exists()):
+                # Verificar si este widget aún existe
+                if self.winfo_exists():
+                    self.main_window.root.after(0, callback)
+                else:
+                    return
+            elif self.winfo_exists():
+                # Fallback: usar el método after del widget actual si existe
+                self.after(0, callback)
+        except Exception as e:
+            # Si hay cualquier error, simplemente ignorar la actualización
+            if hasattr(self, 'logger') and self.logger:
+                self.logger.debug(f"Error programando actualización UI: {e}")
     
     def get_data_directory(self):
         """Obtener directorio de datos correcto para ejecutable y desarrollo"""
@@ -100,6 +124,9 @@ class ModsPanel(ctk.CTkFrame):
         )
         title_label.pack(pady=(0, 10))
         
+        # Frame de configuración de mensajes de inicio
+        self.create_startup_messages_frame(main_frame)
+        
         # Frame de búsqueda mejorado
         self.create_search_frame(main_frame)
         
@@ -114,6 +141,38 @@ class ModsPanel(ctk.CTkFrame):
         
         # Frame de información de mods instalados
         self.create_installed_info_frame(main_frame)
+    
+    def create_startup_messages_frame(self, parent):
+        """Crear frame para configuración de mensajes de inicio"""
+        startup_frame = ctk.CTkFrame(parent, corner_radius=8)
+        startup_frame.pack(fill="x", padx=5, pady=(0, 5))
+        
+        # Frame interno para organizar elementos
+        inner_frame = ctk.CTkFrame(startup_frame, fg_color="transparent")
+        inner_frame.pack(fill="x", padx=10, pady=8)
+        
+        # Etiqueta descriptiva
+        startup_label = ctk.CTkLabel(
+            inner_frame,
+            text="⚙️ Configuración de Mensajes",
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        startup_label.pack(side="left")
+        
+        # Switch para controlar mensajes de inicio
+        self.startup_messages_switch = ctk.CTkSwitch(
+            inner_frame,
+            text="Mostrar mensajes de inicio de la aplicación",
+            command=self.toggle_startup_messages,
+            font=ctk.CTkFont(size=11)
+        )
+        self.startup_messages_switch.pack(side="right", padx=(10, 0))
+        
+        # Establecer estado inicial del switch
+        if self.show_startup_messages:
+            self.startup_messages_switch.select()
+        else:
+            self.startup_messages_switch.deselect()
     
     def create_search_frame(self, parent):
         """Crear frame de búsqueda mejorado"""
@@ -991,13 +1050,13 @@ class ModsPanel(ctk.CTkFrame):
                 mods = data.get("data", [])
                 
                 # Actualizar UI en hilo principal
-                self.after(0, lambda: self.display_search_results(mods))
+                self._safe_schedule_ui_update(lambda: self.display_search_results(mods))
             else:
-                self.after(0, lambda: self.search_status_label.configure(f"❌ Error en la búsqueda: {response.status_code}"))
+                self._safe_schedule_ui_update(lambda: self.search_status_label.configure(f"❌ Error en la búsqueda: {response.status_code}"))
                 
         except Exception as e:
             self.logger.error(f"Error al buscar mods: {e}")
-            self.after(0, lambda: self.search_status_label.configure("❌ Error de conexión"))
+            self._safe_schedule_ui_update(lambda: self.search_status_label.configure("❌ Error de conexión"))
             
     def load_popular_mods(self):
         """Cargar mods populares"""
@@ -1026,13 +1085,13 @@ class ModsPanel(ctk.CTkFrame):
                 mods = data.get("data", [])
                 
                 # Actualizar UI en hilo principal
-                self.after(0, lambda: self.display_search_results(mods))
+                self._safe_schedule_ui_update(lambda: self.display_search_results(mods))
             else:
-                self.after(0, lambda: self.search_status_label.configure(f"❌ Error al cargar mods populares: {response.status_code}"))
+                self._safe_schedule_ui_update(lambda: self.search_status_label.configure(f"❌ Error al cargar mods populares: {response.status_code}"))
                 
         except Exception as e:
             self.logger.error(f"Error al cargar mods populares: {e}")
-            self.after(0, lambda: self.search_status_label.configure("❌ Error de conexión"))
+            self._safe_schedule_ui_update(lambda: self.search_status_label.configure("❌ Error de conexión"))
     
     def display_search_results(self, mods):
         """Mostrar resultados de búsqueda"""
@@ -1632,7 +1691,11 @@ class ModsPanel(ctk.CTkFrame):
             
             # Auto-cerrar después de 3 segundos para mensajes de éxito
             if msg_type == "success":
-                msg_window.after(3000, msg_window.destroy)
+                try:
+                    if msg_window.winfo_exists():
+                        msg_window.after(3000, msg_window.destroy)
+                except Exception:
+                    pass
                 
         except Exception as e:
             if self.logger:
@@ -1642,3 +1705,60 @@ class ModsPanel(ctk.CTkFrame):
                 messagebox.showinfo("Mensaje", message)
             except:
                 pass
+    
+    def toggle_startup_messages(self):
+        """Alternar configuración de mensajes de inicio"""
+        self.show_startup_messages = self.startup_messages_switch.get()
+        self.save_startup_messages_setting()
+        
+        # Mostrar mensaje de confirmación
+        status = "activados" if self.show_startup_messages else "desactivados"
+        self.show_message(f"Mensajes de inicio {status}", "success")
+        
+        if self.logger:
+            self.logger.info(f"Mensajes de inicio {status}")
+    
+    def load_startup_messages_setting(self):
+        """Cargar configuración de mensajes de inicio"""
+        try:
+            data_dir = self.get_data_directory()
+            settings_file = os.path.join(data_dir, "app_settings.json")
+            
+            if os.path.exists(settings_file):
+                with open(settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    self.show_startup_messages = settings.get("show_startup_messages", True)
+            else:
+                self.show_startup_messages = True
+                
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error cargando configuración de mensajes de inicio: {e}")
+            self.show_startup_messages = True
+    
+    def save_startup_messages_setting(self):
+        """Guardar configuración de mensajes de inicio"""
+        try:
+            data_dir = self.get_data_directory()
+            settings_file = os.path.join(data_dir, "app_settings.json")
+            
+            # Cargar configuración existente o crear nueva
+            settings = {}
+            if os.path.exists(settings_file):
+                with open(settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+            
+            # Actualizar configuración
+            settings["show_startup_messages"] = self.show_startup_messages
+            
+            # Guardar configuración
+            with open(settings_file, 'w', encoding='utf-8') as f:
+                json.dump(settings, f, indent=2, ensure_ascii=False)
+                
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error guardando configuración de mensajes de inicio: {e}")
+    
+    def get_startup_messages_setting(self):
+        """Obtener configuración actual de mensajes de inicio"""
+        return self.show_startup_messages

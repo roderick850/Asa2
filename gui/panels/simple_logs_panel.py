@@ -9,6 +9,17 @@ class SimpleLogsPanel(ctk.CTkFrame):
         self.logger = logger
         self.main_window = main_window
         
+    def _safe_schedule_ui_update(self, callback, delay=0):
+        """Programa una actualización de UI de forma segura, verificando que la ventana principal exista"""
+        try:
+            if self.main_window and hasattr(self.main_window, 'root') and self.main_window.root:
+                self.main_window.root.after(delay, callback)
+            elif hasattr(self, 'winfo_exists') and self.winfo_exists():
+                self.after(delay, callback)
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al programar actualización de UI: {e}")
+        
         # Configurar el frame principal para expandirse
         self.pack(fill="both", expand=True)
         
@@ -19,8 +30,8 @@ class SimpleLogsPanel(ctk.CTkFrame):
             # Intentar inmediatamente
             self.show_default_content()
             # Reintentar después de que se construya la GUI
-            self.after(100, self.show_default_content)
-            self.after(1000, self.show_default_content)  # Otro intento por si falla
+            self._safe_schedule_ui_update(self.show_default_content, 100)
+            self._safe_schedule_ui_update(self.show_default_content, 1000)  # Otro intento por si falla
             
             # Agregar mensaje de prueba inmediato
             if self.logger:

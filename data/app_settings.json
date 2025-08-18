@@ -22,5 +22,6 @@
   "selected_server_on_start": null,
   "selected_map_on_start": null,
   "last_server_name": null,
-  "last_map_name": null
+  "last_map_name": null,
+  "show_startup_messages": 0
 }

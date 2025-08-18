@@ -1,0 +1,33 @@
+2025-08-17 01:14:57 - ArkServerManager - INFO - ServerManager inicializado para island
+2025-08-17 01:14:57 - ArkServerManager - INFO - Configuración del cluster cargada: Mi Cluster ARK (1 servidores)
+2025-08-17 01:14:57 - ArkServerManager - INFO - ClusterManager inicializado
+2025-08-17 01:14:57 - ArkServerManager - INFO - ServerManager inicializado para TestServer
+2025-08-17 01:14:57 - ArkServerManager - INFO - Configuración del cluster guardada
+2025-08-17 01:14:57 - ArkServerManager - INFO - Servidor TestServer agregado al cluster
+2025-08-17 01:15:15 - ArkServerManager - INFO - ServerManager inicializado para island
+2025-08-17 01:15:15 - ArkServerManager - INFO - ServerManager inicializado para TestServer
+2025-08-17 01:15:15 - ArkServerManager - INFO - Configuración del cluster cargada: Mi Cluster ARK (2 servidores)
+2025-08-17 01:15:15 - ArkServerManager - INFO - ClusterManager inicializado
+2025-08-17 01:15:15 - ArkServerManager - WARNING - Servidor TestServer ya existe en el cluster
+2025-08-17 01:16:03 - ArkServerManager - INFO - ServerManager inicializado para island
+2025-08-17 01:16:03 - ArkServerManager - INFO - ServerManager inicializado para TestServer
+2025-08-17 01:16:03 - ArkServerManager - INFO - Configuración del cluster cargada: Mi Cluster ARK (2 servidores)
+2025-08-17 01:16:03 - ArkServerManager - INFO - ClusterManager inicializado
+2025-08-17 01:16:03 - ArkServerManager - WARNING - Servidor TestServer ya existe en el cluster
+2025-08-17 01:16:03 - ArkServerManager - INFO - Configuración del cluster guardada
+2025-08-17 01:16:03 - ArkServerManager - INFO - ServerManager inicializado para island
+2025-08-17 01:16:03 - ArkServerManager - INFO - ServerManager inicializado para TestServer
+2025-08-17 01:16:03 - ArkServerManager - INFO - Configuración del cluster cargada: Mi Cluster ARK (2 servidores)
+2025-08-17 01:16:03 - ArkServerManager - INFO - ClusterManager inicializado
+2025-08-17 01:16:03 - ArkServerManager - INFO - ServerManager inicializado para TestInstance
+2025-08-17 01:16:51 - ArkServerManager - INFO - ServerManager inicializado para island
+2025-08-17 01:16:51 - ArkServerManager - INFO - ServerManager inicializado para TestServer
+2025-08-17 01:16:51 - ArkServerManager - INFO - Configuración del cluster cargada: Mi Cluster ARK (2 servidores)
+2025-08-17 01:16:51 - ArkServerManager - INFO - ClusterManager inicializado
+2025-08-17 01:16:51 - ArkServerManager - WARNING - Servidor TestServer ya existe en el cluster
+2025-08-17 01:16:51 - ArkServerManager - INFO - Configuración del cluster guardada
+2025-08-17 01:16:51 - ArkServerManager - INFO - ServerManager inicializado para island
+2025-08-17 01:16:51 - ArkServerManager - INFO - ServerManager inicializado para TestServer
+2025-08-17 01:16:51 - ArkServerManager - INFO - Configuración del cluster cargada: Mi Cluster ARK (2 servidores)
+2025-08-17 01:16:51 - ArkServerManager - INFO - ClusterManager inicializado
+2025-08-17 01:16:51 - ArkServerManager - INFO - ServerManager inicializado para TestInstance

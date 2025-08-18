@@ -44,7 +44,18 @@ class RconPanel(ctk.CTkFrame):
         self.create_widgets()
         
         # Cargar configuración después de un pequeño retraso para asegurar que los widgets estén listos
-        self.after(100, self.load_rcon_config)
+        self._safe_schedule_ui_update(self.load_rcon_config, 100)
+        
+    def _safe_schedule_ui_update(self, callback, delay=0):
+        """Programa una actualización de UI de forma segura, verificando que la ventana principal exista"""
+        try:
+            if self.main_window and hasattr(self.main_window, 'root') and self.main_window.root:
+                self.main_window.root.after(delay, callback)
+            elif hasattr(self, 'winfo_exists') and self.winfo_exists():
+                self.after(delay, callback)
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al programar actualización de UI: {e}")
         
     def create_widgets(self):
         """Crear todos los widgets del panel RCON"""
@@ -296,6 +307,11 @@ class RconPanel(ctk.CTkFrame):
     def update_password_info(self):
         """Actualizar información del password desde AdminPassword"""
         try:
+            # Verificar que el widget password_info existe antes de acceder a él
+            if not hasattr(self, 'password_info') or self.password_info is None:
+                self.logger.warning("Widget password_info no está disponible aún")
+                return
+                
             admin_password = self.config_manager.get("server", "admin_password", "")
             if admin_password:
                 self.password_info.configure(text=f"🔗 Configurado ({len(admin_password)} caracteres)")
@@ -305,7 +321,12 @@ class RconPanel(ctk.CTkFrame):
                 self.rcon_password = ""
         except Exception as e:
             self.logger.error(f"Error al actualizar información del password: {e}")
-            self.password_info.configure(text="❌ Error al obtener password")
+            # Solo intentar configurar el widget si existe
+            if hasattr(self, 'password_info') and self.password_info is not None:
+                try:
+                    self.password_info.configure(text="❌ Error al obtener password")
+                except:
+                    pass  # Ignorar errores adicionales si el widget no está disponible
     
     def refresh_password_from_config(self):
         """Método público para refrescar el password desde configuración (llamado desde main_window)"""
@@ -456,8 +477,8 @@ class RconPanel(ctk.CTkFrame):
     def execute_rcon_command(self, command):
         """Ejecutar comando RCON usando el ejecutable en la carpeta rcon"""
         # Log del intento de ejecución
-        if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
-            self.main_window.root.after(0, lambda: self.main_window.add_log_message(f"🎮 RCON: Ejecutando '{command}'..."))
+        if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
+            self._safe_schedule_ui_update(lambda: self.main_window.add_log_message(f"🎮 RCON: Ejecutando '{command}'..."))
         
         try:
             # Buscar el ejecutable RCON en múltiples ubicaciones
@@ -484,8 +505,8 @@ class RconPanel(ctk.CTkFrame):
                 error_msg = "❌ No se encontró ejecutable RCON"
                 search_info = "Buscado en: " + ", ".join([str(p) for p in search_paths])
                 self.logger.error(f"RCON executable not found. {search_info}")
-                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
-                    self.main_window.root.after(0, lambda: self.main_window.add_log_message(f"🔌 RCON Error: No se encontró ejecutable RCON"))
+                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
+                    self._safe_schedule_ui_update(lambda: self.main_window.add_log_message(f"🔌 RCON Error: No se encontró ejecutable RCON"))
                 return error_msg
             
             # Construir comando
@@ -516,8 +537,8 @@ class RconPanel(ctk.CTkFrame):
                     success_msg += f" - Respuesta: {response[:50]}{'...' if len(response) > 50 else ''}"
                 
                 # Log en área principal
-                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
-                    self.main_window.root.after(0, lambda: self.main_window.add_log_message(success_msg))
+                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
+                    self._safe_schedule_ui_update(lambda: self.main_window.add_log_message(success_msg))
                 
                 # Log en archivo
                 if hasattr(self, 'main_window') and hasattr(self.main_window, 'log_server_event'):
@@ -534,8 +555,8 @@ class RconPanel(ctk.CTkFrame):
                 fail_msg = f"❌ RCON: '{command}' falló - {error_msg}"
                 
                 # Log en área principal
-                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
-                    self.main_window.root.after(0, lambda: self.main_window.add_log_message(fail_msg))
+                if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
+                    self._safe_schedule_ui_update(lambda: self.main_window.add_log_message(fail_msg))
                 
                 # Log en archivo
                 if hasattr(self, 'main_window') and hasattr(self.main_window, 'log_server_event'):
@@ -548,14 +569,14 @@ class RconPanel(ctk.CTkFrame):
                 
         except subprocess.TimeoutExpired:
             timeout_msg = f"⏱️ RCON Timeout: '{command}' tardó demasiado en ejecutarse"
-            if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
-                self.main_window.root.after(0, lambda: self.main_window.add_log_message(timeout_msg))
+            if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
+                self._safe_schedule_ui_update(lambda: self.main_window.add_log_message(timeout_msg))
             return "❌ Timeout: El comando tardó demasiado en ejecutarse"
         except Exception as e:
             self.logger.error(f"Error al ejecutar comando RCON: {e}")
             error_msg = f"🔌 RCON Error: '{command}' - Error de conexión: {str(e)}"
-            if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message') and hasattr(self.main_window, 'root'):
-                self.main_window.root.after(0, lambda: self.main_window.add_log_message(error_msg))
+            if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
+                self._safe_schedule_ui_update(lambda: self.main_window.add_log_message(error_msg))
             return f"❌ Error al ejecutar comando: {e}"
     
     def execute_command(self, command):

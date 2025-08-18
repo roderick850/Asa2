@@ -22,6 +22,13 @@ class ConsolePanel:
         self._current_log_file = None  # Archivo de log actual para detectar cambios
         self._content_loaded = False  # Indica si ya se cargó el contenido existente
         
+        # Variables para modo cluster
+        self.is_cluster_mode = False
+        self.cluster_servers = {}  # Diccionario de servidores del cluster
+        self.current_server_id = None  # Servidor actualmente seleccionado
+        self.server_consoles = {}  # Diccionario de widgets de consola por servidor
+        self.server_threads = {}  # Diccionario de threads de monitoreo por servidor
+        
         # Referencia al server_manager para acceder a la consola
         if main_window and hasattr(main_window, 'server_panel'):
             self.server_manager = main_window.server_panel.server_manager
@@ -37,29 +44,56 @@ class ConsolePanel:
             return
             
         # Frame principal
-        main_frame = ctk.CTkFrame(self.parent)
-        main_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        self.main_frame = ctk.CTkFrame(self.parent)
+        self.main_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # Frame de título y selección de servidor
+        title_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        title_frame.pack(fill="x", pady=(5, 10))
         
         # Título
-        title_label = ctk.CTkLabel(
-            main_frame, 
+        self.title_label = ctk.CTkLabel(
+            title_frame, 
             text="🖥️ Consola del Servidor", 
             font=ctk.CTkFont(size=16, weight="bold")
         )
-        title_label.pack(pady=(5, 10))
+        self.title_label.pack(side="left", padx=(10, 20))
+        
+        # Frame de selección de servidor (solo visible en modo cluster)
+        self.server_selection_frame = ctk.CTkFrame(title_frame, fg_color="transparent")
+        
+        # Label para selección de servidor
+        self.server_label = ctk.CTkLabel(
+            self.server_selection_frame,
+            text="Servidor:",
+            font=ctk.CTkFont(size=12)
+        )
+        self.server_label.pack(side="left", padx=(0, 5))
+        
+        # Dropdown para selección de servidor
+        self.server_dropdown = ctk.CTkOptionMenu(
+            self.server_selection_frame,
+            values=["Ningún servidor"],
+            command=self.on_server_selected,
+            width=200
+        )
+        self.server_dropdown.pack(side="left", padx=(0, 10))
+        
+        # Inicialmente oculto (solo se muestra en modo cluster)
+        # self.server_selection_frame.pack_forget()
         
         # Frame de controles
-        controls_frame = ctk.CTkFrame(main_frame)
+        controls_frame = ctk.CTkFrame(self.main_frame)
         controls_frame.pack(fill="x", padx=5, pady=5)
         
-        # Frame para el switch de visibilidad de consola
-        console_visibility_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
-        console_visibility_frame.pack(fill="x", padx=10, pady=5)
+        # Frame para el switch de visibilidad de consola (modo servidor único)
+        self.single_console_visibility_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
+        self.single_console_visibility_frame.pack(fill="x", padx=10, pady=5)
         
-        # Switch para mostrar/ocultar consola del servidor
+        # Switch para mostrar/ocultar consola del servidor (modo único)
         self.console_visibility_var = ctk.BooleanVar(value=self.config_manager.get("app", "show_server_console", default="true").lower() == "true")
         self.show_console_switch = ctk.CTkSwitch(
-            console_visibility_frame,
+            self.single_console_visibility_frame,
             text="Mostrar Consola del Servidor",
             command=self.toggle_server_console_visibility,
             variable=self.console_visibility_var
@@ -68,11 +102,19 @@ class ConsolePanel:
         
         # Etiqueta explicativa
         ctk.CTkLabel(
-            console_visibility_frame, 
+            self.single_console_visibility_frame, 
             text="Controla si la ventana de consola del servidor es visible o se ejecuta en segundo plano",
             font=("Arial", 10),
             text_color=("gray50", "gray70")
         ).pack(side="left", padx=(0, 20))
+        
+        # Frame para switches individuales de visibilidad (modo cluster)
+        self.cluster_console_visibility_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
+        # Inicialmente oculto
+        
+        # Diccionario para almacenar switches individuales de cada servidor
+        self.server_console_switches = {}
+        self.server_console_vars = {}
         
         # Frame para botones de control
         buttons_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
@@ -128,7 +170,7 @@ class ConsolePanel:
         self.start_monitoring_button.pack(side="right", padx=5, pady=5)
         
         # Frame para comandos
-        command_frame = ctk.CTkFrame(main_frame)
+        command_frame = ctk.CTkFrame(self.main_frame)
         command_frame.pack(fill="x", padx=5, pady=5)
         
         # Label para comandos
@@ -160,8 +202,8 @@ class ConsolePanel:
         )
         self.send_button.pack(side="left", padx=5, pady=5)
         
-        # Frame para la consola
-        console_frame = ctk.CTkFrame(main_frame)
+        # Frame de consola
+        console_frame = ctk.CTkFrame(self.main_frame)
         console_frame.pack(fill="both", expand=True, padx=5, pady=5)
         
         # Título de la consola
@@ -181,7 +223,7 @@ class ConsolePanel:
         self.console_text.pack(fill="both", expand=True, padx=5, pady=5)
         
         # Frame de estado
-        status_frame = ctk.CTkFrame(main_frame)
+        status_frame = ctk.CTkFrame(self.main_frame)
         status_frame.pack(fill="x", padx=5, pady=5)
         
         # Estado de la consola
@@ -203,7 +245,10 @@ class ConsolePanel:
         self.add_console_message("Consola del servidor inicializada. Iniciando monitoreo automático...")
         
         # Iniciar monitoreo automáticamente con retraso para asegurar que la app esté lista
-        self.parent.after(3000, self.auto_start_monitoring)
+        try:
+            self.parent.after(3000, self.auto_start_monitoring)
+        except Exception:
+            pass
         
 
     
@@ -237,7 +282,10 @@ class ConsolePanel:
                 should_auto_start = self.main_window.app_settings.get_setting("auto_start_server")
         
         if should_auto_start and not self.server_manager.is_server_running():
-            self.parent.after(2000, self.auto_start_server)
+            try:
+                self.parent.after(2000, self.auto_start_server)
+            except Exception:
+                pass
             self.add_console_message("🚀 Auto-inicio del servidor configurado, iniciando en 2 segundos...")
         else:
             if should_auto_start:
@@ -365,7 +413,10 @@ class ConsolePanel:
         
         # Actualizar el switch de visibilidad de consola
         if self.main_window and hasattr(self.main_window, 'root'):
-            self.main_window.root.after(1000, self.refresh_console_visibility_switch)
+            try:
+                self.main_window.root.after(1000, self.refresh_console_visibility_switch)
+            except Exception:
+                pass
     
     def _start_server_in_capture_mode(self):
         """Método auxiliar para iniciar el servidor en modo de captura"""
@@ -911,20 +962,42 @@ class ConsolePanel:
     def refresh_console_visibility_switch(self):
         """Actualizar el estado del switch de visibilidad de consola"""
         try:
-            if self.server_manager and self.server_manager.is_server_running():
-                    # Verificar si la consola está visible
-                    if self.server_manager.server_console_hwnd:
-                        # La consola existe, verificar si está visible
-                        import ctypes
+            if not self.server_manager:
+                return
+                
+            # Verificación thread-safe del estado del servidor
+            server_running = False
+            try:
+                server_running = self.server_manager.is_server_running()
+            except Exception as server_check_error:
+                self.logger.debug(f"Error verificando estado del servidor: {server_check_error}")
+                # Fallback: verificar usando el proceso guardado
+                if hasattr(self.server_manager, 'server_process') and self.server_manager.server_process:
+                    try:
+                        server_running = self.server_manager.server_process.poll() is None
+                    except:
+                        server_running = False
+            
+            if server_running:
+                # Verificar si la consola está visible
+                if self.server_manager.server_console_hwnd:
+                    # La consola existe, verificar si está visible
+                    import ctypes
+                    try:
                         is_visible = ctypes.windll.user32.IsWindowVisible(self.server_manager.server_console_hwnd)
                         self.console_visibility_var.set(is_visible)
-                    else:
-                        # Buscar la ventana de consola
+                    except Exception as visibility_error:
+                        self.logger.debug(f"Error verificando visibilidad de consola: {visibility_error}")
+                else:
+                    # Buscar la ventana de consola
+                    try:
                         self.server_manager._find_server_console_window()
                         if self.server_manager.server_console_hwnd:
                             import ctypes
                             is_visible = ctypes.windll.user32.IsWindowVisible(self.server_manager.server_console_hwnd)
                             self.console_visibility_var.set(is_visible)
+                    except Exception as find_error:
+                        self.logger.debug(f"Error buscando ventana de consola: {find_error}")
         except Exception as e:
             self.logger.debug(f"Error al actualizar switch de visibilidad: {e}")
     
@@ -1005,32 +1078,289 @@ class ConsolePanel:
                             # Limpiar referencias previas para permitir monitoreo basado en archivos
                             self.server_manager.server_process = None  # No tenemos acceso directo al proceso
                             
-                            # Limpiar estado de archivos para forzar nueva lectura
-                            if hasattr(self, '_last_file_position'):
-                                self._last_file_position = None
-                            if hasattr(self, '_current_log_file'):
-                                self._current_log_file = None
-                            if hasattr(self, '_content_loaded'):
-                                self._content_loaded = False
-                            
-                            # Actualizar estado en MainWindow
-                            if hasattr(self.main_window, 'update_server_status'):
-                                self.main_window.update_server_status("Activo (Monitoreando)")
-                            
-                            self.add_console_message("📋 Monitoreo configurado para leer logs del servidor existente")
                             return True
-                            
                         except psutil.NoSuchProcess:
-                            self.add_console_message("⚠️ El proceso desapareció durante la reconexión")
+                            self.add_console_message("⚠️ El proceso del servidor ya no existe")
                             continue
-                        except psutil.AccessDenied:
-                            self.add_console_message("⚠️ Sin permisos para acceder al proceso")
+                        except Exception as e:
+                            self.add_console_message(f"❌ Error al acceder al proceso: {e}")
                             continue
                             
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
                     
-            # No se encontró servidor
+            return False
+        except Exception as e:
+            self.add_console_message(f"❌ Error al buscar servidor existente: {e}")
+            return False
+    
+    def on_cluster_mode_changed(self, is_cluster_mode):
+        """Manejar el cambio de modo cluster"""
+        try:
+            self.is_cluster_mode = is_cluster_mode
+            
+            if is_cluster_mode:
+                # Mostrar selección de servidor
+                self.server_selection_frame.pack(side="right", padx=(0, 10))
+                self.title_label.configure(text="🌐 Consola del Cluster")
+                
+                # Ocultar switch único y mostrar switches individuales
+                self.single_console_visibility_frame.pack_forget()
+                self.cluster_console_visibility_frame.pack(fill="x", padx=10, pady=5)
+                
+                # Actualizar lista de servidores
+                self.update_server_list()
+                
+                # Crear switches individuales para cada servidor
+                self.create_individual_console_switches()
+                
+                self.logger.info("🌐 Console panel cambiado a modo cluster")
+                
+            else:
+                # Ocultar selección de servidor
+                self.server_selection_frame.pack_forget()
+                self.title_label.configure(text="🖥️ Consola del Servidor")
+                
+                # Mostrar switch único y ocultar switches individuales
+                self.cluster_console_visibility_frame.pack_forget()
+                self.single_console_visibility_frame.pack(fill="x", padx=10, pady=5)
+                
+                # Limpiar datos del cluster
+                self.cluster_servers.clear()
+                self.current_server_id = None
+                self.clear_individual_console_switches()
+                
+                self.logger.info("📱 Console panel cambiado a modo servidor único")
+                
+        except Exception as e:
+            self.logger.error(f"Error al cambiar modo cluster en console panel: {e}")
+    
+    def update_server_list(self):
+        """Actualizar la lista de servidores disponibles"""
+        try:
+            if not self.is_cluster_mode:
+                return
+            
+            # Obtener lista de servidores del cluster desde el main_window
+            server_names = ["Ningún servidor"]
+            
+            if self.main_window and hasattr(self.main_window, 'cluster_panel'):
+                cluster_panel = self.main_window.cluster_panel
+                if hasattr(cluster_panel, 'servers') and cluster_panel.servers:
+                    server_names = [f"{server['name']} ({server['map']})" for server in cluster_panel.servers.values()]
+                    server_names.insert(0, "Ningún servidor")
+            
+            # Actualizar el dropdown
+            self.server_dropdown.configure(values=server_names)
+            
+            if len(server_names) > 1 and self.current_server_id is None:
+                self.server_dropdown.set(server_names[1])  # Seleccionar el primer servidor
+                self.on_server_selected(server_names[1])
+            
+            # Actualizar switches individuales si están visibles
+            if self.cluster_console_visibility_frame.winfo_viewable():
+                self.create_individual_console_switches()
+            
+        except Exception as e:
+            self.logger.error(f"Error al actualizar lista de servidores: {e}")
+    
+    def on_server_selected(self, server_name):
+        """Manejar la selección de un servidor"""
+        try:
+            if server_name == "Ningún servidor":
+                self.current_server_id = None
+                self.add_console_message("ℹ️ Ningún servidor seleccionado")
+                return
+            
+            # Extraer el nombre del servidor del texto del dropdown
+            if " (" in server_name:
+                server_id = server_name.split(" (")[0]
+            else:
+                server_id = server_name
+            
+            self.current_server_id = server_id
+            
+            # Cambiar el monitoreo al servidor seleccionado
+            self.add_console_message(f"🔄 Cambiando a servidor: {server_name}")
+            
+            # Aplicar configuración de visibilidad específica del servidor
+            if self.is_cluster_mode and server_id in self.server_console_vars:
+                is_visible = self.server_console_vars[server_id].get()
+                if hasattr(self, 'server_manager') and self.server_manager:
+                    if is_visible:
+                        self.server_manager.show_console_window()
+                    else:
+                        self.server_manager.hide_console_window()
+            
+            # Reiniciar el monitoreo para el nuevo servidor
+            self.stop_console()
+            time.sleep(0.5)  # Pequeña pausa
+            self.start_console()
+            
+            self.logger.info(f"Servidor seleccionado: {server_name}")
+            
+        except Exception as e:
+            self.logger.error(f"Error al seleccionar servidor: {e}")
+    
+    def get_current_server_log_path(self):
+        """Obtener la ruta del log del servidor actual"""
+        try:
+            if self.is_cluster_mode and self.current_server_id:
+                # En modo cluster, cada servidor tiene su propio directorio de logs
+                if self.main_window and hasattr(self.main_window, 'cluster_panel'):
+                    cluster_panel = self.main_window.cluster_panel
+                    if hasattr(cluster_panel, 'servers') and self.current_server_id in cluster_panel.servers:
+                        server_info = cluster_panel.servers[self.current_server_id]
+                        # Construir ruta del log específica del servidor
+                        server_dir = f"server_{self.current_server_id}"
+                        log_path = os.path.join("logs", server_dir, "server.log")
+                        return log_path
+            
+            # Modo servidor único o fallback
+            return self.server_manager.get_log_file_path()
+            
+        except Exception as e:
+            self.logger.error(f"Error al obtener ruta del log: {e}")
+            return self.server_manager.get_log_file_path()
+    
+    def add_cluster_server(self, server_id, server_info):
+        """Agregar un servidor al cluster"""
+        try:
+            self.cluster_servers[server_id] = server_info
+            self.update_server_list()
+            self.logger.info(f"Servidor agregado al cluster: {server_id}")
+            
+        except Exception as e:
+            self.logger.error(f"Error al agregar servidor al cluster: {e}")
+    
+    def remove_cluster_server(self, server_id):
+        """Remover un servidor del cluster"""
+        try:
+            if server_id in self.cluster_servers:
+                del self.cluster_servers[server_id]
+                
+                # Si era el servidor actual, cambiar a ninguno
+                if self.current_server_id == server_id:
+                    self.current_server_id = None
+                    self.server_dropdown.set("Ningún servidor")
+                
+                self.update_server_list()
+                self.logger.info(f"Servidor removido del cluster: {server_id}")
+                
+        except Exception as e:
+            self.logger.error(f"Error al remover servidor del cluster: {e}")
+    
+    def create_individual_console_switches(self):
+        """Crear switches individuales para cada servidor del cluster"""
+        try:
+            # Limpiar switches existentes
+            self.clear_individual_console_switches()
+            
+            if not self.main_window or not hasattr(self.main_window, 'cluster_panel'):
+                return
+            
+            cluster_panel = self.main_window.cluster_panel
+            if not hasattr(cluster_panel, 'servers') or not cluster_panel.servers:
+                return
+            
+            # Crear título para la sección
+            title_label = ctk.CTkLabel(
+                self.cluster_console_visibility_frame,
+                text="Visibilidad de Consola por Servidor:",
+                font=ctk.CTkFont(size=12, weight="bold")
+            )
+            title_label.pack(anchor="w", padx=(0, 10), pady=(0, 5))
+            
+            # Frame contenedor para los switches
+            switches_container = ctk.CTkFrame(self.cluster_console_visibility_frame, fg_color="transparent")
+            switches_container.pack(fill="x", padx=10)
+            
+            # Crear un switch para cada servidor
+            for server_id, server_info in cluster_panel.servers.items():
+                server_name = server_info.get('name', server_id)
+                server_map = server_info.get('map', 'Unknown')
+                
+                # Frame para cada switch individual
+                switch_frame = ctk.CTkFrame(switches_container, fg_color="transparent")
+                switch_frame.pack(fill="x", pady=2)
+                
+                # Variable para el switch
+                var_key = f"show_console_{server_id}"
+                default_value = self.config_manager.get("cluster_console", var_key, default="true").lower() == "true"
+                console_var = ctk.BooleanVar(value=default_value)
+                self.server_console_vars[server_id] = console_var
+                
+                # Switch individual
+                switch = ctk.CTkSwitch(
+                    switch_frame,
+                    text=f"{server_name} ({server_map})",
+                    variable=console_var,
+                    command=lambda sid=server_id: self.toggle_individual_server_console(sid)
+                )
+                switch.pack(side="left", padx=(0, 20))
+                
+                self.server_console_switches[server_id] = switch
+            
+            # Etiqueta explicativa
+            ctk.CTkLabel(
+                self.cluster_console_visibility_frame,
+                text="Controla la visibilidad de la consola para cada servidor del cluster individualmente",
+                font=("Arial", 10),
+                text_color=("gray50", "gray70")
+            ).pack(anchor="w", padx=(0, 10), pady=(5, 0))
+            
+            self.logger.info(f"Creados {len(self.server_console_switches)} switches individuales de consola")
+            
+        except Exception as e:
+            self.logger.error(f"Error al crear switches individuales de consola: {e}")
+    
+    def clear_individual_console_switches(self):
+        """Limpiar todos los switches individuales"""
+        try:
+            # Limpiar widgets del frame
+            for widget in self.cluster_console_visibility_frame.winfo_children():
+                widget.destroy()
+            
+            # Limpiar diccionarios
+            self.server_console_switches.clear()
+            self.server_console_vars.clear()
+            
+        except Exception as e:
+            self.logger.error(f"Error al limpiar switches individuales: {e}")
+    
+    def toggle_individual_server_console(self, server_id):
+        """Alternar la visibilidad de consola para un servidor específico"""
+        try:
+            if server_id not in self.server_console_vars:
+                return
+            
+            is_visible = self.server_console_vars[server_id].get()
+            
+            # Guardar configuración
+            var_key = f"show_console_{server_id}"
+            self.config_manager.set("cluster_console", var_key, str(is_visible).lower())
+            
+            # Aplicar cambio si es el servidor actualmente seleccionado
+            if self.current_server_id == server_id:
+                if hasattr(self, 'server_manager') and self.server_manager:
+                    if is_visible:
+                        self.server_manager.show_console_window()
+                        self.add_console_message(f"✅ Consola de {server_id} ahora visible")
+                    else:
+                        self.server_manager.hide_console_window()
+                        self.add_console_message(f"🔇 Consola de {server_id} ahora oculta")
+            
+            server_name = server_id
+            if self.main_window and hasattr(self.main_window, 'cluster_panel'):
+                cluster_panel = self.main_window.cluster_panel
+                if hasattr(cluster_panel, 'servers') and server_id in cluster_panel.servers:
+                    server_name = cluster_panel.servers[server_id].get('name', server_id)
+            
+            status = "visible" if is_visible else "oculta"
+            self.logger.info(f"Consola de servidor {server_name} configurada como {status}")
+            
+        except Exception as e:
+            self.logger.error(f"Error al alternar consola individual del servidor {server_id}: {e}")
             self.add_console_message("❌ No se encontró proceso del servidor para reconectar")
             return False
             

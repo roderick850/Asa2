@@ -25,10 +25,11 @@ from .panels.console_panel import ConsolePanel
 from .dialogs.advanced_settings_dialog import AdvancedSettingsDialog
 from .dialogs.custom_dialogs import show_info, show_warning, show_error, ask_yes_no, ask_string
 from .panels.ini_config_panel import IniConfigPanel
+from .panels.cluster_panel import ClusterPanel
 
 class MainWindow:
 
-    APP_VERSION = "2.3"
+    APP_VERSION = "3.1"
     
     def __init__(self, root, config_manager, logger):
         """Inicializar la ventana principal"""
@@ -90,6 +91,20 @@ class MainWindow:
         
         # Configurar auto-inicio si es necesario
         self.check_auto_start_fallback()
+    
+    def _safe_schedule_ui_update(self, callback):
+        """Programar actualización de UI de forma segura verificando que la ventana principal exista"""
+        try:
+            # Verificar si la ventana principal existe y no está destruida
+            if hasattr(self, 'root') and self.root and hasattr(self.root, 'winfo_exists'):
+                if self.root.winfo_exists():
+                    self.root.after(0, callback)
+                else:
+                    return
+        except Exception as e:
+            # Si hay cualquier error, simplemente ignorar la actualización
+            if hasattr(self, 'logger') and self.logger:
+                self.logger.debug(f"Error programando actualización UI: {e}")
     
     def setup_window(self):
         """Configurar la ventana principal"""
@@ -417,6 +432,7 @@ class MainWindow:
         
         # Crear pestañas
         self.tab_principal_content = self.tabview.add("Principal")
+        self.tab_cluster_content = self.tabview.add("Cluster")
         self.tab_ini_config_content = self.tabview.add("Conf. INI")
         self.tab_mods_content = self.tabview.add("Mods")
         self.tab_backup_content = self.tabview.add("Backup")
@@ -429,6 +445,7 @@ class MainWindow:
         
         # Crear paneles
         self.principal_panel = PrincipalPanel(self.tab_principal_content, self.config_manager, self.logger, self)
+        self.cluster_panel = ClusterPanel(self.tab_cluster_content, self.config_manager, self.logger, self)
         # El ServerPanel ya no se muestra en la interfaz, pero se mantiene para funcionalidad backend
         self.server_panel = ServerPanel(None, self.config_manager, self.logger, self)
         self.config_panel = ConfigPanel(self.tab_configuraciones_content, self.config_manager, self.logger, self)
@@ -720,14 +737,14 @@ class MainWindow:
             
             # Auto-backup al iniciar
             if self.app_settings.get_setting("auto_backup_on_start"):
-                self.root.after(5000, self.auto_backup_on_start)
+                self._safe_schedule_ui_update(lambda: self.root.after(5000, self.auto_backup_on_start))
             
             # Minimizar al iniciar si está configurado
             if self.app_settings.get_setting("start_minimized"):
-                self.root.after(1000, self.minimize_to_tray)
+                self._safe_schedule_ui_update(lambda: self.root.after(1000, self.minimize_to_tray))
             
             # Inicializar información del panel expandido
-            self.root.after(2000, self.initialize_extended_panel_info)
+            self._safe_schedule_ui_update(lambda: self.root.after(2000, self.initialize_extended_panel_info))
             
             self.logger.info("Configuraciones de aplicación aplicadas")
             
@@ -2294,7 +2311,10 @@ Versión de la app: {self.APP_VERSION}
             # Notificar a los paneles que se cargó la configuración
             if last_server and hasattr(self, 'server_panel'):
                 # Programar actualización del panel después de que se inicialice completamente
-                self.root.after(500, lambda: self.update_panels_with_config(last_server, last_map))
+                try:
+                    self.root.after(500, lambda: self.update_panels_with_config(last_server, last_map))
+                except Exception:
+                    pass
                 
         except Exception as e:
             self.logger.error(f"❌ Error al cargar última configuración: {e}")
@@ -2597,6 +2617,68 @@ Versión de la app: {self.APP_VERSION}
                 
         except Exception as e:
             self.logger.error(f"Error al minimizar a bandeja: {e}")
+    
+    def on_cluster_mode_changed(self, is_cluster_mode):
+        """Manejar el cambio de modo cluster"""
+        try:
+            if is_cluster_mode:
+                # Modo cluster activado
+                self.logger.info("🌐 Cambiando a modo cluster")
+                
+                # Ocultar/modificar elementos de servidor único
+                if hasattr(self, 'server_selection_frame'):
+                    # Cambiar el texto del label de selección
+                    for widget in self.server_selection_frame.winfo_children():
+                        if isinstance(widget, ctk.CTkLabel) and "Servidor" in widget.cget("text"):
+                            widget.configure(text="🌐 Servidores del Cluster:")
+                            break
+                
+                # Mostrar panel de cluster si existe
+                if hasattr(self, 'cluster_panel'):
+                    # Hacer visible el tab de cluster
+                    try:
+                        self.notebook.tab(self.tab_cluster, state="normal")
+                    except:
+                        pass
+                
+                # Actualizar título de la ventana
+                self.root.title("ARK Cluster Manager")
+                
+            else:
+                # Modo servidor único activado
+                self.logger.info("📱 Cambiando a modo servidor único")
+                
+                # Restaurar elementos de servidor único
+                if hasattr(self, 'server_selection_frame'):
+                    # Restaurar el texto del label de selección
+                    for widget in self.server_selection_frame.winfo_children():
+                        if isinstance(widget, ctk.CTkLabel) and "Cluster" in widget.cget("text"):
+                            widget.configure(text="🖥️ Servidor:")
+                            break
+                
+                # Ocultar panel de cluster si existe
+                if hasattr(self, 'cluster_panel'):
+                    # Ocultar el tab de cluster
+                    try:
+                        self.notebook.tab(self.tab_cluster, state="hidden")
+                    except:
+                        pass
+                
+                # Restaurar título de la ventana
+                self.root.title("ARK Server Manager")
+            
+            # Actualizar otros paneles que puedan necesitar saber del cambio de modo
+            if hasattr(self, 'console_panel') and hasattr(self.console_panel, 'on_cluster_mode_changed'):
+                self.console_panel.on_cluster_mode_changed(is_cluster_mode)
+            
+            if hasattr(self, 'server_panel') and hasattr(self.server_panel, 'on_cluster_mode_changed'):
+                self.server_panel.on_cluster_mode_changed(is_cluster_mode)
+            
+            if hasattr(self, 'cluster_panel') and hasattr(self.cluster_panel, 'on_cluster_mode_changed'):
+                self.cluster_panel.on_cluster_mode_changed(is_cluster_mode)
+                
+        except Exception as e:
+            self.logger.error(f"Error al cambiar modo cluster: {e}")
     
     def restore_from_tray(self):
         """Restaurar la aplicación desde la bandeja del sistema"""

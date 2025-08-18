@@ -53,6 +53,28 @@ class DirectCommandsPanel(ctk.CTkFrame):
         
         # Iniciar monitoreo automático para conectar cuando el servidor esté disponible
         self.start_auto_connect_monitoring()
+    
+    def _safe_schedule_ui_update(self, callback, delay=0):
+        """Programar actualización de UI de forma segura"""
+        try:
+            # Verificar si la ventana principal aún existe
+            if (self.main_window and hasattr(self.main_window, 'root') and 
+                hasattr(self.main_window.root, 'winfo_exists')):
+                try:
+                    if self.main_window.root.winfo_exists():
+                        self.main_window.root.after(delay, callback)
+                        return
+                except Exception:
+                    pass
+            
+            # Verificar si el parent aún existe
+            try:
+                if hasattr(self.parent, 'winfo_exists') and self.parent.winfo_exists():
+                    self.parent.after(delay, callback)
+            except Exception:
+                pass
+        except Exception:
+            pass
         
     def create_widgets(self):
         """Crear todos los widgets del panel"""
@@ -613,16 +635,16 @@ class DirectCommandsPanel(ctk.CTkFrame):
                 self.logger.info("Actualizando UI...")
                 
                 # Actualizar interfaz en el hilo principal
-                self.parent.after(0, self._update_ui_after_auto_connect)
+                self._safe_schedule_ui_update(self._update_ui_after_auto_connect)
                 
                 # Iniciar monitoreo automáticamente en el hilo principal
-                self.parent.after(0, self.start_monitoring)
+                self._safe_schedule_ui_update(self.start_monitoring)
                 
             except Exception as e:
                 self.logger.error(f"Error al enviar comando de prueba: {e}")
                 self.logger.info("Reintentando conexión en 10 segundos...")
                 # Reintentar después de un delay
-                self.parent.after(10000, self.auto_connect_to_server)
+                self._safe_schedule_ui_update(self.auto_connect_to_server, 10000)
                 
         except Exception as e:
             self.logger.error(f"Error general en conexión automática: {e}")
@@ -973,7 +995,7 @@ class DirectCommandsPanel(ctk.CTkFrame):
                 if status == "started":
                     self.add_result("✅ Iniciado", "Servidor reiniciado con soporte para comandos programados")
                     # Intentar conectar automáticamente después de un momento
-                    self.parent.after(5000, self.connect_to_server)
+                    self._safe_schedule_ui_update(self.connect_to_server, 5000)
                 elif status == "error":
                     self.add_result("❌ Error", f"Error al reiniciar servidor: {message}")
                     self.show_error(f"Error al reiniciar servidor: {message}")

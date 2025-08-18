@@ -42,7 +42,10 @@ class ToolTip:
 
     def schedule(self):
         self.unschedule()
-        self.id = self.widget.after(800, self.showtip)  # Aumentar delay a 800ms
+        try:
+            self.id = self.widget.after(800, self.showtip)  # Aumentar delay a 800ms
+        except Exception:
+            pass
 
     def unschedule(self):
         if self.id:
@@ -51,7 +54,10 @@ class ToolTip:
 
     def schedule_hide(self):
         self.cancel_hide()
-        self.hide_id = self.widget.after(100, self.hidetip)  # Ocultar rápidamente
+        try:
+            self.hide_id = self.widget.after(100, self.hidetip)  # Ocultar rápidamente
+        except Exception:
+            pass
 
     def cancel_hide(self):
         if self.hide_id:
@@ -80,7 +86,10 @@ class ToolTip:
             label.pack()
             
             # Auto-ocultar después de un tiempo
-            tw.after(5000, self.hidetip)  # Auto-ocultar después de 5 segundos
+            try:
+                tw.after(5000, self.hidetip)  # Auto-ocultar después de 5 segundos
+            except Exception:
+                pass
             
         except tk.TclError:
             # El widget ya no existe
@@ -304,6 +313,8 @@ class IniConfigPanel(ctk.CTkFrame):
             "ImplantSuicideCD": "implantsuicidecd",
             
             # Agregar más mapeos según sea necesario...
+            "alwaysNotifyPlayerJoined":"alwaysnotifyplayerjoined",
+            "LogChatMessages":"logchatmessages"
         }
         
         # Variables de estado
@@ -329,6 +340,7 @@ class IniConfigPanel(ctk.CTkFrame):
             "MaxTamedDinos_SoftTameLimit_CountdownForDeletionDuration": "604800.0",
             "MaxPersonalTamedDinos": "500",
             "DifficultyOffset": "1.0",
+            "LogChatMessages": "True",
             "OverrideOfficialDifficulty": "5.0",
             "XPMultiplier": "1.0",
             "TamingSpeedMultiplier": "1.0",
@@ -457,6 +469,7 @@ class IniConfigPanel(ctk.CTkFrame):
             "RCONServerGameLogBuffer": "600",
             "GlobalPoweredBatteryDurabilityDecreasePerSecond": "4.0",
             "ImplantSuicideCD": "28800.0",
+            "alwaysNotifyPlayerJoined":"False",
             # Game.ini - [/Script/ShooterGame.ShooterGameMode] - Valores adicionales
             "bUseCorpseLocator": "True",
             "bDisableStructurePlacementCollision": "False",
@@ -519,6 +532,17 @@ class IniConfigPanel(ctk.CTkFrame):
         
         # Configurar auto-recarga cuando cambie el servidor
         self.setup_auto_reload()
+        
+    def _safe_schedule_ui_update(self, callback):
+        """Programar actualización de UI de forma segura"""
+        try:
+            if self.main_window and hasattr(self.main_window, 'root') and self.main_window.root:
+                callback()
+            elif hasattr(self, 'root') and self.root:
+                callback()
+        except Exception as e:
+            if hasattr(self, 'logger'):
+                self.logger.error(f"Error en _safe_schedule_ui_update: {e}")
         
     def create_widgets(self):
         """Crear todos los widgets del panel"""
@@ -1089,7 +1113,8 @@ class IniConfigPanel(ctk.CTkFrame):
             fields = [
                 ("alwaysNotifyPlayerJoined", "Siempre notificar jugador unido", "bool"),
                 ("alwaysNotifyPlayerLeft", "Siempre notificar jugador que se fue", "bool"),
-                ("AdminLogging", "Logging de administrador", "bool")
+                ("AdminLogging", "Logging de administrador", "bool"),
+                ("LogChatMessages", "Los registros de chat se guardarán en formato json", "bool")
             ]
         elif category == "StasisAndOptimization":
             fields = [
@@ -1568,7 +1593,10 @@ class IniConfigPanel(ctk.CTkFrame):
         self.update_status_indicator()
         
         # Guardar automáticamente después de un pequeño retraso
-        self.after(1000, self.auto_save_changes)
+        try:
+            self.after(1000, self.auto_save_changes)
+        except Exception:
+            pass
         
     def update_status_indicator(self):
         """Actualizar el indicador de estado"""
@@ -1712,12 +1740,19 @@ class IniConfigPanel(ctk.CTkFrame):
                     self.logger.debug(f"✅ Servidor sin cambios: {current_server}")
                 
                 # Programar próxima verificación
-                self.main_window.root.after(2000, self.check_for_server_changes)
+                if self.main_window and hasattr(self.main_window, 'root') and self.main_window.root:
+                    try:
+                        self.main_window.root.after(2000, self.check_for_server_changes)
+                    except Exception:
+                        pass
             else:
                 self.logger.debug("MainWindow no disponible, esperando...")
                 # Programar próxima verificación incluso si no hay main_window
                 if hasattr(self, 'root') and self.root:
-                    self.root.after(2000, self.check_for_server_changes)
+                    try:
+                        self.root.after(2000, self.check_for_server_changes)
+                    except Exception:
+                        pass
         except Exception as e:
             self.logger.error(f"❌ Error verificando cambios de servidor: {e}")
             import traceback

@@ -474,7 +474,10 @@ class AdvancedSettingsDialog:
             self._theme_change_in_progress = True
             
             # Cambiar tema de forma asíncrona para evitar bloqueos
-            self.dialog.after(100, lambda: self._apply_theme_change(value))
+            try:
+                self.dialog.after(100, lambda: self._apply_theme_change(value))
+            except Exception as e:
+                self.logger.error(f"Error al programar cambio de tema: {e}")
             self.changes_made = True
             
         except Exception as e:
@@ -537,7 +540,10 @@ class AdvancedSettingsDialog:
                 self.logger.warning(f"Error al actualizar interfaz: {e}")
             
             # Restaurar cursor normal y habilitar cambios futuros
-            self.dialog.after(800, lambda: self._finish_theme_change())
+            try:
+                self.dialog.after(800, lambda: self._finish_theme_change())
+            except Exception as e:
+                self.logger.error(f"Error al programar finalización de cambio de tema: {e}")
             
             self.logger.info(f"Tema cambiado exitosamente a: {theme_value}")
             

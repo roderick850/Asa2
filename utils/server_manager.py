@@ -23,6 +23,11 @@ class ServerManager:
         self.server_fully_started = False  # Nueva variable para controlar el estado completo
         self.logger = logging.getLogger(__name__)
         
+        # Cache para optimizar is_server_running
+        self._last_process_check = 0
+        self._process_check_cache = False
+        self._cache_timeout = 3  # 3 segundos de cache
+        
         # Cargar APIs de Windows para controlar ventanas
         self.user32 = ctypes.windll.user32
         self.kernel32 = ctypes.windll.kernel32
@@ -263,36 +268,15 @@ class ServerManager:
             return False
 
     def get_server_status(self):
-        """Obtiene el estado actual del servidor"""
-        # Verificar proceso guardado
-        if self.server_process and self.server_process.poll() is None:
-            if self.server_fully_started:
-                return "Ejecutándose"
-            else:
-                return "Iniciando"
-        elif self.server_pid and psutil.pid_exists(self.server_pid):
+        """Obtiene el estado actual del servidor - Optimizado"""
+        # Usar el método optimizado is_server_running
+        if self.is_server_running():
             if self.server_fully_started:
                 return "Ejecutándose"
             else:
                 return "Iniciando"
         else:
-            # Buscar procesos de ARK Server por nombre
-            for proc in psutil.process_iter(['pid', 'name']):
-                try:
-                    if proc.info['name'] and 'ArkAscendedServer.exe' in proc.info['name']:
-                        # Encontrado proceso ARK, actualizar PID
-                        self.server_pid = proc.info['pid']
-                        self.server_running = True
-                        if self.server_fully_started:
-                            return "Ejecutándose"
-                        else:
-                            return "Iniciando"
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
-            
-            # No se encontró ningún proceso ARK
-            self.server_running = False
-            self.server_pid = None
+            # No hay servidor ejecutándose
             self.server_fully_started = False
             return "Detenido"
     
@@ -326,33 +310,70 @@ class ServerManager:
             return {"cpu_percent": 0, "memory_mb": 0}
     
     def is_server_running(self):
-        """Verificar si el servidor está ejecutándose - Detecta por nombre de proceso"""
+        """Verificar si el servidor está ejecutándose - Optimizado con cache"""
         try:
-            # Método 1: Verificar proceso guardado
+            import time
+            current_time = time.time()
+            
+            # Método 1: Verificar proceso guardado (siempre rápido)
             if self.server_process and self.server_process.poll() is None:
+                self.server_pid = self.server_process.pid
+                self.server_running = True
+                self._process_check_cache = True
+                self._last_process_check = current_time
                 return True
-                
-            # Método 2: Buscar procesos por nombre (método principal)
+            
+            # Método 2: Verificar PID guardado (rápido)
+            if self.server_pid:
+                try:
+                    if psutil.pid_exists(self.server_pid):
+                        proc = psutil.Process(self.server_pid)
+                        if 'ArkAscendedServer.exe' in proc.name():
+                            self.server_running = True
+                            self._process_check_cache = True
+                            self._last_process_check = current_time
+                            return True
+                        else:
+                            # PID existe pero no es ARK, limpiar
+                            self.server_pid = None
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    # PID no existe, limpiar
+                    self.server_pid = None
+            
+            # Método 3: Cache de búsqueda de procesos (costoso)
+            if (current_time - self._last_process_check) < self._cache_timeout:
+                # Usar resultado cacheado
+                self.server_running = self._process_check_cache
+                return self._process_check_cache
+            
+            # Método 4: Búsqueda completa de procesos (solo cada 3 segundos)
+            self.logger.debug("Realizando búsqueda completa de procesos ARK...")
+            ark_processes = []
             for proc in psutil.process_iter(['pid', 'name']):
                 try:
                     if proc.info['name'] and 'ArkAscendedServer.exe' in proc.info['name']:
-                        # Encontrado proceso ARK, actualizar PID
-                        self.server_pid = proc.info['pid']
-                        self.server_running = True
-                        self.logger.debug(f"Servidor detectado por nombre - PID: {proc.info['pid']}")
-                        return True
+                        ark_processes.append(proc)
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
-                    
-            # Método 3: Verificar PID guardado (fallback)
-            if self.server_pid and psutil.pid_exists(self.server_pid):
-                return True
-                
-            # No se encontró servidor ejecutándose
-            self.server_running = False
-            self.server_pid = None
-            return False
             
+            # Actualizar cache
+            self._last_process_check = current_time
+            
+            if ark_processes:
+                # Tomar el primer proceso encontrado
+                proc = ark_processes[0]
+                self.server_pid = proc.info['pid']
+                self.server_running = True
+                self._process_check_cache = True
+                self.logger.debug(f"Servidor detectado en búsqueda completa - PID: {proc.info['pid']}")
+                return True
+            else:
+                # No se encontró servidor
+                self.server_running = False
+                self.server_pid = None
+                self._process_check_cache = False
+                return False
+                
         except Exception as e:
             self.logger.error(f"Error verificando estado del servidor: {e}")
             return False

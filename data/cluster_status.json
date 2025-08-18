@@ -1,0 +1,56 @@
+{
+  "cluster_id": "my_ark_cluster",
+  "last_update": "2025-08-17T01:37:34.740960",
+  "servers": {
+    "island": {
+      "name": "island",
+      "status": "stopped",
+      "pid": null,
+      "uptime": 0,
+      "players_online": 0,
+      "memory_usage": 0,
+      "cpu_usage": 0.0,
+      "last_backup": null,
+      "last_update": "2025-08-17T01:30:20.952551",
+      "config": {
+        "name": "The Island",
+        "map": "TheIsland_WP",
+        "port": 7777,
+        "query_port": 27015,
+        "rcon_port": 32330,
+        "priority": 1,
+        "auto_start": true,
+        "transfer_allowed": true
+      }
+    },
+    "TestServer": {
+      "name": "TestServer",
+      "status": "stopped",
+      "pid": null,
+      "uptime": 0,
+      "players_online": 0,
+      "memory_usage": 0,
+      "cpu_usage": 0.0,
+      "last_backup": null,
+      "last_update": "2025-08-17T01:30:20.953557",
+      "config": {
+        "name": "TestServer",
+        "map": "TheIsland_WP",
+        "port": 7778,
+        "query_port": 27016,
+        "rcon_port": 32331,
+        "max_players": 20,
+        "server_path": "D:\\ASA\\TestServer",
+        "priority": 2,
+        "auto_start": false,
+        "cluster_enabled": true
+      }
+    }
+  },
+  "cluster_stats": {
+    "total_players": 0,
+    "total_memory": 0,
+    "average_cpu": 0.0,
+    "active_servers": 0
+  }
+}

@@ -225,13 +225,42 @@ class SystemTray:
             self.is_hidden = True
             self.show_notification("Ark Server Manager", "Aplicación minimizada a la bandeja del sistema")
     
+    def _safe_after(self, delay, func):
+        """Ejecutar función de forma segura en el hilo principal de Tkinter"""
+        try:
+            # Verificar si el hilo principal está disponible
+            if hasattr(self.main_window, 'root') and self.main_window.root:
+                self.main_window.root.after(delay, func)
+            else:
+                self.logger.warning("No se puede ejecutar función: ventana principal no disponible")
+        except RuntimeError as e:
+            if "main thread is not in main loop" in str(e):
+                self.logger.warning(f"No se puede ejecutar función desde hilo secundario: {func}")
+                # Intentar ejecutar directamente si es posible
+                try:
+                    func()
+                except Exception as direct_error:
+                    self.logger.error(f"Error ejecutando función directamente: {direct_error}")
+            else:
+                self.logger.error(f"Error en _safe_after: {e}")
+        except Exception as e:
+            self.logger.error(f"Error inesperado en _safe_after: {e}")
+    
     def show_window(self, icon=None, item=None):
         """Mostrar ventana principal desde la bandeja"""
-        if self.is_hidden:
-            self.main_window.root.deiconify()
-            self.main_window.root.lift()
-            self.main_window.root.focus_force()
-            self.is_hidden = False
+        try:
+            if self.is_hidden and hasattr(self.main_window, 'root') and self.main_window.root:
+                self.main_window.root.deiconify()
+                self.main_window.root.lift()
+                self.main_window.root.focus_force()
+                self.is_hidden = False
+        except RuntimeError as e:
+            if "main thread is not in main loop" in str(e):
+                self.logger.warning("No se puede mostrar ventana: hilo principal no disponible")
+            else:
+                self.logger.error(f"Error mostrando ventana: {e}")
+        except Exception as e:
+            self.logger.error(f"Error inesperado mostrando ventana: {e}")
     
     def can_start_server(self):
         """Verificar si se puede iniciar el servidor"""
@@ -255,7 +284,7 @@ class SystemTray:
         """Iniciar servidor desde la bandeja"""
         try:
             if hasattr(self.main_window, 'server_panel'):
-                self.main_window.root.after(0, self.main_window.server_panel.start_server)
+                self._safe_after(0, self.main_window.server_panel.start_server)
                 self.show_notification("Servidor", "Iniciando servidor...")
         except Exception as e:
             self.logger.error(f"Error al iniciar servidor desde bandeja: {e}")
@@ -264,7 +293,7 @@ class SystemTray:
         """Detener servidor desde la bandeja"""
         try:
             if hasattr(self.main_window, 'server_panel'):
-                self.main_window.root.after(0, self.main_window.server_panel.stop_server)
+                self._safe_after(0, self.main_window.server_panel.stop_server)
                 self.show_notification("Servidor", "Deteniendo servidor...")
         except Exception as e:
             self.logger.error(f"Error al detener servidor desde bandeja: {e}")
@@ -282,7 +311,7 @@ class SystemTray:
         """Realizar backup manual desde la bandeja"""
         try:
             if hasattr(self.main_window, 'backup_panel'):
-                self.main_window.root.after(0, lambda: self.main_window.backup_panel.manual_backup())
+                self._safe_after(0, lambda: self.main_window.backup_panel.manual_backup())
                 self.show_notification("Backup", "Iniciando backup manual...")
         except Exception as e:
             self.logger.error(f"Error al hacer backup desde bandeja: {e}")
@@ -291,12 +320,12 @@ class SystemTray:
         """Mostrar configuraciones"""
         self.show_window()
         # Mostrar diálogo de configuraciones
-        self.main_window.root.after(100, self.main_window.show_configuracion)
+        self._safe_after(100, self.main_window.show_configuracion)
     
     def show_about(self, icon=None, item=None):
         """Mostrar información acerca de"""
         self.show_window()
-        self.main_window.root.after(100, self.main_window.show_ayuda)
+        self._safe_after(100, self.main_window.show_ayuda)
     
     def quit_application(self, icon=None, item=None):
         """Salir de la aplicación completamente"""
@@ -304,10 +333,11 @@ class SystemTray:
             if self.app_settings.get_setting("confirm_exit"):
                 # Mostrar ventana para confirmar
                 self.show_window()
-                self.main_window.root.after(100, self.main_window.salir_aplicacion)
+                self._safe_after(100, self.main_window.salir_aplicacion)
             else:
                 self.stop_tray()
-                self.main_window.root.quit()
+                # Usar _safe_after para quit también
+                self._safe_after(0, self.main_window.root.quit)
         except Exception as e:
             self.logger.error(f"Error al salir desde bandeja: {e}")
     

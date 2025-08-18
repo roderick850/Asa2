@@ -107,26 +107,32 @@ def test_next_backup_fix():
         backup_panel.toggle_auto_backup()
         
         # Esperar un poco más para asegurar que se actualice
-        main_window.root.after(1500, lambda: [
-            print("   Verificando después de habilitar..."),
-            check_next_backup_status() and print("✅ ÉXITO: El problema está solucionado") or print("❌ FALLO: El problema persiste"),
-            print("\n3. Deshabilitando para verificar que funciona correctamente:"),
-            backup_panel.auto_backup_var.set(False),
-            backup_panel.toggle_auto_backup(),
-            main_window.root.after(500, lambda: [
-                check_next_backup_status(),
-                print("\n4. Habilitando nuevamente para doble verificación:"),
-                backup_panel.auto_backup_var.set(True),
+        try:
+            main_window.root.after(1500, lambda: [
+                print("   Verificando después de habilitar..."),
+                check_next_backup_status() and print("✅ ÉXITO: El problema está solucionado") or print("❌ FALLO: El problema persiste"),
+                print("\n3. Deshabilitando para verificar que funciona correctamente:"),
+                backup_panel.auto_backup_var.set(False),
                 backup_panel.toggle_auto_backup(),
-                main_window.root.after(1500, lambda: [
-                    check_next_backup_status() and print("\n🎉 PRUEBA COMPLETADA: El problema está SOLUCIONADO") or print("\n💥 PRUEBA FALLIDA: El problema AÚN PERSISTE"),
-                    print("\nCierre la ventana para terminar.")
+                main_window.root.after(500, lambda: [
+                    check_next_backup_status(),
+                    print("\n4. Habilitando nuevamente para doble verificación:"),
+                    backup_panel.auto_backup_var.set(True),
+                    backup_panel.toggle_auto_backup(),
+                    main_window.root.after(1500, lambda: [
+                        check_next_backup_status() and print("\n🎉 PRUEBA COMPLETADA: El problema está SOLUCIONADO") or print("\n💥 PRUEBA FALLIDA: El problema AÚN PERSISTE"),
+                        print("\nCierre la ventana para terminar.")
+                    ])
                 ])
             ])
-        ])
+        except Exception as e:
+            print(f"Error en programación de pruebas: {e}")
     
     # Iniciar secuencia de pruebas
-    main_window.root.after(500, test_sequence)
+    try:
+        main_window.root.after(500, test_sequence)
+    except Exception as e:
+        print(f"Error iniciando secuencia de pruebas: {e}")
     
     # Ejecutar la aplicación
     main_window.root.mainloop()

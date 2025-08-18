@@ -496,14 +496,51 @@ class AdvancedRestartPanel(ctk.CTkFrame):
         self.restart_scheduler_enabled = True
         self.stop_restart_scheduler.clear()
         
-        self.restart_scheduler_thread = threading.Thread(
-            target=self._restart_scheduler_worker,
-            daemon=True
-        )
-        self.restart_scheduler_thread.start()
-        
-        self.after(0, lambda: self._safe_update_restart_status("🔄 Reinicios activos"))
-        self.logger.info("Programador de reinicios iniciado")
+        # Obtener configuración desde el hilo principal
+        try:
+            selected_days = [day for day, var in self.day_vars.items() if var.get()]
+            hours_text = self.restart_hours_text.get("0.0", "end-1c").strip()
+            
+            # Obtener configuración de actualización
+            update_always = self.update_always_var.get() if hasattr(self, 'update_always_var') else False
+            update_specific_days = self.update_specific_days_var.get() if hasattr(self, 'update_specific_days_var') else False
+            update_day_values = {day: var.get() for day, var in self.update_day_vars.items()} if hasattr(self, 'update_day_vars') else {}
+            
+            # Obtener configuración de DestroyWildDinos
+            destroywilddinos_enabled = self.destroywilddinos_enabled_var.get() if hasattr(self, 'destroywilddinos_enabled_var') else False
+            destroywilddinos_day_values = {day: var.get() for day, var in self.destroywilddinos_day_vars.items()} if hasattr(self, 'destroywilddinos_day_vars') else {}
+            
+            # Obtener configuración de avisos RCON
+            rcon_warnings = self.rcon_warnings_var.get() if hasattr(self, 'rcon_warnings_var') else False
+            
+            # Pasar la configuración al hilo secundario
+            config_data = {
+                'selected_days': selected_days,
+                'hours_text': hours_text,
+                'update_always': update_always,
+                'update_specific_days': update_specific_days,
+                'update_day_values': update_day_values,
+                'destroywilddinos_enabled': destroywilddinos_enabled,
+                'destroywilddinos_day_values': destroywilddinos_day_values,
+                'rcon_warnings': rcon_warnings
+            }
+            
+            self.restart_scheduler_thread = threading.Thread(
+                target=self._restart_scheduler_worker,
+                args=(config_data,),
+                daemon=True
+            )
+            self.restart_scheduler_thread.start()
+            
+            try:
+                self.after(0, lambda: self._safe_update_restart_status("🔄 Reinicios activos"))
+            except Exception:
+                pass
+            self.logger.info("Programador de reinicios iniciado")
+            
+        except Exception as e:
+            self.logger.error(f"Error al iniciar programador de reinicios: {e}")
+            self.restart_scheduler_enabled = False
 
     def stop_restart_scheduler_func(self):
         """Detener programador de reinicios"""
@@ -514,15 +551,21 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             self.restart_scheduler_thread.join(timeout=1)
         
         schedule.clear('restart')
-        self.after(0, lambda: self._safe_update_restart_status("⏹️ Inactivo"))
-        self.after(0, lambda: self._safe_update_next_restart("Próximo reinicio: Deshabilitado"))
+        try:
+            self.after(0, lambda: self._safe_update_restart_status("⏹️ Inactivo"))
+        except Exception:
+            pass
+        try:
+            self.after(0, lambda: self._safe_update_next_restart("Próximo reinicio: Deshabilitado"))
+        except Exception:
+            pass
         self.logger.info("Programador de reinicios detenido")
 
-    def _restart_scheduler_worker(self):
+    def _restart_scheduler_worker(self, config_data):
         """Worker del programador de reinicios"""
         try:
             # Configurar trabajos de reinicio
-            self._setup_restart_jobs()
+            self._setup_restart_jobs(config_data)
             
             while self.restart_scheduler_enabled:
                 schedule.run_pending()
@@ -531,15 +574,18 @@ class AdvancedRestartPanel(ctk.CTkFrame):
                 
         except Exception as e:
             self.logger.error(f"Error en programador de reinicios: {e}")
-            self.after(0, lambda: self._safe_update_restart_status("❌ Error en programador"))
+            # Usar try-except para el after en caso de que el widget ya no exista
+            try:
+                self.after(0, lambda: self._safe_update_restart_status("❌ Error en programador"))
+            except:
+                pass
 
-    def _setup_restart_jobs(self):
+    def _setup_restart_jobs(self, config_data):
         """Configurar trabajos de reinicio"""
         schedule.clear('restart')
         
-        # Obtener días y horas seleccionados
-        selected_days = [day for day, var in self.day_vars.items() if var.get()]
-        hours_text = self.restart_hours_text.get("0.0", "end-1c").strip()
+        selected_days = config_data['selected_days']
+        hours_text = config_data['hours_text']
         
         if not selected_days or not hours_text:
             self.logger.warning("No hay días u horas seleccionados para reinicios")
@@ -560,13 +606,68 @@ class AdvancedRestartPanel(ctk.CTkFrame):
                     if day in day_map:
                         # Usar la sintaxis correcta para cada día específico
                         day_schedule = getattr(schedule.every(), day_map[day])
-                        day_schedule.at(hour).do(self._scheduled_restart).tag('restart')
+                        day_schedule.at(hour).do(self._scheduled_restart_with_config, config_data).tag('restart')
             
             self.logger.info(f"Programados reinicios para {selected_days} a las {hours}")
             self.logger.info(f"Total de trabajos programados: {len([job for job in schedule.jobs if 'restart' in job.tags])}")
             
         except Exception as e:
             self.logger.error(f"Error configurando trabajos de reinicio: {e}")
+
+    def _scheduled_restart_with_config(self, config_data):
+        """Ejecutar reinicio programado con configuración predefinida"""
+        self.logger.info("Ejecutando reinicio programado")
+        self.show_message("🔄 REINICIO PROGRAMADO: Iniciando secuencia automática de reinicio")
+        
+        # Registrar inicio del reinicio automático
+        if hasattr(self.main_window, 'log_server_event'):
+            self.main_window.log_server_event("custom_event", 
+                event_name="Reinicio automático iniciado", 
+                details=f"Reinicio programado según configuración")
+        
+        # Determinar si se debe actualizar usando la configuración predefinida
+        should_update = self._should_update_today_with_config(config_data)
+        
+        restart_info = {
+            "type": "programado",
+            "datetime": datetime.now().isoformat(),
+            "server": self.current_server_name or "Desconocido",
+            "backup_done": False,
+            "saveworld_done": False,
+            "update_done": False,
+            "success": False,
+            "reason": "Reinicio programado",
+            "warnings_sent": False,
+            "update_requested": should_update
+        }
+        
+        # Registrar con el sistema de eventos del servidor
+        if hasattr(self.main_window, 'log_server_event'):
+            self.main_window.log_server_event("automatic_restart_start", restart_info=restart_info)
+        
+        # Enviar avisos RCON antes del reinicio
+        if config_data['rcon_warnings']:
+            try:
+                self.after(0, lambda: self._send_rcon_warnings_and_restart(restart_info))
+            except Exception:
+                pass
+        else:
+            # Si no hay avisos RCON pero sí DestroyWildDinos, programar para 5 minutos antes
+            if self._should_execute_destroywilddinos_today_with_config(config_data):
+                self.logger.info("DestroyWildDinos programado para 5 minutos antes del reinicio")
+                self.show_message("🦕 COMANDO PROGRAMADO: DestroyWildDinos programado para 5 minutos antes del reinicio")
+                # Ejecutar DestroyWildDinos inmediatamente y luego esperar 5 minutos para el reinicio
+                self._execute_destroywilddinos()
+                # Programar reinicio en 5 minutos
+                try:
+                    self.after(5 * 60 * 1000, lambda: self._execute_restart_sequence(restart_info))
+                except Exception:
+                    pass
+            else:
+                try:
+                    self.after(0, lambda: self._execute_restart_sequence(restart_info))
+                except Exception:
+                    pass
 
     def _scheduled_restart(self):
         """Ejecutar reinicio programado"""
@@ -601,7 +702,10 @@ class AdvancedRestartPanel(ctk.CTkFrame):
         
         # Enviar avisos RCON antes del reinicio
         if self.rcon_warnings_var.get():
-            self.after(0, lambda: self._send_rcon_warnings_and_restart(restart_info))
+            try:
+                self.after(0, lambda: self._send_rcon_warnings_and_restart(restart_info))
+            except Exception:
+                pass
         else:
             # Si no hay avisos RCON pero sí DestroyWildDinos, programar para 5 minutos antes
             if self._should_execute_destroywilddinos_today():
@@ -610,9 +714,15 @@ class AdvancedRestartPanel(ctk.CTkFrame):
                 # Ejecutar DestroyWildDinos inmediatamente y luego esperar 5 minutos para el reinicio
                 self._execute_destroywilddinos()
                 # Programar reinicio en 5 minutos
-                self.after(5 * 60 * 1000, lambda: self._execute_restart_sequence(restart_info))
+                try:
+                    self.after(5 * 60 * 1000, lambda: self._execute_restart_sequence(restart_info))
+                except Exception:
+                    pass
             else:
-                self.after(0, lambda: self._execute_restart_sequence(restart_info))
+                try:
+                    self.after(0, lambda: self._execute_restart_sequence(restart_info))
+                except Exception:
+                    pass
 
 
 
@@ -651,6 +761,41 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             self.logger.error(f"Error determinando si actualizar hoy: {e}")
             return False
     
+    def _should_update_today_with_config(self, config_data):
+        """Determinar si se debe actualizar el servidor hoy usando configuración predefinida"""
+        try:
+            # Si está configurado para actualizar siempre
+            if config_data['update_always']:
+                return True
+            
+            # Si está configurado para días específicos
+            if config_data['update_specific_days']:
+                # Obtener el día actual
+                today = datetime.now().strftime('%A')  # Lunes, Martes, etc. en inglés
+                
+                # Mapear día en inglés a español
+                day_map = {
+                    'Monday': 'Lunes',
+                    'Tuesday': 'Martes', 
+                    'Wednesday': 'Miércoles',
+                    'Thursday': 'Jueves',
+                    'Friday': 'Viernes',
+                    'Saturday': 'Sábado',
+                    'Sunday': 'Domingo'
+                }
+                
+                today_spanish = day_map.get(today, today)
+                
+                # Verificar si hoy está seleccionado para actualizaciones
+                if today_spanish in config_data['update_day_values']:
+                    return config_data['update_day_values'][today_spanish]
+            
+            # Por defecto, no actualizar
+            return False
+        except Exception as e:
+            self.logger.error(f"Error determinando si actualizar hoy: {e}")
+            return False
+    
     def _should_execute_destroywilddinos_today(self):
         """Determinar si se debe ejecutar DestroyWildDinos hoy"""
         try:
@@ -682,7 +827,39 @@ class AdvancedRestartPanel(ctk.CTkFrame):
         except Exception as e:
             self.logger.error(f"Error determinando si ejecutar DestroyWildDinos hoy: {e}")
             return False
-    
+
+    def _should_execute_destroywilddinos_today_with_config(self, config_data):
+        """Determinar si se debe ejecutar DestroyWildDinos hoy usando configuración predefinida"""
+        try:
+            # Verificar si la función está habilitada
+            if not config_data['destroywilddinos_enabled']:
+                return False
+            
+            # Obtener el día actual
+            today = datetime.now().strftime('%A')  # Lunes, Martes, etc. en inglés
+            
+            # Mapear día en inglés a español
+            day_map = {
+                'Monday': 'Lunes',
+                'Tuesday': 'Martes', 
+                'Wednesday': 'Miércoles',
+                'Thursday': 'Jueves',
+                'Friday': 'Viernes',
+                'Saturday': 'Sábado',
+                'Sunday': 'Domingo'
+            }
+            
+            today_spanish = day_map.get(today, today)
+            
+            # Verificar si hoy está seleccionado para DestroyWildDinos
+            if today_spanish in config_data['destroywilddinos_day_values']:
+                return config_data['destroywilddinos_day_values'][today_spanish]
+            
+            return False
+        except Exception as e:
+            self.logger.error(f"Error determinando si ejecutar DestroyWildDinos hoy: {e}")
+            return False
+
     def _execute_destroywilddinos(self):
         """Ejecutar DestroyWildDinos via RCON"""
         try:
@@ -774,7 +951,10 @@ class AdvancedRestartPanel(ctk.CTkFrame):
                 self.logger.info(f"Aviso RCON enviado: {interval} minutos hasta reinicio")
             else:
                 # Programar aviso para más tarde
-                self.after(delay_seconds, lambda msg=message, mins=interval: self._send_scheduled_warning(msg, mins))
+                try:
+                    self.after(delay_seconds, lambda msg=message, mins=interval: self._send_scheduled_warning(msg, mins))
+                except Exception:
+                    pass
                 self.logger.info(f"Aviso RCON programado para {delay_minutes} minutos: {interval} minutos hasta reinicio")
             
             # Verificar si necesitamos ejecutar DestroyWildDinos en 5 minutos
@@ -783,12 +963,18 @@ class AdvancedRestartPanel(ctk.CTkFrame):
                 if destroy_delay == 0:
                     self._execute_destroywilddinos()
                 else:
-                    self.after(destroy_delay, self._execute_destroywilddinos)
+                    try:
+                        self.after(destroy_delay, self._execute_destroywilddinos)
+                    except Exception:
+                        pass
         
         # Programar el reinicio para después del último aviso
         final_delay = total_time * 60 * 1000
         self.logger.info(f"Reinicio programado en {total_time} minutos")
-        self.after(final_delay, lambda: self._execute_restart_sequence_after_warnings(restart_info))
+        try:
+            self.after(final_delay, lambda: self._execute_restart_sequence_after_warnings(restart_info))
+        except Exception:
+            pass
 
     def _send_scheduled_warning(self, message, minutes):
         """Enviar un aviso programado"""
@@ -943,8 +1129,14 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             self._save_restart_to_history(restart_info)
             
             # Resetear barra de progreso después de 5 segundos
-            self.after(5000, lambda: self.restart_progress_bar.set(0))
-            self.after(5000, lambda: self.restart_progress_label.configure(text="Listo para reinicio"))
+            try:
+                self.after(5000, lambda: self.restart_progress_bar.set(0))
+            except Exception:
+                pass
+            try:
+                self.after(5000, lambda: self.restart_progress_label.configure(text="Listo para reinicio"))
+            except Exception:
+                pass
             
         except Exception as e:
             self.logger.error(f"Error al finalizar secuencia de reinicio: {e}")

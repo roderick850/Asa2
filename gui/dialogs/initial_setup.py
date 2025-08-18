@@ -418,7 +418,10 @@ class InitialSetupDialog:
                 success_label.pack(pady=10)
                 
                 # Esperar un momento antes de cerrar
-                self.dialog.after(1000, self._close_with_success)
+                try:
+                    self.dialog.after(1000, self._close_with_success)
+                except Exception as e:
+                    self.logger.error(f"Error al programar cierre del diálogo: {e}")
                 
             except Exception as e:
                 self.logger.error(f"Error al guardar configuración: {e}")
@@ -439,7 +442,10 @@ class InitialSetupDialog:
         error_label.pack(pady=10)
         
         # Auto-eliminar el error después de 5 segundos
-        self.dialog.after(5000, lambda: error_label.destroy())
+        try:
+            self.dialog.after(5000, lambda: error_label.destroy())
+        except Exception as e:
+            self.logger.error(f"Error al programar eliminación de error: {e}")
     
     def _close_with_success(self):
         """Cerrar diálogo con éxito"""

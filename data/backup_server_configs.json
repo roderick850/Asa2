@@ -1,1 +1,30 @@
-{}
+{
+  "Prueba": {
+    "backup_path": "D:\\ASA\\Backup",
+    "auto_backup": false,
+    "interval_type": "hours",
+    "interval_value": 6,
+    "compress": true,
+    "max_backups": 10,
+    "include_logs": true,
+    "include_configs": true,
+    "include_saves": true,
+    "backup_name_format": "{server}_{date}_{time}",
+    "saveworld_before_backup": true
+  },
+  "Prueba2": {
+    "backup_path": "D:\\ASA\\Backup",
+    "auto_backup": true,
+    "interval_type": "minutos",
+    "interval_value": 10,
+    "compress": true,
+    "include_saves": true,
+    "include_configs": true,
+    "include_logs": true,
+    "backup_name_format": "{server}_{date}_{time}",
+    "max_backups": 10,
+    "backup_before_start": true,
+    "verify_backup": true,
+    "saveworld_before_backup": true
+  }
+}

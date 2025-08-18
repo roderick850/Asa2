@@ -259,5 +259,349 @@
       "score": 1
     },
     "featuredProjectTag": 0
+  },
+  {
+    "screenshots": [
+      {
+        "id": 931523,
+        "modId": 933447,
+        "title": "Floatings foundations",
+        "description": "",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/931/523/310/172/20240803104406_1.jpg",
+        "url": "https://83374.media.forgecdn.net/attachments/931/523/20240803104406_1.jpg"
+      },
+      {
+        "id": 931521,
+        "modId": 933447,
+        "title": "Variants",
+        "description": "- Plataforms Wood, Wood closed and Gras",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/931/521/310/172/20240803103712_1.jpg",
+        "url": "https://83374.media.forgecdn.net/attachments/931/521/20240803103712_1.jpg"
+      },
+      {
+        "id": 931513,
+        "modId": 933447,
+        "title": "Variants",
+        "description": "- Platforms Ice, Underwater cage and Shasta cage",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/931/513/310/172/20240730222828_1.jpg",
+        "url": "https://83374.media.forgecdn.net/attachments/931/513/20240730222828_1.jpg"
+      },
+      {
+        "id": 756856,
+        "modId": 933447,
+        "title": "Plataforms",
+        "description": "- Platforms Cage, Normal and Closed",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/756/856/310/172/20231104175928_1.jpg",
+        "url": "https://83374.media.forgecdn.net/attachments/756/856/20231104175928_1.jpg"
+      }
+    ],
+    "id": 933447,
+    "gameId": 83374,
+    "name": "Alfa Oceanic Platforms",
+    "slug": "alfaoceanicplataforms",
+    "links": {
+      "websiteUrl": "https://www.curseforge.com/ark-survival-ascended/mods/alfaoceanicplataforms",
+      "wikiUrl": "https://discord.gg/TdQUYMKUnf",
+      "issuesUrl": null,
+      "sourceUrl": null
+    },
+    "summary": "Ocean platform of different types",
+    "status": 4,
+    "downloadCount": 3652669,
+    "isFeatured": false,
+    "primaryCategoryId": 6080,
+    "categories": [
+      {
+        "id": 6080,
+        "gameId": 83374,
+        "name": "Structures",
+        "slug": "structures",
+        "url": "https://www.curseforge.com/ark-survival-ascended/mods/structures",
+        "iconUrl": "https://83374.media.forgecdn.net/avatars/780/867/638126560715804577.png",
+        "dateModified": "2023-02-22T09:47:51.58Z",
+        "isClass": false,
+        "classId": 6072,
+        "parentCategoryId": 6072
+      },
+      {
+        "id": 6076,
+        "gameId": 83374,
+        "name": "General",
+        "slug": "general",
+        "url": "https://www.curseforge.com/ark-survival-ascended/mods/general",
+        "iconUrl": "https://83374.media.forgecdn.net/avatars/780/863/638126560274835693.png",
+        "dateModified": "2023-02-22T09:47:07.49Z",
+        "isClass": false,
+        "classId": 6072,
+        "parentCategoryId": 6072
+      }
+    ],
+    "classId": 6072,
+    "authors": [
+      {
+        "id": 105553995,
+        "name": "matheusrp11",
+        "url": "https://www.curseforge.com/members/matheusrp11",
+        "avatarUrl": "https://static-cdn.jtvnw.net/user-default-pictures-uv/41780b5a-def8-11e9-94d9-784f43822e80-profile_image-150x150.png"
+      }
+    ],
+    "logo": {
+      "id": 1324588,
+      "modId": 933447,
+      "title": "638861147920296246.png",
+      "description": "",
+      "thumbnailUrl": "https://83374.media.forgecdn.net/avatars/thumbnails/1324/588/256/256/638861147920296246.png",
+      "url": "https://83374.media.forgecdn.net/avatars/1324/588/638861147920296246.png"
+    },
+    "mainFileId": 6714800,
+    "latestFiles": [
+      {
+        "id": 6714800,
+        "gameId": 83374,
+        "modId": 933447,
+        "isAvailable": true,
+        "displayName": "alfa oceanic platforms-windows 79.zip",
+        "fileName": "alfa oceanic platforms-windows 79.zip",
+        "releaseType": 1,
+        "fileStatus": 4,
+        "hashes": [
+          {
+            "value": "6f84e928b17a1994029ed51cdea10e5ee84211da",
+            "algo": 1
+          },
+          {
+            "value": "6e50fbe1cf80c641c8a69dd1939515ec",
+            "algo": 2
+          }
+        ],
+        "fileDate": "2025-07-01T02:10:42.62Z",
+        "fileLength": 53763282,
+        "downloadCount": 0,
+        "fileSizeOnDisk": 63993645,
+        "downloadUrl": null,
+        "gameVersions": [
+          "1.0"
+        ],
+        "sortableGameVersions": [
+          {
+            "gameVersionName": "1.0",
+            "gameVersionPadded": "0000000001.0000000000",
+            "gameVersion": "1.0",
+            "gameVersionReleaseDate": "2023-02-22T00:00:00Z",
+            "gameVersionTypeId": 76367
+          }
+        ],
+        "dependencies": [],
+        "alternateFileId": 0,
+        "isServerPack": false,
+        "fileFingerprint": 115391548,
+        "modules": [
+          {
+            "name": "ASA_AlfaOceanicPlataform",
+            "fingerprint": 34738935
+          }
+        ],
+        "cookingInfo": {
+          "cookerVersion": "2",
+          "cookerRevision": "711945"
+        }
+      }
+    ],
+    "supportedPlatform": 0,
+    "supportsCrossPlatform": true,
+    "latestFilesIndexes": [
+      {
+        "gameVersion": "1.0",
+        "fileId": 6714800,
+        "filename": "alfa oceanic platforms-windows 79.zip",
+        "releaseType": 1,
+        "gameVersionTypeId": 76367
+      }
+    ],
+    "latestEarlyAccessFilesIndexes": [],
+    "dateCreated": "2023-11-04T21:07:55.42Z",
+    "dateModified": "2025-07-01T13:48:34.263Z",
+    "dateReleased": "2025-07-01T02:10:43.113Z",
+    "allowModDistribution": false,
+    "gamePopularityRank": 66,
+    "isAvailable": true,
+    "thumbsUpCount": 0,
+    "ratingDetails": {
+      "rating": 99.61,
+      "totalRatings": 15029,
+      "positiveRatings": 14970,
+      "score": 1
+    },
+    "featuredProjectTag": 0
+  },
+  {
+    "screenshots": [
+      {
+        "id": 756860,
+        "modId": 932777,
+        "title": "Spyglass status",
+        "description": "",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/756/860/310/172/spyglass1.jpg",
+        "url": "https://83374.media.forgecdn.net/attachments/756/860/spyglass1.jpg"
+      },
+      {
+        "id": 756859,
+        "modId": 932777,
+        "title": "Customizable",
+        "description": "",
+        "thumbnailUrl": "https://83374.media.forgecdn.net/attachments/thumbnails/756/859/310/172/spyglass2.png",
+        "url": "https://83374.media.forgecdn.net/attachments/756/859/spyglass2.png"
+      }
+    ],
+    "id": 932777,
+    "gameId": 83374,
+    "name": "Alfa Spyglass",
+    "slug": "alfa-spyglass",
+    "links": {
+      "websiteUrl": "https://www.curseforge.com/ark-survival-ascended/mods/alfa-spyglass",
+      "wikiUrl": "https://discord.gg/TdQUYMKUnf",
+      "issuesUrl": null,
+      "sourceUrl": null
+    },
+    "summary": "Enhanced Spyglass / Binoculars",
+    "status": 4,
+    "downloadCount": 123807,
+    "isFeatured": false,
+    "primaryCategoryId": 6081,
+    "categories": [
+      {
+        "id": 6082,
+        "gameId": 83374,
+        "name": "Weapons",
+        "slug": "weapons",
+        "url": "https://www.curseforge.com/ark-survival-ascended/mods/weapons",
+        "iconUrl": "https://83374.media.forgecdn.net/avatars/780/869/638126561039378325.png",
+        "dateModified": "2023-02-22T09:48:23.94Z",
+        "isClass": false,
+        "classId": 6072,
+        "parentCategoryId": 6072
+      },
+      {
+        "id": 6081,
+        "gameId": 83374,
+        "name": "Visuals and Sounds",
+        "slug": "visuals-and-sounds",
+        "url": "https://www.curseforge.com/ark-survival-ascended/mods/visuals-and-sounds",
+        "iconUrl": "https://83374.media.forgecdn.net/avatars/780/868/638126560930785638.png",
+        "dateModified": "2023-02-22T09:48:13.083Z",
+        "isClass": false,
+        "classId": 6072,
+        "parentCategoryId": 6072
+      },
+      {
+        "id": 6076,
+        "gameId": 83374,
+        "name": "General",
+        "slug": "general",
+        "url": "https://www.curseforge.com/ark-survival-ascended/mods/general",
+        "iconUrl": "https://83374.media.forgecdn.net/avatars/780/863/638126560274835693.png",
+        "dateModified": "2023-02-22T09:47:07.49Z",
+        "isClass": false,
+        "classId": 6072,
+        "parentCategoryId": 6072
+      }
+    ],
+    "classId": 6072,
+    "authors": [
+      {
+        "id": 105553995,
+        "name": "matheusrp11",
+        "url": "https://www.curseforge.com/members/matheusrp11",
+        "avatarUrl": "https://static-cdn.jtvnw.net/user-default-pictures-uv/41780b5a-def8-11e9-94d9-784f43822e80-profile_image-150x150.png"
+      }
+    ],
+    "logo": {
+      "id": 899887,
+      "modId": 932777,
+      "title": "638346145874754158.png",
+      "description": "",
+      "thumbnailUrl": "https://83374.media.forgecdn.net/avatars/thumbnails/899/887/256/256/638346145874754158.png",
+      "url": "https://83374.media.forgecdn.net/avatars/899/887/638346145874754158.png"
+    },
+    "mainFileId": 6848710,
+    "latestFiles": [
+      {
+        "id": 6848710,
+        "gameId": 83374,
+        "modId": 932777,
+        "isAvailable": true,
+        "displayName": "alfa spyglass-windows 84.zip",
+        "fileName": "alfa spyglass-windows 84.zip",
+        "releaseType": 1,
+        "fileStatus": 4,
+        "hashes": [
+          {
+            "value": "cf3a89b4c1190e1dee2208b27c61eeb9015beae6",
+            "algo": 1
+          },
+          {
+            "value": "92f1abecf7aa78612d444d451b39cc0a",
+            "algo": 2
+          }
+        ],
+        "fileDate": "2025-08-04T22:21:07.447Z",
+        "fileLength": 2875034,
+        "downloadCount": 0,
+        "fileSizeOnDisk": 2903547,
+        "downloadUrl": null,
+        "gameVersions": [
+          "1.0"
+        ],
+        "sortableGameVersions": [
+          {
+            "gameVersionName": "1.0",
+            "gameVersionPadded": "0000000001.0000000000",
+            "gameVersion": "1.0",
+            "gameVersionReleaseDate": "2023-02-22T00:00:00Z",
+            "gameVersionTypeId": 76367
+          }
+        ],
+        "dependencies": [],
+        "alternateFileId": 0,
+        "isServerPack": false,
+        "fileFingerprint": 1432143109,
+        "modules": [
+          {
+            "name": "ASA_AlfaSpyglass",
+            "fingerprint": 3754770900
+          }
+        ],
+        "cookingInfo": {
+          "cookerVersion": "2",
+          "cookerRevision": "742496"
+        }
+      }
+    ],
+    "supportedPlatform": 0,
+    "supportsCrossPlatform": true,
+    "latestFilesIndexes": [
+      {
+        "gameVersion": "1.0",
+        "fileId": 6848710,
+        "filename": "alfa spyglass-windows 84.zip",
+        "releaseType": 1,
+        "gameVersionTypeId": 76367
+      }
+    ],
+    "latestEarlyAccessFilesIndexes": [],
+    "dateCreated": "2023-11-03T13:23:07.273Z",
+    "dateModified": "2025-08-05T09:04:35.91Z",
+    "dateReleased": "2025-08-04T22:21:07.99Z",
+    "allowModDistribution": false,
+    "gamePopularityRank": 986,
+    "isAvailable": true,
+    "thumbsUpCount": 0,
+    "ratingDetails": {
+      "rating": 97.35,
+      "totalRatings": 490,
+      "positiveRatings": 477,
+      "score": 2
+    },
+    "featuredProjectTag": 0
   }
 ]

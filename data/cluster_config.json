@@ -1,0 +1,8 @@
+{
+  "enabled": false,
+  "cluster_id": "MiClusterARK",
+  "cluster_data_path": "D:/ASA/Cluster",
+  "allow_character_transfer": true,
+  "allow_item_transfer": true,
+  "allow_dino_transfer": true
+}

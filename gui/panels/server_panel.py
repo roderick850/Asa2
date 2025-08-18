@@ -18,19 +18,26 @@ class ServerPanel:
         self.main_window = main_window
         self.server_manager = ServerManager(config_manager)
         
+    def _safe_schedule_ui_update(self, callback, delay=0):
+        """Programa una actualización de UI de forma segura, verificando que la ventana principal exista"""
+        try:
+            if self.main_window and hasattr(self.main_window, 'root') and self.main_window.root:
+                self.main_window.root.after(delay, callback)
+            elif hasattr(self, 'winfo_exists') and self.winfo_exists():
+                self.after(delay, callback)
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al programar actualización de UI: {e}")
+        
         # Inicializar variables de selección
         self.selected_server = None
         self.selected_map = None
+        self.monitoring_active = True  # Bandera para controlar el monitoreo
         
         self.create_widgets()
         
         # Iniciar monitoreo con retraso para asegurar que main_window esté listo
-        if self.main_window and hasattr(self.main_window, 'after'):
-            self.main_window.after(2000, self.start_monitoring)  # 2 segundos de retraso
-        else:
-            # Fallback si no hay main_window
-            import threading
-            threading.Timer(2.0, self.start_monitoring).start()
+        self._safe_schedule_ui_update(self.start_monitoring, 2000)  # 2 segundos de retraso
     
     def create_widgets(self):
         # Si no hay parent, no crear widgets (modo backend solamente)
@@ -188,8 +195,8 @@ class ServerPanel:
         
         # Programar mensajes adicionales para asegurar visibilidad
         if hasattr(self, 'main_window') and self.main_window:
-            self.main_window.after(1000, lambda: self.add_status_message("Área de logs activa", "success"))
-            self.main_window.after(2000, lambda: self.add_status_message("Monitoreo del sistema iniciado", "info"))
+            self._safe_schedule_ui_update(lambda: self.add_status_message("Área de logs activa", "success"), 1000)
+            self._safe_schedule_ui_update(lambda: self.add_status_message("Monitoreo del sistema iniciado", "info"), 2000)
     
     def browse_root_path(self):
         """Buscar directorio raíz para servidores"""
@@ -409,8 +416,19 @@ class ServerPanel:
     def start_monitoring(self):
         """Inicia el monitoreo del servidor en un hilo separado"""
         def monitor():
-            while True:
+            while self.monitoring_active:
                 try:
+                    # Verificar si la ventana principal aún existe
+                    if (self.main_window and hasattr(self.main_window, 'root') and 
+                        hasattr(self.main_window.root, 'winfo_exists')):
+                        try:
+                            if not self.main_window.root.winfo_exists():
+                                self.monitoring_active = False
+                                break
+                        except Exception:
+                            self.monitoring_active = False
+                            break
+                    
                     self.update_server_info()
                     time.sleep(2)  # Actualizar cada 2 segundos
                 except Exception as e:
@@ -418,6 +436,11 @@ class ServerPanel:
                     time.sleep(5)
         
         threading.Thread(target=monitor, daemon=True).start()
+    
+    def stop_monitoring(self):
+        """Detiene el monitoreo del servidor"""
+        self.monitoring_active = False
+        self.logger.info("Monitoreo del servidor detenido")
     
     def update_server_info(self):
         """Actualiza la información del servidor"""
@@ -476,13 +499,7 @@ class ServerPanel:
                     pass
             
             # Programar la actualización completa en el hilo principal
-            if self.main_window and hasattr(self.main_window, 'root') and hasattr(self.main_window.root, 'after') and hasattr(self.main_window.root, 'winfo_exists'):
-                try:
-                    if self.main_window.root.winfo_exists():
-                        self.main_window.root.after(0, update_all_ui)
-                except Exception:
-                    # Ventana ya no existe, parar el monitoreo
-                    pass
+            self._safe_schedule_ui_update(update_all_ui)
             
             # Mostrar información del servidor seleccionado si hay uno
             if hasattr(self, 'selected_server') and self.selected_server:
@@ -621,10 +638,10 @@ class ServerPanel:
         self.update_server_status("Deteniendo...", "orange")
         
         # Simular pasos de detención con logs en ambos lugares
-        if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'root'):
-            self.main_window.root.after(500, lambda: self._log_stop_step("🔄 Enviando señal de detención al servidor"))
-            self.main_window.root.after(1000, lambda: self._log_stop_step("⏳ Esperando que el servidor termine procesos"))
-            self.main_window.root.after(1500, lambda: self._log_stop_step("✅ Servidor detenido correctamente"))
+        if hasattr(self, 'main_window') and self.main_window:
+            self._safe_schedule_ui_update(lambda: self._log_stop_step("🔄 Enviando señal de detención al servidor"), 500)
+            self._safe_schedule_ui_update(lambda: self._log_stop_step("⏳ Esperando que el servidor termine procesos"), 1000)
+            self._safe_schedule_ui_update(lambda: self._log_stop_step("✅ Servidor detenido correctamente"), 1500)
     
     def _log_stop_step(self, message):
         """Helper para registrar pasos de detención en ambos logs"""
@@ -656,8 +673,7 @@ class ServerPanel:
                             self.add_log_message("🔍 Verificando que el proceso se cerró completamente...")
                             
                             # Verificar después de 2 segundos
-                            if hasattr(self.main_window, 'root'):
-                                self.main_window.root.after(2000, self._verify_server_stopped)
+                            self._safe_schedule_ui_update(self._verify_server_stopped, 2000)
                         else:
                             self.add_log_message(f"❌ Error en detención: {message}")
                     
@@ -1215,13 +1231,11 @@ class ServerPanel:
         # Programar mensajes de prueba con delays
         for i, message in enumerate(test_messages):
             delay = (i + 1) * 400  # 400ms entre cada mensaje
-            if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'root'):
-                self.main_window.root.after(delay, lambda m=message: self._test_log_step(m))
+            self._safe_schedule_ui_update(lambda m=message: self._test_log_step(m), delay)
         
         # Mensaje final
         final_delay = len(test_messages) * 400 + 500
-        if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'root'):
-            self.main_window.root.after(final_delay, lambda: self._test_log_step("✅ Prueba de logs finalizada - Sistema funcionando correctamente"))
+        self._safe_schedule_ui_update(lambda: self._test_log_step("✅ Prueba de logs finalizada - Sistema funcionando correctamente"), final_delay)
     
     def _test_log_step(self, message):
         """Helper para mostrar paso de prueba en ambos logs"""
@@ -1278,3 +1292,39 @@ class ServerPanel:
                 
         except Exception as e:
             self.logger.error(f"Error al agregar mensaje de estado: {e}")
+    
+    def on_cluster_mode_changed(self, is_cluster_mode):
+        """Manejar el cambio de modo cluster"""
+        try:
+            if is_cluster_mode:
+                # En modo cluster, deshabilitar algunos controles del panel de servidor
+                self.logger.info("🌐 Server panel cambiado a modo cluster")
+                
+                # Deshabilitar botones de control individual ya que se manejan desde ClusterPanel
+                if hasattr(self, 'start_button'):
+                    self.start_button.configure(state="disabled")
+                if hasattr(self, 'stop_button'):
+                    self.stop_button.configure(state="disabled")
+                if hasattr(self, 'restart_button'):
+                    self.restart_button.configure(state="disabled")
+                
+                # Mostrar mensaje informativo
+                self.add_status_message("🌐 Modo cluster activo - Use el panel de cluster para controlar servidores", "info")
+                
+            else:
+                # Modo servidor único - restaurar funcionalidad normal
+                self.logger.info("📱 Server panel cambiado a modo servidor único")
+                
+                # Rehabilitar botones de control
+                if hasattr(self, 'start_button'):
+                    self.start_button.configure(state="normal")
+                if hasattr(self, 'stop_button'):
+                    self.stop_button.configure(state="normal")
+                if hasattr(self, 'restart_button'):
+                    self.restart_button.configure(state="normal")
+                
+                # Mostrar mensaje informativo
+                self.add_status_message("📱 Modo servidor único activo", "info")
+                
+        except Exception as e:
+            self.logger.error(f"Error al cambiar modo cluster en server panel: {e}")

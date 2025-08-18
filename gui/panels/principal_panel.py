@@ -41,6 +41,9 @@ class PrincipalPanel:
         
         # Cargar configuración guardada
         self.load_saved_config()
+        
+        # Cargar configuración del cluster
+        self.load_cluster_configuration()
     
     def create_widgets(self):
         """Crear todos los widgets de la pestaña principal"""
@@ -55,6 +58,101 @@ class PrincipalPanel:
             font=("Arial", 16, "bold")
         )
         title_label.pack(pady=(0, 10))
+        
+        # Frame para configuración de cluster
+        cluster_frame = ctk.CTkFrame(main_frame)
+        cluster_frame.pack(fill="x", padx=5, pady=5)
+        
+        # Título de configuración de cluster
+        ctk.CTkLabel(
+            cluster_frame, 
+            text="🌐 Configuración de Cluster", 
+            font=("Arial", 13, "bold")
+        ).pack(pady=5)
+        
+        # Switch para habilitar cluster
+        self.cluster_enabled_var = ctk.BooleanVar(value=False)
+        cluster_switch_frame = ctk.CTkFrame(cluster_frame, fg_color="transparent")
+        cluster_switch_frame.pack(fill="x", padx=10, pady=5)
+        
+        self.cluster_switch = ctk.CTkSwitch(
+            cluster_switch_frame,
+            text="🔗 Habilitar Modo Cluster (Múltiples Servidores)",
+            variable=self.cluster_enabled_var,
+            font=("Arial", 12, "bold"),
+            command=self.on_cluster_toggle
+        )
+        self.cluster_switch.pack(anchor="w")
+        
+        # Frame para configuraciones de cluster (inicialmente oculto)
+        self.cluster_config_frame = ctk.CTkFrame(cluster_frame)
+        
+        # Configuraciones de cluster en dos columnas
+        cluster_columns_frame = ctk.CTkFrame(self.cluster_config_frame, fg_color="transparent")
+        cluster_columns_frame.pack(fill="x", padx=10, pady=10)
+        
+        cluster_columns_frame.grid_columnconfigure(0, weight=1)
+        cluster_columns_frame.grid_columnconfigure(1, weight=1)
+        
+        # Columna izquierda - Cluster ID y Carpeta de datos
+        cluster_col1 = ctk.CTkFrame(cluster_columns_frame, fg_color="transparent")
+        cluster_col1.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+        
+        # Cluster ID
+        ctk.CTkLabel(cluster_col1, text="🆔 Cluster ID:", font=("Arial", 11, "bold")).pack(anchor="w", pady=(0, 2))
+        self.cluster_id_entry = ctk.CTkEntry(cluster_col1, placeholder_text="MiClusterARK", width=200, height=28)
+        self.cluster_id_entry.pack(fill="x", pady=(0, 6))
+        
+        # Carpeta de datos compartidos
+        ctk.CTkLabel(cluster_col1, text="📁 Carpeta de Datos Compartidos:", font=("Arial", 11, "bold")).pack(anchor="w", pady=(0, 2))
+        cluster_data_frame = ctk.CTkFrame(cluster_col1, fg_color="transparent")
+        cluster_data_frame.pack(fill="x", pady=(0, 6))
+        
+        self.cluster_data_entry = ctk.CTkEntry(cluster_data_frame, placeholder_text="Cluster", height=28)
+        self.cluster_data_entry.pack(side="left", fill="x", expand=True, padx=(0, 5))
+        
+        self.cluster_data_button = ctk.CTkButton(
+            cluster_data_frame,
+            text="📂",
+            command=self.browse_cluster_data_path,
+            width=30,
+            height=28
+        )
+        self.cluster_data_button.pack(side="right")
+        
+        # Columna derecha - Configuraciones adicionales
+        cluster_col2 = ctk.CTkFrame(cluster_columns_frame, fg_color="transparent")
+        cluster_col2.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        
+        # Switch para transferencia de personajes
+        self.allow_character_transfer_var = ctk.BooleanVar(value=True)
+        self.character_transfer_switch = ctk.CTkSwitch(
+            cluster_col2,
+            text="👤 Permitir Transferencia de Personajes",
+            variable=self.allow_character_transfer_var,
+            font=("Arial", 10)
+        )
+        self.character_transfer_switch.pack(anchor="w", pady=5)
+        
+        # Switch para transferencia de items
+        self.allow_item_transfer_var = ctk.BooleanVar(value=True)
+        self.item_transfer_switch = ctk.CTkSwitch(
+            cluster_col2,
+            text="🎒 Permitir Transferencia de Items",
+            variable=self.allow_item_transfer_var,
+            font=("Arial", 10)
+        )
+        self.item_transfer_switch.pack(anchor="w", pady=5)
+        
+        # Switch para transferencia de dinos
+        self.allow_dino_transfer_var = ctk.BooleanVar(value=True)
+        self.dino_transfer_switch = ctk.CTkSwitch(
+            cluster_col2,
+            text="🦕 Permitir Transferencia de Dinos",
+            variable=self.allow_dino_transfer_var,
+            font=("Arial", 10)
+        )
+        self.dino_transfer_switch.pack(anchor="w", pady=5)
         
         # Frame para parámetros básicos
         basic_frame = ctk.CTkFrame(main_frame)
@@ -296,7 +394,9 @@ class PrincipalPanel:
             self.save_to_gameusersettings()
             
             # Notificar al panel RCON para actualizar password
-            if hasattr(self.main_window, 'rcon_panel'):
+            if (hasattr(self.main_window, 'rcon_panel') and 
+                self.main_window.rcon_panel is not None and
+                hasattr(self.main_window.rcon_panel, 'password_info')):
                 self.main_window.rcon_panel.refresh_password_from_config()
             
             # Mostrar mensaje de éxito
@@ -632,14 +732,19 @@ class PrincipalPanel:
             self.logger.error(f"Error al cargar configuración: {e}")
             self.show_message(f"❌ Error al cargar: {str(e)}", "error")
     
-    def start_server_with_config(self, capture_console=False):
+    def start_server_with_config(self, capture_console=False, server_name=None):
         """Iniciar servidor con la configuración actual"""
+        # Si estamos en modo clúster y se especifica un servidor
+        if self.is_cluster_mode() and server_name:
+            return self.start_cluster_server(server_name, capture_console)
+        
         # Obtener servidor y mapa desde main_window
-        selected_server = None
+        selected_server = server_name
         selected_map = None
         
         if self.main_window and hasattr(self.main_window, 'selected_server'):
-            selected_server = self.main_window.selected_server
+            if not selected_server:
+                selected_server = self.main_window.selected_server
             selected_map = self.main_window.selected_map
         
         # Fallback a las variables locales si no están disponibles en main_window
@@ -662,7 +767,7 @@ class PrincipalPanel:
         self.save_configuration()
         
         # Construir argumentos del servidor
-        server_args = self.build_server_arguments()
+        server_args = self.build_server_arguments(server_name)
         
         # Iniciar servidor con argumentos personalizados
         try:
@@ -690,14 +795,49 @@ class PrincipalPanel:
             self.logger.error(f"Error al iniciar servidor: {e}")
             self.show_message(f"❌ Error al iniciar servidor: {str(e)}", "error")
     
-    def restart_server_with_config(self, capture_console=False):
+    def stop_server(self, server_name=None):
+        """Detener servidor (modo normal o clúster)"""
+        # Si estamos en modo clúster y se especifica un servidor
+        if self.is_cluster_mode() and server_name:
+            return self.stop_cluster_server(server_name)
+        
+        # Modo servidor único - delegar al server_manager
+        try:
+            if self.server_manager:
+                self.show_message("⏹️ Deteniendo servidor...", "info")
+                
+                def stop_callback(status, message):
+                    if status == "stopped":
+                        self.add_status_message(f"✅ {message}", "success")
+                        if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'server_panel'):
+                            self.main_window.server_panel.update_server_status("Detenido", "red")
+                    else:
+                        self.add_status_message(f"❌ Error: {message}", "error")
+                
+                self.server_manager.stop_server(stop_callback)
+                return True
+            else:
+                self.show_message("❌ ServerManager no disponible", "error")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Error al detener servidor: {e}")
+            self.show_message(f"❌ Error al detener servidor: {str(e)}", "error")
+            return False
+    
+    def restart_server_with_config(self, capture_console=False, server_name=None):
         """Reiniciar servidor con la configuración actual"""
+        # Si estamos en modo clúster y se especifica un servidor
+        if self.is_cluster_mode() and server_name:
+            return self.restart_cluster_server(server_name, capture_console)
+        
         # Obtener servidor y mapa desde main_window
-        selected_server = None
+        selected_server = server_name
         selected_map = None
         
         if self.main_window and hasattr(self.main_window, 'selected_server'):
-            selected_server = self.main_window.selected_server
+            if not selected_server:
+                selected_server = self.main_window.selected_server
             selected_map = self.main_window.selected_map
         
         # Fallback a las variables locales si no están disponibles en main_window
@@ -745,14 +885,24 @@ class PrincipalPanel:
             self.logger.error(f"Error al reiniciar servidor: {e}")
             self.show_message(f"❌ Error al reiniciar servidor: {str(e)}", "error")
     
-    def build_server_arguments(self):
+    def build_server_arguments(self, server_name=None):
         """Construir argumentos del servidor basados en la configuración"""
-        # 1. Obtener el mapa seleccionado (desde el dropdown de la ventana principal)
+        # 1. Obtener el mapa seleccionado
         selected_map = None
-        if hasattr(self.main_window, 'selected_map') and self.main_window.selected_map:
-            selected_map = self.main_window.selected_map
-        elif self.selected_map:
-            selected_map = self.selected_map
+        
+        # Si estamos en modo clúster y se especifica un servidor, obtener mapa desde configuración del clúster
+        if self.is_cluster_mode() and server_name and server_name in self.server_configs:
+            server_config = self.server_configs[server_name]
+            selected_map = server_config.get("map")
+            if self.logger.should_log_debug():
+                self.logger.info(f"DEBUG: Modo clúster - Mapa obtenido desde configuración del servidor {server_name}: '{selected_map}'")
+        
+        # Fallback a la selección de la ventana principal
+        if not selected_map:
+            if hasattr(self.main_window, 'selected_map') and self.main_window.selected_map:
+                selected_map = self.main_window.selected_map
+            elif self.selected_map:
+                selected_map = self.selected_map
         
         # Mapear nombres de mapas a sus identificadores técnicos
         # NOTA: Incluimos todas las variantes posibles para máxima compatibilidad
@@ -838,21 +988,38 @@ class PrincipalPanel:
         # El primer argumento debe ser el mapa con todos sus parámetros concatenados
         map_arg = map_identifier + "?listen"
         
+        # Obtener configuración específica del servidor si estamos en modo cluster
+        server_config = None
+        if self.is_cluster_mode() and server_name and server_name in self.server_configs:
+            server_config = self.server_configs[server_name]
+        
         # Agregar los parámetros de configuración al argumento del mapa
         # Port
-        port = self.port_entry.get() or "7777"
+        if server_config:
+            port = server_config.get("port", "7777")
+        else:
+            port = self.port_entry.get() or "7777"
         map_arg += f"?Port={port}"
         
         # QueryPort
-        query_port = self.query_port_entry.get() or "27015"
+        if server_config:
+            query_port = server_config.get("query_port", "27015")
+        else:
+            query_port = self.query_port_entry.get() or "27015"
         map_arg += f"?QueryPort={query_port}"
         
         # MultiHome
-        multihome = self.multihome_entry.get() or "127.0.0.1"
+        if server_config:
+            multihome = server_config.get("multihome", "127.0.0.1")
+        else:
+            multihome = self.multihome_entry.get() or "127.0.0.1"
         map_arg += f"?MultiHome={multihome}"
         
         # Argumentos personalizados
-        custom_args = self.custom_args_text.get("1.0", "end-1c").strip()
+        if server_config:
+            custom_args = server_config.get("custom_args", "").strip()
+        else:
+            custom_args = self.custom_args_text.get("1.0", "end-1c").strip()
         if custom_args:
             for line in custom_args.split('\n'):
                 line = line.strip()
@@ -865,10 +1032,20 @@ class PrincipalPanel:
                         map_arg += f"?{line}"
         
         # RCON
-        if hasattr(self.main_window, 'rcon_panel') and self.main_window.rcon_panel.get_rcon_enabled():
-            rcon_port = self.main_window.rcon_panel.get_rcon_port()
-            map_arg += "?RCONEnabled=True"
-            map_arg += f"?RCONPort={rcon_port}"
+        if (hasattr(self.main_window, 'rcon_panel') and 
+            self.main_window.rcon_panel and 
+            hasattr(self.main_window.rcon_panel, 'get_rcon_enabled') and 
+            hasattr(self.main_window.rcon_panel, 'get_rcon_port') and 
+            self.main_window.rcon_panel.get_rcon_enabled()):
+            try:
+                rcon_port = self.main_window.rcon_panel.get_rcon_port()
+                map_arg += "?RCONEnabled=True"
+                map_arg += f"?RCONPort={rcon_port}"
+            except Exception as e:
+                self.logger.error(f"Error al obtener configuración RCON: {e}")
+                # Usar configuración por defecto si hay error
+                map_arg += "?RCONEnabled=True"
+                map_arg += "?RCONPort=32330"
         
         # Construir la lista final
         args = [map_arg, "-server", "-log"]
@@ -878,11 +1055,39 @@ class PrincipalPanel:
             args.append(f"-mods={mod_ids}")
         
         # 5. Agregar MaxPlayers como argumento si el switch está activado
-        if hasattr(self, 'maxplayers_as_arg_var') and self.maxplayers_as_arg_var.get():
+        maxplayers_as_arg = False
+        max_players = "70"
+        
+        if server_config:
+            maxplayers_as_arg = server_config.get("maxplayers_as_arg", False)
+            max_players = server_config.get("max_players", "70")
+        else:
+            if hasattr(self, 'maxplayers_as_arg_var'):
+                maxplayers_as_arg = self.maxplayers_as_arg_var.get()
             max_players = self.max_players_entry.get() or "70"
+        
+        if maxplayers_as_arg:
             args.append(f"-WinLiveMaxPlayers={max_players}")
             if self.logger.should_log_debug():
                 self.logger.info(f"DEBUG: MaxPlayers agregado como argumento: -WinLiveMaxPlayers={max_players}")
+        
+        # 6. Agregar argumentos de cluster si está activo
+        if self.is_cluster_mode():
+            cluster_config = self.get_cluster_config()
+            if cluster_config:
+                # Agregar cluster ID
+                cluster_id = cluster_config.get("cluster_id", "")
+                if cluster_id:
+                    args.append(f"-clusterid={cluster_id}")
+                    if self.logger.should_log_debug():
+                        self.logger.info(f"DEBUG: Cluster ID agregado: -clusterid={cluster_id}")
+                
+                # Agregar ClusterDirOverride
+                cluster_data_path = cluster_config.get("cluster_data_path", "")
+                if cluster_data_path:
+                    args.append(f"-ClusterDirOverride={cluster_data_path}")
+                    if self.logger.should_log_debug():
+                        self.logger.info(f"DEBUG: ClusterDirOverride agregado: -ClusterDirOverride={cluster_data_path}")
         
         if self.logger.should_log_debug():
             self.logger.info(f"DEBUG: Argumentos finales generados: {args}")
@@ -1058,9 +1263,176 @@ class PrincipalPanel:
             os.makedirs("data", exist_ok=True)
             with open("data/principal_server_configs.json", 'w', encoding='utf-8') as f:
                 json.dump(self.server_configs, f, indent=2, ensure_ascii=False)
-                
         except Exception as e:
             self.logger.error(f"Error al guardar configuraciones de servidores: {e}")
+    
+    def on_cluster_toggle(self):
+        """Manejar el cambio del switch de cluster"""
+        try:
+            is_enabled = self.cluster_enabled_var.get()
+            
+            if is_enabled:
+                # Mostrar configuraciones de cluster
+                self.cluster_config_frame.pack(fill="x", padx=10, pady=(0, 10))
+                self.logger.info("🔗 Modo cluster habilitado")
+                
+                # Cambiar título principal
+                if hasattr(self, 'title_label'):
+                    # Buscar y actualizar el título
+                    for widget in self.parent.winfo_children():
+                        if isinstance(widget, ctk.CTkScrollableFrame):
+                            for child in widget.winfo_children():
+                                if isinstance(child, ctk.CTkLabel) and "Configuración Principal" in child.cget("text"):
+                                    child.configure(text="🌐 Configuración Principal del Cluster")
+                                    break
+                            break
+                
+                # Notificar al main_window sobre el cambio de modo
+                if self.main_window and hasattr(self.main_window, 'on_cluster_mode_changed'):
+                    self.main_window.on_cluster_mode_changed(True)
+                    
+            else:
+                # Ocultar configuraciones de cluster
+                self.cluster_config_frame.pack_forget()
+                self.logger.info("📱 Modo servidor único habilitado")
+                
+                # Restaurar título original
+                for widget in self.parent.winfo_children():
+                    if isinstance(widget, ctk.CTkScrollableFrame):
+                        for child in widget.winfo_children():
+                            if isinstance(child, ctk.CTkLabel) and "Configuración Principal" in child.cget("text"):
+                                child.configure(text="Configuración Principal del Servidor")
+                                break
+                        break
+                
+                # Notificar al main_window sobre el cambio de modo
+                if self.main_window and hasattr(self.main_window, 'on_cluster_mode_changed'):
+                    self.main_window.on_cluster_mode_changed(False)
+            
+            # Guardar configuración
+            self.save_cluster_configuration()
+            
+        except Exception as e:
+            self.logger.error(f"Error al cambiar modo cluster: {e}")
+    
+    def browse_cluster_data_path(self):
+        """Seleccionar carpeta de datos compartidos del cluster"""
+        try:
+            from tkinter import filedialog
+            
+            # Obtener ruta actual si existe
+            current_path = self.cluster_data_entry.get() or "C:\\"
+            
+            # Abrir diálogo de selección de carpeta
+            selected_path = filedialog.askdirectory(
+                title="Seleccionar Carpeta de Datos Compartidos del Cluster",
+                initialdir=current_path
+            )
+            
+            if selected_path:
+                # Actualizar el campo de entrada
+                self.cluster_data_entry.delete(0, "end")
+                self.cluster_data_entry.insert(0, selected_path)
+                
+                # Crear la carpeta si no existe
+                os.makedirs(selected_path, exist_ok=True)
+                
+                self.logger.info(f"📁 Carpeta de datos del cluster configurada: {selected_path}")
+                
+                # Guardar configuración
+                self.save_cluster_configuration()
+                
+        except Exception as e:
+            self.logger.error(f"Error al seleccionar carpeta de cluster: {e}")
+            messagebox.showerror("Error", f"Error al seleccionar carpeta: {e}")
+    
+    def save_cluster_configuration(self):
+        """Guardar configuración del cluster"""
+        try:
+            cluster_config = {
+                "enabled": self.cluster_enabled_var.get(),
+                "cluster_id": self.cluster_id_entry.get(),
+                "cluster_data_path": self.cluster_data_entry.get(),
+                "allow_character_transfer": self.allow_character_transfer_var.get(),
+                "allow_item_transfer": self.allow_item_transfer_var.get(),
+                "allow_dino_transfer": self.allow_dino_transfer_var.get()
+            }
+            
+            # Guardar en config_manager
+            self.config_manager.set("cluster", "enabled", cluster_config["enabled"])
+            self.config_manager.set("cluster", "cluster_id", cluster_config["cluster_id"])
+            self.config_manager.set("cluster", "cluster_data_path", cluster_config["cluster_data_path"])
+            self.config_manager.set("cluster", "allow_character_transfer", cluster_config["allow_character_transfer"])
+            self.config_manager.set("cluster", "allow_item_transfer", cluster_config["allow_item_transfer"])
+            self.config_manager.set("cluster", "allow_dino_transfer", cluster_config["allow_dino_transfer"])
+            
+            # También guardar en archivo JSON separado
+            os.makedirs("data", exist_ok=True)
+            with open("data/cluster_config.json", 'w', encoding='utf-8') as f:
+                json.dump(cluster_config, f, indent=2, ensure_ascii=False)
+                
+        except Exception as e:
+            self.logger.error(f"Error al guardar configuración del cluster: {e}")
+    
+    def load_cluster_configuration(self):
+        """Cargar configuración del cluster"""
+        try:
+            # Cargar desde config_manager
+            cluster_enabled = self.config_manager.get("cluster", "enabled", False)
+            if isinstance(cluster_enabled, str):
+                cluster_enabled = cluster_enabled.lower() == 'true'
+            
+            cluster_id = self.config_manager.get("cluster", "cluster_id", "MiClusterARK")
+            # Establecer carpeta por defecto 'Cluster' en la raíz si no hay configuración previa
+            default_cluster_path = os.path.join(os.getcwd(), "Cluster")
+            cluster_data_path = self.config_manager.get("cluster", "cluster_data_path", default_cluster_path)
+            allow_character_transfer = self.config_manager.get("cluster", "allow_character_transfer", True)
+            allow_item_transfer = self.config_manager.get("cluster", "allow_item_transfer", True)
+            allow_dino_transfer = self.config_manager.get("cluster", "allow_dino_transfer", True)
+            
+            # Aplicar configuración a los widgets
+            self.cluster_enabled_var.set(cluster_enabled)
+            self.cluster_id_entry.delete(0, "end")
+            self.cluster_id_entry.insert(0, cluster_id)
+            self.cluster_data_entry.delete(0, "end")
+            self.cluster_data_entry.insert(0, cluster_data_path)
+            
+            if isinstance(allow_character_transfer, str):
+                allow_character_transfer = allow_character_transfer.lower() == 'true'
+            if isinstance(allow_item_transfer, str):
+                allow_item_transfer = allow_item_transfer.lower() == 'true'
+            if isinstance(allow_dino_transfer, str):
+                allow_dino_transfer = allow_dino_transfer.lower() == 'true'
+                
+            self.allow_character_transfer_var.set(allow_character_transfer)
+            self.allow_item_transfer_var.set(allow_item_transfer)
+            self.allow_dino_transfer_var.set(allow_dino_transfer)
+            
+            # Aplicar el estado del cluster
+            if cluster_enabled:
+                self.cluster_config_frame.pack(fill="x", padx=10, pady=(0, 10))
+            else:
+                self.cluster_config_frame.pack_forget()
+                
+        except Exception as e:
+            self.logger.error(f"Error al cargar configuración del cluster: {e}")
+    
+    def is_cluster_mode(self):
+        """Verificar si está en modo cluster"""
+        return self.cluster_enabled_var.get() if hasattr(self, 'cluster_enabled_var') else False
+    
+    def get_cluster_config(self):
+        """Obtener configuración actual del cluster"""
+        if not self.is_cluster_mode():
+            return None
+            
+        return {
+            "cluster_id": self.cluster_id_entry.get(),
+            "cluster_data_path": self.cluster_data_entry.get(),
+            "allow_character_transfer": self.allow_character_transfer_var.get(),
+            "allow_item_transfer": self.allow_item_transfer_var.get(),
+            "allow_dino_transfer": self.allow_dino_transfer_var.get()
+        }
     
     def save_server_config(self, server_name=None):
         """Guardar configuración específica del servidor"""
@@ -1153,3 +1525,143 @@ class PrincipalPanel:
             
         except Exception as e:
             self.logger.error(f"Error al cargar configuración del servidor {server_name}: {e}")
+    
+    def start_cluster_server(self, server_name, capture_console=False):
+        """Iniciar un servidor específico del clúster"""
+        try:
+            if not hasattr(self, 'cluster_manager'):
+                self._initialize_cluster_manager()
+            
+            if not self.cluster_manager:
+                self.show_message("❌ ClusterManager no disponible", "error")
+                return False
+            
+            server_instance = self.cluster_manager.get_server(server_name)
+            if not server_instance:
+                self.show_message(f"❌ Servidor {server_name} no encontrado en el clúster", "error")
+                return False
+            
+            self.show_message(f"🚀 Iniciando servidor del clúster: {server_name}", "info")
+            
+            # Construir argumentos del servidor
+            server_args = self.build_server_arguments(server_name)
+            
+            # Obtener configuración del servidor
+            server_config = self.server_configs.get(server_name, {})
+            selected_map = server_config.get("map", "TheIsland_WP")
+            
+            def callback(level, message):
+                self.add_status_message(message, level)
+            
+            # Usar el ServerManager del servidor para iniciar con argumentos específicos
+            if server_instance.server_manager:
+                success = server_instance.server_manager.start_server_with_args(
+                    callback, server_name, selected_map, server_args, capture_console
+                )
+                if success:
+                    server_instance.status = "running"
+                    from datetime import datetime
+                    server_instance.uptime_start = datetime.now()
+                    server_instance.start_monitoring()
+                    
+                    # Forzar actualización del estado después de un breve delay
+                    def force_status_update():
+                        try:
+                            time.sleep(3)  # Esperar 3 segundos para que el proceso se estabilice
+                            server_instance.update_status()
+                            self.logger.info(f"Estado forzado actualizado para {server_name}: {server_instance.status}")
+                        except Exception as e:
+                            self.logger.error(f"Error en actualización forzada de estado: {e}")
+                    
+                    import threading
+                    threading.Thread(target=force_status_update, daemon=True).start()
+            else:
+                success = server_instance.start(callback)
+            if success:
+                self.show_message(f"✅ Servidor {server_name} iniciado correctamente", "success")
+            else:
+                self.show_message(f"❌ Error al iniciar servidor {server_name}", "error")
+            
+            return success
+            
+        except Exception as e:
+            self.logger.error(f"Error al iniciar servidor del clúster {server_name}: {e}")
+            self.show_message(f"❌ Error al iniciar servidor {server_name}: {str(e)}", "error")
+            return False
+    
+    def stop_cluster_server(self, server_name):
+        """Detener un servidor específico del clúster"""
+        try:
+            if not hasattr(self, 'cluster_manager') or not self.cluster_manager:
+                self.show_message("❌ ClusterManager no disponible", "error")
+                return False
+            
+            server_instance = self.cluster_manager.get_server(server_name)
+            if not server_instance:
+                self.show_message(f"❌ Servidor {server_name} no encontrado en el clúster", "error")
+                return False
+            
+            self.show_message(f"⏹️ Deteniendo servidor del clúster: {server_name}", "info")
+            
+            def callback(level, message):
+                self.add_status_message(message, level)
+            
+            success = server_instance.stop(callback)
+            if success:
+                self.show_message(f"✅ Servidor {server_name} detenido correctamente", "success")
+            else:
+                self.show_message(f"❌ Error al detener servidor {server_name}", "error")
+            
+            return success
+            
+        except Exception as e:
+            self.logger.error(f"Error al detener servidor del clúster {server_name}: {e}")
+            self.show_message(f"❌ Error al detener servidor {server_name}: {str(e)}", "error")
+            return False
+    
+    def restart_cluster_server(self, server_name, capture_console=False):
+        """Reiniciar un servidor específico del clúster"""
+        try:
+            if not hasattr(self, 'cluster_manager') or not self.cluster_manager:
+                self.show_message("❌ ClusterManager no disponible", "error")
+                return False
+            
+            server_instance = self.cluster_manager.get_server(server_name)
+            if not server_instance:
+                self.show_message(f"❌ Servidor {server_name} no encontrado en el clúster", "error")
+                return False
+            
+            self.show_message(f"🔄 Reiniciando servidor del clúster: {server_name}", "info")
+            
+            def callback(level, message):
+                self.add_status_message(message, level)
+            
+            success = server_instance.restart(callback)
+            if success:
+                self.show_message(f"✅ Servidor {server_name} reiniciado correctamente", "success")
+            else:
+                self.show_message(f"❌ Error al reiniciar servidor {server_name}", "error")
+            
+            return success
+            
+        except Exception as e:
+            self.logger.error(f"Error al reiniciar servidor del clúster {server_name}: {e}")
+            self.show_message(f"❌ Error al reiniciar servidor {server_name}: {str(e)}", "error")
+            return False
+    
+    def _initialize_cluster_manager(self):
+        """Inicializar ClusterManager si no existe"""
+        try:
+            if not hasattr(self, 'cluster_manager'):
+                from utils.cluster_manager import ClusterManager
+                self.cluster_manager = ClusterManager(self.config_manager, self.logger)
+                self.logger.info("ClusterManager inicializado")
+        except Exception as e:
+            self.logger.error(f"Error inicializando ClusterManager: {e}")
+            self.cluster_manager = None
+    
+    def get_cluster_manager(self):
+         """Obtener instancia del ClusterManager"""
+         if not hasattr(self, 'cluster_manager'):
+             self._initialize_cluster_manager()
+         return getattr(self, 'cluster_manager', None)
