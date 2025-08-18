@@ -104,6 +104,7 @@ hiddenimports = [
     'gui.panels.logs_panel_new',
     'gui.panels.working_logs_panel',
     'gui.panels.test_logs_panel',
+    'gui.panel.cluster_panel',
     'utils.config_manager',
     'utils.logger',
     'utils.server_manager',
@@ -127,7 +128,7 @@ excludes = [
     'unittest',
 ]
 
-a = Analysis(
+a = Analysis(   
     ['main.py'],
     pathex=[],
     binaries=[],

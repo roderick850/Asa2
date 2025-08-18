@@ -1,0 +1,52 @@
+2025-08-18 00:00:11 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 00:01:13 | INFO | 📥 ACTUALIZACIÓN INICIADA | Servidor: Prueba2 | Método: SteamCMD
+2025-08-18 00:01:13 | INFO | 📥 ACTUALIZACIÓN ❌ FALLIDA | Servidor: Prueba2 | Error en actualización: None
+2025-08-18 00:07:35 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 00:08:47 | INFO | 📥 ACTUALIZACIÓN INICIADA | Servidor: Prueba2 | Método: SteamCMD
+2025-08-18 00:08:47 | INFO | 📥 ACTUALIZACIÓN ❌ FALLIDA | Servidor: Prueba2 | Error en actualización: None
+2025-08-18 00:18:18 | INFO | 📋 BACKUP AUTOMÁTICO INICIADO | Servidor: Prueba | Iniciando backup del servidor
+2025-08-18 00:18:20 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: saveworld
+2025-08-18 00:18:21 | INFO | 📋 BACKUP AUTOMÁTICO INICIADO | Servidor: Prueba | Iniciando backup del servidor
+2025-08-18 00:18:23 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: saveworld
+2025-08-18 00:19:07 | INFO | 📥 ACTUALIZACIÓN INICIADA | Servidor: Prueba | Método: SteamCMD
+2025-08-18 00:19:07 | INFO | 📥 ACTUALIZACIÓN ❌ FALLIDA | Servidor: Prueba | Error en actualización: None
+2025-08-18 00:26:43 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 00:27:54 | INFO | 📥 ACTUALIZACIÓN INICIADA | Servidor: Prueba | Método: SteamCMD
+2025-08-18 00:27:54 | INFO | 📥 ACTUALIZACIÓN ❌ FALLIDA | Servidor: Prueba | Error en actualización: None
+2025-08-18 00:33:09 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 00:47:45 | INFO | 📥 ACTUALIZACIÓN INICIADA | Servidor: Prueba | Método: SteamCMD
+2025-08-18 00:47:45 | INFO | 📥 ACTUALIZACIÓN ❌ FALLIDA | Servidor: Prueba | Error en actualización: None
+2025-08-18 00:50:32 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 00:54:47 | INFO | 📥 ACTUALIZACIÓN INICIADA | Servidor: Prueba | Método: SteamCMD
+2025-08-18 00:54:47 | INFO | 📥 ACTUALIZACIÓN ❌ FALLIDA | Servidor: Prueba | Error en actualización: Actualización iniciada
+2025-08-18 00:56:34 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 00:57:22 | INFO | 📥 ACTUALIZACIÓN INICIADA | Servidor: Prueba | Método: SteamCMD
+2025-08-18 00:57:49 | INFO | 📥 ACTUALIZACIÓN ✅ EXITOSA | Servidor: Prueba | Actualización completada exitosamente vía botón Actualizar
+2025-08-18 01:04:15 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 01:12:17 | INFO | 📥 ACTUALIZACIÓN ✅ EXITOSA | Servidor: Prueba | Actualización completada exitosamente vía botón Actualizar
+2025-08-18 01:12:17 | INFO | 📥 ACTUALIZACIÓN ✅ EXITOSA | Servidor: Prueba | Actualización completada exitosamente vía botón Actualizar
+2025-08-18 01:18:11 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 01:20:20 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: saveworld
+2025-08-18 01:22:34 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 01:23:44 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba | Comando: saveworld
+2025-08-18 01:26:17 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 01:30:43 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 01:41:26 | INFO | 📋 BACKUP AUTOMÁTICO INICIADO | Servidor: Prueba2 | Iniciando backup del servidor
+2025-08-18 01:41:28 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: Prueba2 | Comando: saveworld
+2025-08-18 01:51:42 | INFO | 📋 BACKUP AUTOMÁTICO INICIADO | Servidor: prueba3 | Iniciando backup del servidor
+2025-08-18 01:51:44 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: prueba3 | Comando: saveworld
+2025-08-18 01:51:44 | INFO | 📋 BACKUP AUTOMÁTICO INICIADO | Servidor: prueba3 | Iniciando backup del servidor
+2025-08-18 01:51:46 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: prueba3 | Comando: saveworld
+2025-08-18 01:52:08 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: prueba3 | Comando: saveworld
+2025-08-18 01:55:03 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 01:56:05 | INFO | 🎮 RCON ❌ FALLIDO | Servidor: prueba3 | Comando: saveworld
+2025-08-18 01:57:50 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 02:06:19 | INFO | 🎮 RCON ✅ EXITOSO | Servidor: prueba3 | Comando: saveworld | Resultado: World Saved
+2025-08-18 02:08:46 | INFO | 📋 APLICACIÓN INICIADA | Servidor: default | Ark Server Manager se ha iniciado correctamente
+2025-08-18 02:11:39 | INFO | 🎮 RCON ✅ EXITOSO | Servidor: prueba3 | Comando: saveworld | Resultado: World Saved
+2025-08-18 02:11:41 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: prueba3 | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-18 02:11:41 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: prueba3 | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-18 02:11:41 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: prueba3 | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-18 02:11:42 | INFO | ⏹️ SERVIDOR DETENIDO | Servidor: prueba3 | Motivo: Manual - Botón Detener | Usuario detuvo servidor desde interfaz
+2025-08-18 02:11:54 | INFO | 📥 ACTUALIZACIÓN INICIADA | Servidor: prueba3 | Método: SteamCMD
+2025-08-18 02:12:23 | INFO | 📥 ACTUALIZACIÓN ✅ EXITOSA | Servidor: prueba3 | Actualización completada exitosamente vía botón Actualizar

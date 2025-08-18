@@ -737,7 +737,7 @@ class ServerManager:
             return False
     
     def stop_server(self, callback=None):
-        """Detiene el servidor de Ark"""
+        """Detiene el servidor de Ark con manejo mejorado para evitar bloqueos"""
         def _stop():
             try:
                 stopped = False
@@ -745,73 +745,130 @@ class ServerManager:
                 # Intentar detener usando el proceso guardado
                 if self.server_process and self.server_process.poll() is None:
                     self.logger.info("Deteniendo servidor usando referencia de proceso...")
-                    self.server_process.terminate()
-                    
-                    # Esperar hasta 30 segundos para que se cierre graciosamente
                     try:
-                        self.server_process.wait(timeout=30)
-                        stopped = True
-                    except subprocess.TimeoutExpired:
-                        self.logger.warning("Servidor no se cerró graciosamente, forzando cierre...")
-                        self.server_process.kill()
-                        self.server_process.wait()
-                        stopped = True
+                        self.server_process.terminate()
+                        
+                        # Esperar solo 10 segundos para cierre gracioso
+                        try:
+                            self.server_process.wait(timeout=10)
+                            stopped = True
+                            self.logger.info("Servidor detenido graciosamente")
+                        except subprocess.TimeoutExpired:
+                            self.logger.warning("Servidor no respondió, forzando cierre...")
+                            try:
+                                self.server_process.kill()
+                                # Esperar máximo 5 segundos después del kill
+                                self.server_process.wait(timeout=5)
+                                stopped = True
+                                self.logger.info("Servidor forzado a cerrar")
+                            except subprocess.TimeoutExpired:
+                                self.logger.error("Proceso no responde ni a kill, marcando como detenido")
+                                stopped = True
+                            except Exception as e:
+                                self.logger.error(f"Error en kill: {e}")
+                                stopped = True
+                        
+                    except Exception as e:
+                        self.logger.error(f"Error terminando proceso: {e}")
+                        stopped = False
                     
-                    self.server_running = False
-                    self.server_pid = None
-                    self.uptime_start = None
-                    self.logger.info("Servidor detenido exitosamente")
+                    if stopped:
+                        self.server_running = False
+                        self.server_pid = None
+                        self.uptime_start = None
+                        self.server_process = None
                         
                 elif self.server_pid and psutil.pid_exists(self.server_pid):
                     # Si el proceso existe pero no tenemos referencia al subprocess
                     self.logger.info(f"Deteniendo servidor usando PID: {self.server_pid}")
-                    process = psutil.Process(self.server_pid)
-                    process.terminate()
-                    
                     try:
-                        process.wait(timeout=30)
+                        process = psutil.Process(self.server_pid)
+                        process.terminate()
+                        
+                        # Esperar solo 10 segundos
+                        try:
+                            process.wait(timeout=10)
+                            stopped = True
+                            self.logger.info("Proceso detenido graciosamente")
+                        except psutil.TimeoutExpired:
+                            self.logger.warning("Proceso no respondió, forzando cierre...")
+                            try:
+                                process.kill()
+                                # Verificar que realmente se cerró
+                                time.sleep(2)
+                                if not psutil.pid_exists(self.server_pid):
+                                    stopped = True
+                                    self.logger.info("Proceso forzado a cerrar")
+                                else:
+                                    self.logger.warning("Proceso aún existe después de kill")
+                                    stopped = True  # Marcar como detenido de todas formas
+                            except Exception as e:
+                                self.logger.error(f"Error en kill: {e}")
+                                stopped = True
+                        
+                    except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                        self.logger.info(f"Proceso ya no existe o sin acceso: {e}")
                         stopped = True
-                    except psutil.TimeoutExpired:
-                        self.logger.warning("Forzando cierre del servidor...")
-                        process.kill()
-                        stopped = True
+                    except Exception as e:
+                        self.logger.error(f"Error manejando proceso PID {self.server_pid}: {e}")
+                        stopped = False
                     
-                    self.server_running = False
-                    self.server_pid = None
-                    self.uptime_start = None
-                    self.logger.info("Servidor detenido exitosamente")
+                    if stopped:
+                        self.server_running = False
+                        self.server_pid = None
+                        self.uptime_start = None
                 
                 # Si no pudo detener con los métodos anteriores, buscar por nombre de proceso
                 if not stopped:
                     self.logger.info("Buscando procesos de ARK Server ejecutándose...")
                     ark_processes = []
-                    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-                        try:
-                            if proc.info['name'] and 'ArkAscendedServer.exe' in proc.info['name']:
-                                ark_processes.append(proc)
-                                self.logger.info(f"Encontrado proceso ARK: PID {proc.info['pid']}")
-                        except (psutil.NoSuchProcess, psutil.AccessDenied):
-                            continue
+                    try:
+                        for proc in psutil.process_iter(['pid', 'name']):
+                            try:
+                                if proc.info['name'] and 'ArkAscendedServer.exe' in proc.info['name']:
+                                    ark_processes.append(proc)
+                                    self.logger.info(f"Encontrado proceso ARK: PID {proc.info['pid']}")
+                            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                                continue
+                    except Exception as e:
+                        self.logger.error(f"Error buscando procesos ARK: {e}")
                     
                     if ark_processes:
                         self.logger.info(f"Deteniendo {len(ark_processes)} proceso(s) de ARK Server...")
+                        processes_stopped = 0
                         for proc in ark_processes:
                             try:
                                 proc.terminate()
+                                # Esperar solo 8 segundos por proceso
                                 try:
-                                    proc.wait(timeout=30)
+                                    proc.wait(timeout=8)
+                                    processes_stopped += 1
+                                    self.logger.info(f"Proceso ARK PID {proc.pid} detenido graciosamente")
                                 except psutil.TimeoutExpired:
-                                    self.logger.warning(f"Forzando cierre del proceso PID {proc.pid}")
-                                    proc.kill()
-                                self.logger.info(f"Proceso ARK PID {proc.pid} detenido")
-                                stopped = True
+                                    try:
+                                        proc.kill()
+                                        time.sleep(1)
+                                        if not psutil.pid_exists(proc.pid):
+                                            processes_stopped += 1
+                                            self.logger.info(f"Proceso ARK PID {proc.pid} forzado a cerrar")
+                                        else:
+                                            self.logger.warning(f"Proceso PID {proc.pid} aún existe")
+                                            processes_stopped += 1  # Contar como detenido
+                                    except Exception as e:
+                                        self.logger.error(f"Error forzando cierre PID {proc.pid}: {e}")
+                                        processes_stopped += 1  # Contar como detenido
                             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                                self.logger.warning(f"No se pudo detener proceso PID {proc.pid}: {e}")
+                                self.logger.info(f"Proceso PID {proc.pid} ya no existe: {e}")
+                                processes_stopped += 1
+                            except Exception as e:
+                                self.logger.error(f"Error deteniendo proceso PID {proc.pid}: {e}")
                         
-                        self.server_running = False
-                        self.server_pid = None
-                        self.uptime_start = None
-                        self.logger.info("Todos los procesos de ARK Server detenidos")
+                        if processes_stopped > 0:
+                            stopped = True
+                            self.server_running = False
+                            self.server_pid = None
+                            self.uptime_start = None
+                            self.logger.info(f"Procesos de ARK Server detenidos: {processes_stopped}/{len(ark_processes)}")
                     else:
                         self.logger.warning("No se encontraron procesos de ARK Server ejecutándose")
                         if callback:
@@ -820,40 +877,201 @@ class ServerManager:
                 
                 if stopped and callback:
                     callback("stopped", "Servidor detenido exitosamente")
+                elif callback:
+                    callback("error", "No se pudo detener el servidor completamente")
                         
             except Exception as e:
-                self.logger.error(f"Error al detener el servidor: {e}")
+                self.logger.error(f"Error crítico al detener el servidor: {e}")
                 if callback:
                     callback("error", f"Error al detener: {str(e)}")
         
         threading.Thread(target=_stop, daemon=True).start()
     
+    def _stop_server_sync(self, callback=None):
+        """Versión síncrona de stop_server para uso interno (evita recursión)"""
+        try:
+            stopped = False
+            
+            # Intentar detener usando el proceso guardado
+            if self.server_process and self.server_process.poll() is None:
+                self.logger.info("Deteniendo servidor usando referencia de proceso...")
+                try:
+                    self.server_process.terminate()
+                    
+                    # Esperar solo 10 segundos para cierre gracioso
+                    try:
+                        self.server_process.wait(timeout=10)
+                        stopped = True
+                        self.logger.info("Servidor detenido graciosamente")
+                    except subprocess.TimeoutExpired:
+                        self.logger.warning("Servidor no respondió, forzando cierre...")
+                        try:
+                            self.server_process.kill()
+                            # Esperar máximo 5 segundos después del kill
+                            self.server_process.wait(timeout=5)
+                            stopped = True
+                            self.logger.info("Servidor forzado a cerrar")
+                        except subprocess.TimeoutExpired:
+                            self.logger.error("Proceso no responde ni a kill, marcando como detenido")
+                            stopped = True
+                        except Exception as e:
+                            self.logger.error(f"Error en kill: {e}")
+                            stopped = True
+                    
+                except Exception as e:
+                    self.logger.error(f"Error terminando proceso: {e}")
+                    stopped = False
+                
+                if stopped:
+                    self.server_running = False
+                    self.server_pid = None
+                    self.uptime_start = None
+                    self.server_process = None
+            
+            # Si no se pudo detener con el proceso guardado, intentar con PID
+            elif self.server_pid and psutil.pid_exists(self.server_pid):
+                self.logger.info(f"Deteniendo servidor usando PID: {self.server_pid}")
+                try:
+                    process = psutil.Process(self.server_pid)
+                    process.terminate()
+                    
+                    # Esperar solo 10 segundos
+                    try:
+                        process.wait(timeout=10)
+                        stopped = True
+                        self.logger.info("Proceso detenido graciosamente")
+                    except psutil.TimeoutExpired:
+                        self.logger.warning("Proceso no respondió, forzando cierre...")
+                        try:
+                            process.kill()
+                            time.sleep(2)
+                            if not psutil.pid_exists(self.server_pid):
+                                stopped = True
+                                self.logger.info("Proceso forzado a cerrar")
+                            else:
+                                self.logger.warning("Proceso aún existe después de kill")
+                                stopped = True
+                        except Exception as e:
+                            self.logger.error(f"Error en kill: {e}")
+                            stopped = True
+                    
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    self.logger.info(f"Proceso ya no existe o sin acceso: {e}")
+                    stopped = True
+                except Exception as e:
+                    self.logger.error(f"Error manejando proceso PID {self.server_pid}: {e}")
+                    stopped = False
+                
+                if stopped:
+                    self.server_running = False
+                    self.server_pid = None
+                    self.uptime_start = None
+            
+            # Buscar por nombre de proceso si no se pudo detener
+            if not stopped:
+                self.logger.info("Buscando procesos de ARK Server ejecutándose...")
+                ark_processes = []
+                try:
+                    for proc in psutil.process_iter(['pid', 'name']):
+                        try:
+                            if proc.info['name'] and 'ArkAscendedServer.exe' in proc.info['name']:
+                                ark_processes.append(proc)
+                                self.logger.info(f"Encontrado proceso ARK: PID {proc.info['pid']}")
+                        except (psutil.NoSuchProcess, psutil.AccessDenied):
+                            continue
+                except Exception as e:
+                    self.logger.error(f"Error buscando procesos ARK: {e}")
+                
+                if ark_processes:
+                    self.logger.info(f"Deteniendo {len(ark_processes)} proceso(s) de ARK Server...")
+                    processes_stopped = 0
+                    for proc in ark_processes:
+                        try:
+                            proc.terminate()
+                            try:
+                                proc.wait(timeout=8)
+                                processes_stopped += 1
+                                self.logger.info(f"Proceso ARK PID {proc.pid} detenido graciosamente")
+                            except psutil.TimeoutExpired:
+                                try:
+                                    proc.kill()
+                                    time.sleep(1)
+                                    if not psutil.pid_exists(proc.pid):
+                                        processes_stopped += 1
+                                        self.logger.info(f"Proceso ARK PID {proc.pid} forzado a cerrar")
+                                    else:
+                                        self.logger.warning(f"Proceso PID {proc.pid} aún existe")
+                                        processes_stopped += 1
+                                except Exception as e:
+                                    self.logger.error(f"Error forzando cierre PID {proc.pid}: {e}")
+                                    processes_stopped += 1
+                        except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                            self.logger.info(f"Proceso PID {proc.pid} ya no existe: {e}")
+                            processes_stopped += 1
+                        except Exception as e:
+                            self.logger.error(f"Error deteniendo proceso PID {proc.pid}: {e}")
+                    
+                    if processes_stopped > 0:
+                        stopped = True
+                        self.server_running = False
+                        self.server_pid = None
+                        self.uptime_start = None
+                        self.logger.info(f"Procesos de ARK Server detenidos: {processes_stopped}/{len(ark_processes)}")
+                else:
+                    self.logger.warning("No se encontraron procesos de ARK Server ejecutándose")
+                    if callback:
+                        callback("warning", "No hay servidor ejecutándose")
+                    return
+            
+            if stopped and callback:
+                callback("stopped", "Servidor detenido exitosamente")
+            elif callback:
+                callback("error", "No se pudo detener el servidor completamente")
+                    
+        except Exception as e:
+            self.logger.error(f"Error crítico al detener el servidor: {e}")
+            if callback:
+                callback("error", f"Error al detener: {str(e)}")
+    
     def restart_server(self, callback=None, server_name=None, map_name=None, custom_args=None, capture_console=False, force_stdin=True):
         """Reinicia el servidor de Ark con argumentos personalizados"""
-        def _restart():
-            try:
-                self.logger.info(f"Reiniciando servidor {server_name} con mapa {map_name}...")
-                if callback:
-                    callback("info", f"Reiniciando servidor {server_name} con mapa {map_name}...")
-                
-                # Detener servidor
-                self.stop_server()
-                
-                # Esperar un momento para asegurar que se detenga
-                time.sleep(5)
-                
-                # Usar start_server_with_args para conservar argumentos personalizados y mods
-                if custom_args:
-                    self.start_server_with_args(callback, server_name, map_name, custom_args, capture_console, force_stdin)
+        try:
+            self.logger.info(f"Reiniciando servidor {server_name} con mapa {map_name}...")
+            if callback:
+                callback("info", f"Reiniciando servidor {server_name} con mapa {map_name}...")
+            
+            # Detener servidor usando el método asíncrono para evitar bloqueos
+            def stop_callback(status, message):
+                self.logger.info(f"Stop callback: {status} - {message}")
+                if status in ["stopped", "warning"]:
+                    # Esperar un momento adicional para asegurar que se detenga
+                    time.sleep(3)
+                    
+                    # Iniciar el servidor en un hilo separado para evitar bloqueos
+                    def _start_after_stop():
+                        try:
+                            if custom_args:
+                                self.start_server_with_args(callback, server_name, map_name, custom_args, capture_console, force_stdin)
+                            else:
+                                self.start_server(callback, server_name, map_name, capture_console, force_stdin)
+                        except Exception as e:
+                            self.logger.error(f"Error al iniciar servidor después del reinicio: {e}")
+                            if callback:
+                                callback("error", f"Error al iniciar: {str(e)}")
+                    
+                    threading.Thread(target=_start_after_stop, daemon=True).start()
                 else:
-                    self.start_server(callback, server_name, map_name, capture_console, force_stdin)
-                
-            except Exception as e:
-                self.logger.error(f"Error al reiniciar el servidor: {e}")
-                if callback:
-                    callback("error", f"Error al reiniciar: {str(e)}")
-        
-        threading.Thread(target=_restart, daemon=True).start()
+                    self.logger.error(f"Error al detener servidor para reinicio: {message}")
+                    if callback:
+                        callback("error", f"Error al detener para reinicio: {message}")
+            
+            # Usar el método asíncrono stop_server en lugar del síncrono
+            self.stop_server(stop_callback)
+            
+        except Exception as e:
+            self.logger.error(f"Error al reiniciar el servidor: {e}")
+            if callback:
+                callback("error", f"Error al reiniciar: {str(e)}")
     
     def install_server(self, callback=None, server_name=None):
         """Instala/actualiza el servidor de Ark"""
@@ -865,7 +1083,7 @@ class ServerManager:
                 if not root_path:
                     if callback:
                         callback("error", "Ruta raíz no configurada. Configure la aplicación primero.")
-                    return
+                    return "Ruta raíz no configurada"
                 
                 # Verificar que la ruta raíz existe
                 if not os.path.exists(root_path):
@@ -918,7 +1136,7 @@ class ServerManager:
                 if not steamcmd_path:
                     if callback:
                         callback("error", "No se pudo instalar SteamCMD. Verifique su conexión a internet.")
-                    return
+                    return "No se pudo instalar SteamCMD"
                 
                 # Crear directorio de instalación si no existe
                 try:
@@ -965,7 +1183,7 @@ class ServerManager:
                 except Exception as e:
                     if callback:
                         callback("error", f"Error al ejecutar SteamCMD: {str(e)}")
-                    return
+                    return f"Error al ejecutar SteamCMD: {str(e)}"
                 
                 # Leer salida en tiempo real con polling más frecuente
                 if callback:
@@ -1092,65 +1310,122 @@ class ServerManager:
                 # Obtener código de salida
                 return_code = process.poll()
                 
-                # SteamCMD puede devolver códigos de salida diferentes a 0 incluso cuando la operación es exitosa
-                # Código 7 es común cuando la instalación se completa correctamente
-                if return_code == 0 or return_code == 7:
+                if return_code == 0:
                     if callback:
-                        callback("info", "Buscando ejecutable del servidor...")
-                    
-                    # Esperar un momento para que se complete la instalación
-                    import time
-                    time.sleep(2)
-                    
-                    # Buscar el ejecutable del servidor
-                    server_exe = self.find_server_executable(install_path)
-                    if server_exe:
-                        # Guardar la ruta del ejecutable para este servidor específico
-                        if server_name:
-                            # Crear una clave específica para este servidor
-                            server_key = f"executable_path_{server_name}"
-                            self.config_manager.set("server", server_key, server_exe)
-                        else:
-                            self.config_manager.set("server", "executable_path", server_exe)
-                        
-                        self.config_manager.save()
-                        
-                        self.logger.info(f"{operation_type.capitalize()} completada exitosamente. Ejecutable: {server_exe}")
-                        if callback:
-                            callback("success", f"{operation_type.capitalize()} completada exitosamente. Servidor en: {server_exe}")
-                    else:
-                        self.logger.warning(f"{operation_type.capitalize()} completada pero no se encontró el ejecutable en: {install_path}")
-                        if callback:
-                            callback("warning", f"{operation_type.capitalize()} completada pero no se encontró el ejecutable del servidor en: {install_path}")
-                        
-                        # Listar archivos en el directorio para debugging
-                        try:
-                            self.logger.info("Contenido del directorio de instalación:")
-                            for root, dirs, files in os.walk(install_path):
-                                level = root.replace(install_path, '').count(os.sep)
-                                indent = ' ' * 2 * level
-                                self.logger.info(f"{indent}{os.path.basename(root)}/")
-                                subindent = ' ' * 2 * (level + 1)
-                                for file in files[:10]:  # Solo mostrar los primeros 10 archivos
-                                    self.logger.info(f"{subindent}{file}")
-                                if len(files) > 10:
-                                    self.logger.info(f"{subindent}... y {len(files) - 10} archivos más")
-                        except Exception as e:
-                            self.logger.error(f"Error al listar contenido del directorio: {e}")
+                        callback("success", "✅ Actualización completada exitosamente")
+                    self.logger.info("SteamCMD actualización completada exitosamente")
                 else:
-                    stderr_output = process.stderr.read()
-                    self.logger.error(f"Error en la {operation_type}: {stderr_output}")
                     if callback:
-                        callback("error", f"Error en la {operation_type}. Código de salida: {return_code}")
-                        if stderr_output:
-                            callback("error", f"Detalles: {stderr_output}")
-                        
+                        callback("error", f"❌ Error en la actualización (código: {return_code})")
+                    self.logger.error(f"SteamCMD falló con código de salida: {return_code}")
+                    return False
+                    
             except Exception as e:
-                self.logger.error(f"Error durante la instalación: {e}")
+                self.logger.error(f"Error ejecutando SteamCMD: {e}")
                 if callback:
-                    callback("error", f"Error durante la instalación: {str(e)}")
+                    callback("error", f"❌ Error ejecutando SteamCMD: {e}")
+                return False
+                
+            # Verificar que la instalación fue exitosa buscando el ejecutable
+            if callback:
+                callback("progress", "🔍 Verificando instalación...")
+            
+            server_exe = self.find_server_executable(install_path)
+            if server_exe:
+                self.logger.info(f"Instalación completada exitosamente. Ejecutable encontrado: {server_exe}")
+                
+                # Actualizar la configuración con la ruta del ejecutable
+                if server_name:
+                    server_key = f"server_path_{server_name}"
+                    self.config_manager.set("server", server_key, server_exe)
+                else:
+                    self.config_manager.set("server", "server_path", server_exe)
+                self.config_manager.save()
+                
+                if callback:
+                    callback("success", f"✅ Instalación completada exitosamente")
+                    callback("info", f"Servidor instalado en: {install_path}")
+                    callback("info", f"Ejecutable encontrado: {server_exe}")
+                
+                return "Instalación completada exitosamente"
+            else:
+                self.logger.warning(f"Instalación completada pero no se encontró el ejecutable en: {install_path}")
+                if callback:
+                    callback("warning", f"⚠️ Instalación completada pero no se encontró el ejecutable del servidor")
+                    callback("info", f"Verifique manualmente la instalación en: {install_path}")
+                
+                return "Instalación completada con advertencias"
         
+        # Ejecutar la instalación en un hilo separado
         threading.Thread(target=_install, daemon=True).start()
+        return "Instalación iniciada"
+    
+    def _process_steamcmd_line(self, line, source, callback, last_progress):
+        """Procesa una línea de salida de SteamCMD y extrae información de progreso"""
+        if not line or not callback:
+            return last_progress
+            
+        line = line.strip()
+        if not line:
+            return last_progress
+            
+        # Patrones de progreso más completos
+        progress_patterns = [
+            r'Update state \(0x\d+\) downloading, progress: (\d+(?:\.\d+)?) \((\d+) / (\d+)\)',  # Con bytes
+            r'Update state \(0x\d+\) downloading, progress: (\d+(?:\.\d+)?)',  # Simple
+            r'downloading, progress: (\d+(?:\.\d+)?)',  # Progreso de descarga
+            r'Progress: (\d+(?:\.\d+)?)%',  # Progress con %
+            r'(\d+(?:\.\d+)?)% complete',  # X% complete
+            r'Update state \(0x\d+\) verifying update, progress: (\d+(?:\.\d+)?)',  # Verificación
+            r'Update state \(0x\d+\) preallocating, progress: (\d+(?:\.\d+)?)',  # Preasignación
+        ]
+        
+        # Buscar patrones de progreso
+        for pattern in progress_patterns:
+            match = re.search(pattern, line, re.IGNORECASE)
+            if match:
+                try:
+                    progress = float(match.group(1))
+                    if progress > last_progress:
+                        # Determinar el tipo de operación
+                        if 'downloading' in line.lower():
+                            callback("progress", f"📥 Descargando... {progress:.1f}%")
+                        elif 'verifying' in line.lower() or 'validating' in line.lower():
+                            callback("progress", f"🔍 Verificando... {progress:.1f}%")
+                        elif 'preallocating' in line.lower():
+                            callback("progress", f"💾 Preparando espacio... {progress:.1f}%")
+                        elif 'installing' in line.lower():
+                            callback("progress", f"📦 Instalando... {progress:.1f}%")
+                        else:
+                            callback("progress", f"🔄 Progreso... {progress:.1f}%")
+                        return progress
+                except ValueError:
+                    pass
+        
+        # Mensajes de estado importantes
+        if any(keyword in line.lower() for keyword in ['success!', 'fully installed', 'update complete']):
+            callback("success", f"✅ {line}")
+        elif any(keyword in line.lower() for keyword in ['error', 'failed', 'timeout']):
+            callback("error", f"❌ {line}")
+        elif 'update state' in line.lower() and any(state in line.lower() for state in ['downloading', 'installing', 'verifying', 'preallocating']):
+            # Estados de actualización importantes
+            if 'downloading' in line.lower():
+                callback("progress", f"📥 {line}")
+            elif 'installing' in line.lower():
+                callback("progress", f"📦 {line}")
+            elif 'verifying' in line.lower():
+                callback("progress", f"🔍 {line}")
+            else:
+                callback("info", line)
+        elif any(keyword in line.lower() for keyword in ['downloading', 'installing', 'validating', 'verifying']):
+            callback("progress", f"🔄 {line}")
+        elif any(keyword in line for keyword in ['App 2430930', 'Logging directory', 'Loading Steam API', 'Connecting anonymously', 'Waiting for client config']):
+            callback("info", line)
+        elif line.strip() and len(line.strip()) > 5 and not any(noise in line.lower() for noise in ['steam console client', 'type \'quit\'', 'loading steam api']):
+            # Solo mensajes significativos que no sean ruido
+            callback("info", line)
+            
+        return last_progress
     
     def install_steamcmd_if_needed(self, root_path, callback=None):
         """Instala SteamCMD si no está disponible o lo actualiza si existe"""
@@ -1553,13 +1828,13 @@ class ServerManager:
                 else:
                     if callback:
                         callback("error", "Nombre del servidor no especificado.")
-                    return
+                    return "Nombre del servidor no especificado"
                 
                 # Verificar que el servidor existe
                 if not os.path.exists(install_path):
                     if callback:
                         callback("error", f"El servidor '{server_name}' no existe en la ruta: {install_path}")
-                    return
+                    return f"El servidor '{server_name}' no existe"
                 
                 if callback:
                     callback("info", f"Servidor encontrado en: {install_path}")
@@ -1579,16 +1854,23 @@ class ServerManager:
                 
                 # Comando para actualizar el servidor de Ark Survival Ascended
                 # App ID: 2430930 (Ark Survival Ascended Dedicated Server)
+                # IMPORTANTE: force_install_dir debe ir ANTES de login
                 cmd = [
                     steamcmd_path,
-                    "+login", "anonymous",
                     "+force_install_dir", install_path,
+                    "+login", "anonymous",
                     "+app_update", "2430930", "validate",
                     "+quit"
                 ]
                 
                 if callback:
                     callback("info", "Ejecutando SteamCMD para actualización...")
+                
+                # Determinar la ruta del log de SteamCMD
+                steamcmd_log_path = None
+                if steamcmd_path != "steamcmd":
+                    steamcmd_dir = os.path.dirname(steamcmd_path)
+                    steamcmd_log_path = os.path.join(steamcmd_dir, "logs", "stderr.txt")
                 
                 # Ejecutar el proceso de actualización
                 try:
@@ -1604,45 +1886,70 @@ class ServerManager:
                         callback("error", f"Error al ejecutar SteamCMD: {str(e)}")
                     return
                 
-                # Leer salida en tiempo real
+                # Leer salida en tiempo real con mejor seguimiento del progreso
                 if callback:
                     callback("progress", "Iniciando actualización...")
                 
+                import time
+                import re
+                import threading
+                import queue
+                
+                # Variables para seguimiento del progreso
+                last_progress = 0
+                progress_queue = queue.Queue()
+                stderr_lines = []
+                
+                # Función para leer stderr en un hilo separado
+                def read_stderr():
+                    try:
+                        for line in iter(process.stderr.readline, ''):
+                            if line:
+                                stderr_lines.append(line.strip())
+                                progress_queue.put(('stderr', line.strip()))
+                    except:
+                        pass
+                
+                # Iniciar hilo para leer stderr
+                stderr_thread = threading.Thread(target=read_stderr, daemon=True)
+                stderr_thread.start()
+                
                 while True:
-                    output = process.stdout.readline()
-                    if output == '' and process.poll() is not None:
+                    # Verificar si el proceso ha terminado
+                    if process.poll() is not None:
+                        # Procesar cualquier salida restante
+                        try:
+                            while not progress_queue.empty():
+                                source, line = progress_queue.get_nowait()
+                                self._process_steamcmd_line(line, source, callback, last_progress)
+                        except:
+                            pass
                         break
-                    if output:
-                        output = output.strip()
+                    
+                    # Leer stdout
+                    try:
+                        output = process.stdout.readline()
                         if output:
-                            # Filtrar mensajes importantes y actualizar progreso
-                            if any(keyword in output for keyword in ["Downloading update", "Installing update", "Downloading", "Installing", "Validating", "Progress:"]):
-                                if callback:
-                                    callback("progress", output)
-                            elif "Success!" in output or "Installed" in output or "Update complete" in output:
-                                if callback:
-                                    callback("success", output)
-                            elif "ERROR" in output or "Failed" in output:
-                                if callback:
-                                    callback("error", output)
-                            elif any(keyword in output for keyword in ["Update state", "App 2430930", "Logging directory", "Loading Steam API", "Connecting anonymously", "Waiting for client config"]):
-                                if callback:
-                                    callback("info", output)
-                            elif "Steam" in output and ("updating" in output.lower() or "installing" in output.lower()):
-                                if callback:
-                                    callback("progress", output)
-                            elif "Downloading" in output or "Installing" in output or "Validating" in output:
-                                # Capturar cualquier mensaje que contenga estas palabras
-                                if callback:
-                                    callback("progress", output)
-                            elif "Progress:" in output:
-                                # Capturar mensajes de progreso específicos
-                                if callback:
-                                    callback("progress", output)
-                            else:
-                                # Para otros mensajes, mostrarlos como información
-                                if callback and output.strip():
-                                    callback("info", output)
+                            output = output.strip()
+                            if output:
+                                progress = self._process_steamcmd_line(output, 'stdout', callback, last_progress)
+                                if progress > last_progress:
+                                    last_progress = progress
+                    except:
+                        pass
+                    
+                    # Procesar mensajes de stderr desde la cola
+                    try:
+                        while not progress_queue.empty():
+                            source, line = progress_queue.get_nowait()
+                            progress = self._process_steamcmd_line(line, source, callback, last_progress)
+                            if progress > last_progress:
+                                last_progress = progress
+                    except:
+                        pass
+                    
+                    # Pequeña pausa para no sobrecargar el sistema
+                    time.sleep(0.05)
                 
                 # Obtener código de salida
                 return_code = process.poll()
@@ -1687,3 +1994,4 @@ class ServerManager:
                     callback("error", f"Error durante la actualización: {str(e)}")
         
         threading.Thread(target=_update, daemon=True).start()
+        return "Actualización iniciada"

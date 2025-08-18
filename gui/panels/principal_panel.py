@@ -1015,7 +1015,8 @@ class PrincipalPanel:
             multihome = self.multihome_entry.get() or "127.0.0.1"
         map_arg += f"?MultiHome={multihome}"
         
-        # Argumentos personalizados
+        # Argumentos personalizados - separar los que empiezan con ? de los que empiezan con -
+        custom_dash_args = []  # Para argumentos que empiezan con -
         if server_config:
             custom_args = server_config.get("custom_args", "").strip()
         else:
@@ -1024,11 +1025,14 @@ class PrincipalPanel:
             for line in custom_args.split('\n'):
                 line = line.strip()
                 if line and not line.startswith('#'):  # Ignorar líneas vacías y comentarios
-                    # Si la línea ya comienza con ?, la agregamos tal como está
-                    if line.startswith('?'):
+                    # Si la línea comienza con -, la guardamos para agregar al final
+                    if line.startswith('-'):
+                        custom_dash_args.append(line)
+                    # Si la línea ya comienza con ?, la agregamos tal como está al mapa
+                    elif line.startswith('?'):
                         map_arg += line
                     else:
-                        # Si no, agregamos el ? al principio
+                        # Si no tiene prefijo, agregamos el ? al principio para el mapa
                         map_arg += f"?{line}"
         
         # RCON
@@ -1047,14 +1051,17 @@ class PrincipalPanel:
                 map_arg += "?RCONEnabled=True"
                 map_arg += "?RCONPort=32330"
         
-        # Construir la lista final
-        args = [map_arg, "-server", "-log"]
+        # Construir la lista final - PRIMERO argumentos con '?' (mapa y parámetros)
+        args = [map_arg]
         
-        # 4. Agregar mods si existen
+        # Preparar argumentos con '-' para agregar al final
+        dash_args = ["-server", "-log"]
+        
+        # 4. Agregar mods si existen (van con '-')
         if mod_ids:
-            args.append(f"-mods={mod_ids}")
+            dash_args.append(f"-mods={mod_ids}")
         
-        # 5. Agregar MaxPlayers como argumento si el switch está activado
+        # 5. Agregar MaxPlayers como argumento si el switch está activado (va con '-')
         maxplayers_as_arg = False
         max_players = "70"
         
@@ -1067,27 +1074,33 @@ class PrincipalPanel:
             max_players = self.max_players_entry.get() or "70"
         
         if maxplayers_as_arg:
-            args.append(f"-WinLiveMaxPlayers={max_players}")
+            dash_args.append(f"-WinLiveMaxPlayers={max_players}")
             if self.logger.should_log_debug():
                 self.logger.info(f"DEBUG: MaxPlayers agregado como argumento: -WinLiveMaxPlayers={max_players}")
         
-        # 6. Agregar argumentos de cluster si está activo
+        # 6. Agregar argumentos de cluster si está activo (van con '-')
         if self.is_cluster_mode():
             cluster_config = self.get_cluster_config()
             if cluster_config:
                 # Agregar cluster ID
                 cluster_id = cluster_config.get("cluster_id", "")
                 if cluster_id:
-                    args.append(f"-clusterid={cluster_id}")
+                    dash_args.append(f"-clusterid={cluster_id}")
                     if self.logger.should_log_debug():
                         self.logger.info(f"DEBUG: Cluster ID agregado: -clusterid={cluster_id}")
                 
                 # Agregar ClusterDirOverride
                 cluster_data_path = cluster_config.get("cluster_data_path", "")
                 if cluster_data_path:
-                    args.append(f"-ClusterDirOverride={cluster_data_path}")
+                    dash_args.append(f"-ClusterDirOverride={cluster_data_path}")
                     if self.logger.should_log_debug():
                         self.logger.info(f"DEBUG: ClusterDirOverride agregado: -ClusterDirOverride={cluster_data_path}")
+        
+        # Agregar argumentos personalizados que empiezan con '-' al final
+        dash_args.extend(custom_dash_args)
+        
+        # FINALMENTE: Agregar todos los argumentos con '-' al final
+        args.extend(dash_args)
         
         if self.logger.should_log_debug():
             self.logger.info(f"DEBUG: Argumentos finales generados: {args}")

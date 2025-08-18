@@ -1,50 +1,5 @@
 [
   {
-    "name": "Prueba_20250813_121703",
-    "server": "Prueba",
-    "path": "D:\\ASA\\Backup\\Prueba_20250813_121703.zip",
-    "date": "2025-08-13T12:17:12.803683",
-    "size": 127004283,
-    "compressed": true,
-    "type": "autom\u00e1tico"
-  },
-  {
-    "name": "Prueba_20250813_123205",
-    "server": "Prueba",
-    "path": "D:\\ASA\\Backup\\Prueba_20250813_123205.zip",
-    "date": "2025-08-13T12:32:14.890804",
-    "size": 127004283,
-    "compressed": true,
-    "type": "autom\u00e1tico"
-  },
-  {
-    "name": "Prueba_20250813_124707",
-    "server": "Prueba",
-    "path": "D:\\ASA\\Backup\\Prueba_20250813_124707.zip",
-    "date": "2025-08-13T12:47:17.074697",
-    "size": 127004283,
-    "compressed": true,
-    "type": "autom\u00e1tico"
-  },
-  {
-    "name": "Prueba_20250813_130209",
-    "server": "Prueba",
-    "path": "D:\\ASA\\Backup\\Prueba_20250813_130209.zip",
-    "date": "2025-08-13T13:02:19.253180",
-    "size": 127004283,
-    "compressed": true,
-    "type": "autom\u00e1tico"
-  },
-  {
-    "name": "Prueba_20250813_131711",
-    "server": "Prueba",
-    "path": "D:\\ASA\\Backup\\Prueba_20250813_131711.zip",
-    "date": "2025-08-13T13:17:21.892055",
-    "size": 127004283,
-    "compressed": true,
-    "type": "autom\u00e1tico"
-  },
-  {
     "name": "Prueba_20250813_134527",
     "server": "Prueba",
     "path": "D:\\ASA\\Backup\\Prueba_20250813_134527.zip",
@@ -86,6 +41,51 @@
     "path": "D:\\ASA\\Backup\\Prueba_20250813_144536.zip",
     "date": "2025-08-13T14:45:45.756748",
     "size": 127004069,
+    "compressed": true,
+    "type": "autom\u00e1tico"
+  },
+  {
+    "name": "Prueba_20250818_001825",
+    "server": "Prueba",
+    "path": "D:\\ASA\\Backup\\Prueba_20250818_001825.zip",
+    "date": "2025-08-18T00:18:38.781607",
+    "size": 123608233,
+    "compressed": true,
+    "type": "autom\u00e1tico"
+  },
+  {
+    "name": "Prueba_20250818_001828",
+    "server": "Prueba",
+    "path": "D:\\ASA\\Backup\\Prueba_20250818_001828.zip",
+    "date": "2025-08-18T00:18:39.070277",
+    "size": 123608233,
+    "compressed": true,
+    "type": "autom\u00e1tico"
+  },
+  {
+    "name": "Prueba2_20250818_014133",
+    "server": "Prueba2",
+    "path": "D:\\ASA\\Backup\\Prueba2_20250818_014133.zip",
+    "date": "2025-08-18T01:41:34.229442",
+    "size": 51704,
+    "compressed": true,
+    "type": "autom\u00e1tico"
+  },
+  {
+    "name": "prueba3_20250818_015149",
+    "server": "prueba3",
+    "path": "D:\\ASA\\Backup\\prueba3_20250818_015149.zip",
+    "date": "2025-08-18T01:51:49.347975",
+    "size": 299,
+    "compressed": true,
+    "type": "autom\u00e1tico"
+  },
+  {
+    "name": "prueba3_20250818_015151",
+    "server": "prueba3",
+    "path": "D:\\ASA\\Backup\\prueba3_20250818_015151.zip",
+    "date": "2025-08-18T01:51:51.443203",
+    "size": 4725,
     "compressed": true,
     "type": "autom\u00e1tico"
   }

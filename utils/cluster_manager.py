@@ -130,18 +130,21 @@ class ServerInstance:
             
             # Usar ServerManager para detener
             if self.server_manager:
-                success = self.server_manager.stop_server(callback)
-                if success:
-                    self.status = "stopped"
-                    self.pid = None
-                    self.uptime_start = None
-                    if callback:
-                        callback("success", f"Servidor {self.name} detenido correctamente")
-                    return True
-                else:
-                    if callback:
-                        callback("error", f"Error deteniendo servidor {self.name}")
-                    return False
+                # Crear un callback wrapper para manejar la respuesta asíncrona
+                def stop_callback_wrapper(status, message):
+                    if status in ["stopped", "warning"]:
+                        self.status = "stopped"
+                        self.pid = None
+                        self.uptime_start = None
+                        if callback:
+                            callback("success", f"Servidor {self.name} detenido correctamente")
+                    else:
+                        if callback:
+                            callback("error", f"Error deteniendo servidor {self.name}: {message}")
+                
+                # Llamar al método asíncrono sin esperar retorno
+                self.server_manager.stop_server(stop_callback_wrapper)
+                return True  # Retornar True inmediatamente ya que es asíncrono
             else:
                 if callback:
                     callback("error", f"ServerManager no disponible para {self.name}")

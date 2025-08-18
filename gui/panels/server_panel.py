@@ -637,21 +637,14 @@ class ServerPanel:
             
         self.update_server_status("Deteniendo...", "orange")
         
-        # Simular pasos de detención con logs en ambos lugares
-        if hasattr(self, 'main_window') and self.main_window:
-            self._safe_schedule_ui_update(lambda: self._log_stop_step("🔄 Enviando señal de detención al servidor"), 500)
-            self._safe_schedule_ui_update(lambda: self._log_stop_step("⏳ Esperando que el servidor termine procesos"), 1000)
-            self._safe_schedule_ui_update(lambda: self._log_stop_step("✅ Servidor detenido correctamente"), 1500)
+        # Llamar directamente al método de detención sin programar múltiples llamadas
+        self._actually_stop_server()
     
     def _log_stop_step(self, message):
         """Helper para registrar pasos de detención en ambos logs"""
         self.add_status_message(message, "info")
         if hasattr(self.main_window, 'add_log_message'):
             self.main_window.add_log_message(message)
-        
-        # Si es el último paso, llamar realmente al método de detención
-        if "✅ Servidor detenido correctamente" in message:
-            self._actually_stop_server()
     
     def _actually_stop_server(self):
         """Realmente detener el servidor usando ServerManager"""
@@ -666,18 +659,19 @@ class ServerPanel:
                 if status_before == "Ejecutándose":
                     self.add_log_message("🛑 Enviando señal de detención al proceso del servidor...")
                     
-                    # Definir callback para mostrar resultado
+                    # Definir callback simple para mostrar resultado
                     def stop_callback(status, message):
                         if status == "stopped":
                             self.add_log_message(f"✅ {message}")
-                            self.add_log_message("🔍 Verificando que el proceso se cerró completamente...")
-                            
-                            # Verificar después de 2 segundos
-                            self._safe_schedule_ui_update(self._verify_server_stopped, 2000)
+                            self.update_server_status("Detenido", "red")
+                        elif status == "warning":
+                            self.add_log_message(f"⚠️ {message}")
+                            self.update_server_status("Detenido", "red")
                         else:
                             self.add_log_message(f"❌ Error en detención: {message}")
+                            self.update_server_status("Error", "red")
                     
-                    # Detener servidor con callback
+                    # Detener servidor con callback simple
                     self.server_manager.stop_server(stop_callback)
                 else:
                     self.add_log_message("ℹ️ El servidor ya estaba detenido")
@@ -688,6 +682,7 @@ class ServerPanel:
         except Exception as e:
             self.logger.error(f"Error al detener servidor realmente: {e}")
             self.add_log_message(f"❌ Error crítico al detener servidor: {e}")
+            self.update_server_status("Error", "red")
     
     def _verify_server_stopped(self):
         """Verificar que el servidor realmente se detuvo"""
@@ -966,14 +961,9 @@ class ServerPanel:
                 
                 # Registrar resultado de actualización
                 if hasattr(self.main_window, 'log_server_event'):
-                    if result and "success" in str(result).lower():
-                        self.main_window.log_server_event("update_complete", 
-                            success=True, 
-                            details="Actualización completada vía botón Actualizar")
-                    else:
-                        self.main_window.log_server_event("update_complete", 
-                            success=False, 
-                            details=f"Error en actualización: {result}")
+                    # No registrar aquí el resultado, ya que el callback install_callback se encarga de eso
+                    # Solo registrar el inicio de la actualización
+                    pass
                 
             except Exception as e:
                 self.add_status_message(f"❌ Error en la actualización: {str(e)}", "error")
@@ -1067,6 +1057,11 @@ class ServerPanel:
                 # Mostrar error y ocultar barra de progreso
                 self.add_status_message(f"{message}", "error")  # Ya tiene ❌ en add_status_message
                 self.hide_progress()
+                # Registrar error de actualización
+                if hasattr(self.main_window, 'log_server_event'):
+                    self.main_window.log_server_event("update_complete", 
+                        success=False, 
+                        details=message)
             elif message_type == "success":
                 # Mostrar éxito
                 self.add_status_message(f"{message}", "success")  # Ya tiene ✅ en add_status_message
@@ -1075,6 +1070,11 @@ class ServerPanel:
                     self.hide_progress()
                     # Refrescar la lista de servidores
                     self.refresh_servers_list()
+                    # Registrar éxito de actualización
+                    if hasattr(self.main_window, 'log_server_event'):
+                        self.main_window.log_server_event("update_complete", 
+                            success=True, 
+                            details="Actualización completada exitosamente vía botón Actualizar")
             elif message_type == "warning":
                 # Mostrar advertencia
                 self.add_status_message(f"{message}", "warning")  # Ya tiene ⚠️ en add_status_message
