@@ -29,13 +29,18 @@
     "session_name": "Prueba2",
     "server_password": "4r3p3r4",
     "admin_password": "c4rd4n4l",
-    "max_players": "70",
+    "max_players": "44",
     "query_port": "28015",
     "port": "7787",
     "multihome": "roderick850.tplinkdns.com",
     "message": "Prueba!",
     "duration": "10",
-    "custom_args": "-servergamelog",
-    "maxplayers_as_arg": true
+    "custom_args": "",
+    "maxplayers_as_arg": true,
+    "server_arg": true,
+    "log_arg": true,
+    "nobattleye_arg": false,
+    "servergamelog_arg": true,
+    "servergamelogincludetribelogs_arg": false
   }
 }

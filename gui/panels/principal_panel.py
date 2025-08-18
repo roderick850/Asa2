@@ -259,6 +259,91 @@ class PrincipalPanel:
         self.duration_entry = ctk.CTkEntry(col3_frame, placeholder_text="60", width=200, height=28)
         self.duration_entry.pack(fill="x", pady=(0, 6))
         
+        # Frame para argumentos opcionales
+        optional_args_frame = ctk.CTkFrame(main_frame)
+        optional_args_frame.pack(fill="x", padx=5, pady=5)
+        
+        # Título de argumentos opcionales
+        ctk.CTkLabel(
+            optional_args_frame, 
+            text="⚙️ Argumentos de Inicio Opcionales", 
+            font=("Arial", 13, "bold")
+        ).pack(pady=5)
+        
+        # Descripción
+        ctk.CTkLabel(
+            optional_args_frame, 
+            text="Seleccione los argumentos adicionales que desea incluir al iniciar el servidor:",
+            font=("Arial", 10)
+        ).pack(pady=(0, 5))
+        
+        # Frame para checkboxes en dos columnas
+        checkboxes_frame = ctk.CTkFrame(optional_args_frame, fg_color="transparent")
+        checkboxes_frame.pack(fill="x", padx=10, pady=5)
+        
+        # Configurar columnas
+        checkboxes_frame.grid_columnconfigure(0, weight=1)
+        checkboxes_frame.grid_columnconfigure(1, weight=1)
+        
+        # Columna izquierda
+        left_col = ctk.CTkFrame(checkboxes_frame, fg_color="transparent")
+        left_col.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+        
+        # Variables para los checkboxes
+        self.server_arg_var = ctk.BooleanVar(value=True)  # Por defecto activado
+        self.log_arg_var = ctk.BooleanVar(value=True)     # Por defecto activado
+        self.nobattleye_var = ctk.BooleanVar(value=False)
+        
+        # Checkboxes columna izquierda
+        self.server_checkbox = ctk.CTkCheckBox(
+            left_col,
+            text="🖥️ -server (Modo servidor dedicado)",
+            variable=self.server_arg_var,
+            font=("Arial", 11)
+        )
+        self.server_checkbox.pack(anchor="w", pady=3)
+        
+        self.log_checkbox = ctk.CTkCheckBox(
+            left_col,
+            text="📝 -log (Habilitar logging)",
+            variable=self.log_arg_var,
+            font=("Arial", 11)
+        )
+        self.log_checkbox.pack(anchor="w", pady=3)
+        
+        self.nobattleye_checkbox = ctk.CTkCheckBox(
+            left_col,
+            text="🛡️ -NoBattlEye (Deshabilitar BattlEye)",
+            variable=self.nobattleye_var,
+            font=("Arial", 11)
+        )
+        self.nobattleye_checkbox.pack(anchor="w", pady=3)
+        
+        # Columna derecha
+        right_col = ctk.CTkFrame(checkboxes_frame, fg_color="transparent")
+        right_col.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        
+        # Variables para los checkboxes de la columna derecha
+        self.servergamelog_var = ctk.BooleanVar(value=False)
+        self.servergamelogincludetribelogs_var = ctk.BooleanVar(value=False)
+        
+        # Checkboxes columna derecha
+        self.servergamelog_checkbox = ctk.CTkCheckBox(
+            right_col,
+            text="📊 -servergamelog (Log de eventos del juego)",
+            variable=self.servergamelog_var,
+            font=("Arial", 11)
+        )
+        self.servergamelog_checkbox.pack(anchor="w", pady=3)
+        
+        self.servergamelogincludetribelogs_checkbox = ctk.CTkCheckBox(
+            right_col,
+            text="🏛️ -servergamelogincludetribelogs (Incluir logs de tribus)",
+            variable=self.servergamelogincludetribelogs_var,
+            font=("Arial", 11)
+        )
+        self.servergamelogincludetribelogs_checkbox.pack(anchor="w", pady=3)
+        
         # Frame para argumentos personalizados
         custom_frame = ctk.CTkFrame(main_frame)
         custom_frame.pack(fill="x", padx=5, pady=5)
@@ -266,7 +351,7 @@ class PrincipalPanel:
         # Título de argumentos personalizados
         ctk.CTkLabel(
             custom_frame, 
-            text="Argumentos de Inicio Personalizados", 
+            text="📝 Argumentos de Inicio Personalizados", 
             font=("Arial", 13, "bold")
         ).pack(pady=5)
         
@@ -338,6 +423,37 @@ class PrincipalPanel:
                 if isinstance(maxplayers_as_arg, str):
                     maxplayers_as_arg = maxplayers_as_arg.lower() == 'true'
                 self.maxplayers_as_arg_var.set(maxplayers_as_arg)
+            
+            # Cargar estado de los checkboxes de argumentos opcionales
+            if hasattr(self, 'server_arg_var'):
+                server_arg = self.config_manager.get("server", "server_arg", True)
+                if isinstance(server_arg, str):
+                    server_arg = server_arg.lower() == 'true'
+                self.server_arg_var.set(server_arg)
+                
+            if hasattr(self, 'log_arg_var'):
+                log_arg = self.config_manager.get("server", "log_arg", True)
+                if isinstance(log_arg, str):
+                    log_arg = log_arg.lower() == 'true'
+                self.log_arg_var.set(log_arg)
+                
+            if hasattr(self, 'nobattleye_var'):
+                nobattleye_arg = self.config_manager.get("server", "nobattleye_arg", False)
+                if isinstance(nobattleye_arg, str):
+                    nobattleye_arg = nobattleye_arg.lower() == 'true'
+                self.nobattleye_var.set(nobattleye_arg)
+                
+            if hasattr(self, 'servergamelog_var'):
+                servergamelog_arg = self.config_manager.get("server", "servergamelog_arg", False)
+                if isinstance(servergamelog_arg, str):
+                    servergamelog_arg = servergamelog_arg.lower() == 'true'
+                self.servergamelog_var.set(servergamelog_arg)
+                
+            if hasattr(self, 'servergamelogincludetribelogs_var'):
+                servergamelogincludetribelogs_arg = self.config_manager.get("server", "servergamelogincludetribelogs_arg", False)
+                if isinstance(servergamelogincludetribelogs_arg, str):
+                    servergamelogincludetribelogs_arg = servergamelogincludetribelogs_arg.lower() == 'true'
+                self.servergamelogincludetribelogs_var.set(servergamelogincludetribelogs_arg)
                 
         except Exception as e:
             self.logger.error(f"Error al cargar configuración: {e}")
@@ -382,6 +498,18 @@ class PrincipalPanel:
             # Guardar estado del switch de MaxPlayers como argumento
             if hasattr(self, 'maxplayers_as_arg_var'):
                 self.config_manager.set("server", "maxplayers_as_arg", self.maxplayers_as_arg_var.get())
+            
+            # Guardar estado de los checkboxes de argumentos opcionales
+            if hasattr(self, 'server_arg_var'):
+                self.config_manager.set("server", "server_arg", self.server_arg_var.get())
+            if hasattr(self, 'log_arg_var'):
+                self.config_manager.set("server", "log_arg", self.log_arg_var.get())
+            if hasattr(self, 'nobattleye_var'):
+                self.config_manager.set("server", "nobattleye_arg", self.nobattleye_var.get())
+            if hasattr(self, 'servergamelog_var'):
+                self.config_manager.set("server", "servergamelog_arg", self.servergamelog_var.get())
+            if hasattr(self, 'servergamelogincludetribelogs_var'):
+                self.config_manager.set("server", "servergamelogincludetribelogs_arg", self.servergamelogincludetribelogs_var.get())
             
             # Guardar en archivo
             self.config_manager.save()
@@ -1055,7 +1183,33 @@ class PrincipalPanel:
         args = [map_arg]
         
         # Preparar argumentos con '-' para agregar al final
-        dash_args = ["-server", "-log"]
+        dash_args = []
+        
+        # Agregar argumentos opcionales basados en los checkboxes
+        if server_config:
+            # En modo cluster, usar configuración guardada
+            if server_config.get("server_arg", True):
+                dash_args.append("-server")
+            if server_config.get("log_arg", True):
+                dash_args.append("-log")
+            if server_config.get("nobattleye_arg", False):
+                dash_args.append("-NoBattlEye")
+            if server_config.get("servergamelog_arg", False):
+                dash_args.append("-servergamelog")
+            if server_config.get("servergamelogincludetribelogs_arg", False):
+                dash_args.append("-servergamelogincludetribelogs")
+        else:
+            # En modo normal, usar checkboxes de la interfaz
+            if hasattr(self, 'server_arg_var') and self.server_arg_var.get():
+                dash_args.append("-server")
+            if hasattr(self, 'log_arg_var') and self.log_arg_var.get():
+                dash_args.append("-log")
+            if hasattr(self, 'nobattleye_var') and self.nobattleye_var.get():
+                dash_args.append("-NoBattlEye")
+            if hasattr(self, 'servergamelog_var') and self.servergamelog_var.get():
+                dash_args.append("-servergamelog")
+            if hasattr(self, 'servergamelogincludetribelogs_var') and self.servergamelogincludetribelogs_var.get():
+                dash_args.append("-servergamelogincludetribelogs")
         
         # 4. Agregar mods si existen (van con '-')
         if mod_ids:
@@ -1467,7 +1621,12 @@ class PrincipalPanel:
                 "message": getattr(self, 'message_entry', None) and self.message_entry.get() or "",
                 "duration": getattr(self, 'duration_entry', None) and self.duration_entry.get() or "1440",
                 "custom_args": getattr(self, 'custom_args_text', None) and self.custom_args_text.get("1.0", "end-1c") or "",
-                "maxplayers_as_arg": getattr(self, 'maxplayers_as_arg_var', None) and self.maxplayers_as_arg_var.get() or False
+                "maxplayers_as_arg": getattr(self, 'maxplayers_as_arg_var', None) and self.maxplayers_as_arg_var.get() or False,
+                "server_arg": getattr(self, 'server_arg_var', None) and self.server_arg_var.get() or True,
+                "log_arg": getattr(self, 'log_arg_var', None) and self.log_arg_var.get() or True,
+                "nobattleye_arg": getattr(self, 'nobattleye_var', None) and self.nobattleye_var.get() or False,
+                "servergamelog_arg": getattr(self, 'servergamelog_var', None) and self.servergamelog_var.get() or False,
+                "servergamelogincludetribelogs_arg": getattr(self, 'servergamelogincludetribelogs_var', None) and self.servergamelogincludetribelogs_var.get() or False
             }
             
             self.server_configs[server_name] = config
@@ -1533,6 +1692,37 @@ class PrincipalPanel:
                 if isinstance(maxplayers_value, str):
                     maxplayers_value = maxplayers_value.lower() == 'true'
                 self.maxplayers_as_arg_var.set(maxplayers_value)
+            
+            # Cargar estado de los checkboxes de argumentos opcionales
+            if hasattr(self, 'server_arg_var'):
+                server_arg_value = config.get("server_arg", True)
+                if isinstance(server_arg_value, str):
+                    server_arg_value = server_arg_value.lower() == 'true'
+                self.server_arg_var.set(server_arg_value)
+                
+            if hasattr(self, 'log_arg_var'):
+                log_arg_value = config.get("log_arg", True)
+                if isinstance(log_arg_value, str):
+                    log_arg_value = log_arg_value.lower() == 'true'
+                self.log_arg_var.set(log_arg_value)
+                
+            if hasattr(self, 'nobattleye_var'):
+                nobattleye_value = config.get("nobattleye_arg", False)
+                if isinstance(nobattleye_value, str):
+                    nobattleye_value = nobattleye_value.lower() == 'true'
+                self.nobattleye_var.set(nobattleye_value)
+                
+            if hasattr(self, 'servergamelog_var'):
+                servergamelog_value = config.get("servergamelog_arg", False)
+                if isinstance(servergamelog_value, str):
+                    servergamelog_value = servergamelog_value.lower() == 'true'
+                self.servergamelog_var.set(servergamelog_value)
+                
+            if hasattr(self, 'servergamelogincludetribelogs_var'):
+                servergamelogincludetribelogs_value = config.get("servergamelogincludetribelogs_arg", False)
+                if isinstance(servergamelogincludetribelogs_value, str):
+                    servergamelogincludetribelogs_value = servergamelogincludetribelogs_value.lower() == 'true'
+                self.servergamelogincludetribelogs_var.set(servergamelogincludetribelogs_value)
             
             self.logger.info(f"Configuración cargada para servidor: {server_name}")
             
