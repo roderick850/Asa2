@@ -126,9 +126,6 @@ class AdvancedSettingsDialog:
             font=("Arial", 16, "bold")
         ).pack(pady=(0, 20))
         
-        # Cargar configuraciones automáticamente al mostrar la pestaña
-        self.load_current_settings()
-        
         # Inicio con Windows
         startup_frame = ctk.CTkFrame(main_frame)
         startup_frame.pack(fill="x", pady=5)
@@ -215,6 +212,9 @@ class AdvancedSettingsDialog:
             text="Realiza un backup automático al iniciar la aplicación",
             text_color="gray"
         ).pack(side="left", padx=(10, 0), pady=10)
+        
+        # Cargar configuraciones después de crear todas las variables
+        self.load_current_settings()
         
     def create_behavior_tab(self):
         """Crear pestaña de comportamiento"""
@@ -332,6 +332,9 @@ class AdvancedSettingsDialog:
             text_color="gray"
         ).pack(side="left", padx=(10, 0), pady=10)
         
+        # Cargar configuraciones después de crear todas las variables
+        self.load_current_settings()
+        
     def create_interface_tab(self):
         """Crear pestaña de interfaz"""
         tab = self.notebook.add("🎨 Interfaz")
@@ -421,15 +424,8 @@ class AdvancedSettingsDialog:
             text_color="gray"
         ).pack(side="left", padx=(10, 0), pady=10)
         
-
-    
-
-    
-
-
-
-
-
+        # Cargar configuraciones después de crear todas las variables
+        self.load_current_settings()
         
     def on_startup_toggle(self):
         """Manejar toggle de inicio con Windows"""
@@ -764,61 +760,94 @@ class AdvancedSettingsDialog:
         try:
             self.logger.info("🔄 Iniciando sincronización de configuraciones...")
             
-            # Forzar recarga de configuraciones desde archivo
-            if hasattr(self.app_settings, 'load_settings'):
-                self.app_settings.load_settings()
-                self.logger.info("✅ Configuraciones recargadas desde archivo")
-            else:
-                self.logger.warning("⚠️ AppSettings no tiene método load_settings")
+            # Desactivar temporalmente los comandos de los switches para evitar que se ejecuten durante la carga
+            switches_with_commands = []
             
-            # Actualizar variables de interfaz con valores actuales
-            settings_map = {
-                'startup_var': 'startup_with_windows',
-                'autostart_var': 'auto_start_server',
-                'autostart_windows_var': 'auto_start_server_with_windows',
-                'start_minimized_var': 'start_minimized',
-                'minimize_tray_var': 'minimize_to_tray',
-                'close_tray_var': 'close_to_tray',
-                'always_ontop_var': 'always_on_top',
-                'remember_position_var': 'remember_window_position',
-                'auto_backup_var': 'auto_backup_on_start',
-                'confirm_exit_var': 'confirm_exit',
-                'auto_save_var': 'auto_save_config',
-                'auto_updates_var': 'auto_check_updates',
-                'notification_sound_var': 'notification_sound',
-                'theme_var': 'theme_mode'
-            }
+            # Identificar switches con comandos y guardar sus comandos originales
+            if hasattr(self, 'startup_switch'):
+                original_command = getattr(self.startup_switch, '_command', None)
+                if original_command:
+                    switches_with_commands.append(('startup_switch', original_command))
+                    self.startup_switch.configure(command=None)
             
-            successful_updates = 0
-            failed_updates = 0
+            if hasattr(self, 'always_ontop_switch'):
+                original_command = getattr(self.always_ontop_switch, '_command', None)
+                if original_command:
+                    switches_with_commands.append(('always_ontop_switch', original_command))
+                    self.always_ontop_switch.configure(command=None)
             
-            for var_name, setting_key in settings_map.items():
-                if hasattr(self, var_name):
-                    try:
-                        current_value = self.app_settings.get_setting(setting_key)
-                        var_obj = getattr(self, var_name)
-                        
-                        # Verificar que la variable existe y tiene método set
-                        if hasattr(var_obj, 'set'):
-                            old_value = var_obj.get() if hasattr(var_obj, 'get') else "UNKNOWN"
-                            var_obj.set(current_value)
-                            successful_updates += 1
-                            
-                            # Log detallado para configuraciones críticas
-                            if setting_key in ['auto_start_server', 'auto_start_server_with_windows', 'startup_with_windows']:
-                                self.logger.info(f"🔄 {setting_key}: {old_value} → {current_value}")
-                        else:
-                            self.logger.error(f"❌ Variable {var_name} no tiene método set()")
-                            failed_updates += 1
-                            
-                    except Exception as e:
-                        self.logger.error(f"❌ Error al actualizar {var_name} ({setting_key}): {e}")
-                        failed_updates += 1
+            if hasattr(self, 'theme_combo'):
+                original_command = getattr(self.theme_combo, '_command', None)
+                if original_command:
+                    switches_with_commands.append(('theme_combo', original_command))
+                    self.theme_combo.configure(command=None)
+            
+            try:
+                # Forzar recarga de configuraciones desde archivo
+                if hasattr(self.app_settings, 'load_settings'):
+                    self.app_settings.load_settings()
+                    self.logger.info("✅ Configuraciones recargadas desde archivo")
                 else:
-                    self.logger.warning(f"⚠️ Variable {var_name} no existe en el diálogo")
-                    failed_updates += 1
-            
-            self.logger.info(f"✅ Sincronización completada: {successful_updates} exitosas, {failed_updates} fallidas")
+                    self.logger.warning("⚠️ AppSettings no tiene método load_settings")
+                
+                # Actualizar variables de interfaz con valores actuales
+                settings_map = {
+                    'startup_var': 'startup_with_windows',
+                    'autostart_var': 'auto_start_server',
+                    'autostart_windows_var': 'auto_start_server_with_windows',
+                    'start_minimized_var': 'start_minimized',
+                    'minimize_tray_var': 'minimize_to_tray',
+                    'close_tray_var': 'close_to_tray',
+                    'always_ontop_var': 'always_on_top',
+                    'remember_position_var': 'remember_window_position',
+                    'auto_backup_var': 'auto_backup_on_start',
+                    'confirm_exit_var': 'confirm_exit',
+                    'auto_save_var': 'auto_save_config',
+                    'auto_updates_var': 'auto_check_updates',
+                    'notification_sound_var': 'notification_sound',
+                    'theme_var': 'theme_mode'
+                }
+                
+                successful_updates = 0
+                failed_updates = 0
+                
+                for var_name, setting_key in settings_map.items():
+                    if hasattr(self, var_name):
+                        try:
+                            current_value = self.app_settings.get_setting(setting_key)
+                            var_obj = getattr(self, var_name)
+                            
+                            # Verificar que la variable existe y tiene método set
+                            if hasattr(var_obj, 'set'):
+                                old_value = var_obj.get() if hasattr(var_obj, 'get') else "UNKNOWN"
+                                var_obj.set(current_value)
+                                successful_updates += 1
+                                
+                                # Log detallado para configuraciones críticas
+                                if setting_key in ['auto_start_server', 'auto_start_server_with_windows', 'startup_with_windows']:
+                                    self.logger.info(f"🔄 {setting_key}: {old_value} → {current_value}")
+                            else:
+                                self.logger.error(f"❌ Variable {var_name} no tiene método set()")
+                                failed_updates += 1
+                                
+                        except Exception as e:
+                            self.logger.error(f"❌ Error al actualizar {var_name} ({setting_key}): {e}")
+                            failed_updates += 1
+                    else:
+                        self.logger.warning(f"⚠️ Variable {var_name} no existe en el diálogo")
+                        failed_updates += 1
+                
+                self.logger.info(f"✅ Sincronización completada: {successful_updates} exitosas, {failed_updates} fallidas")
+                
+            finally:
+                # Reactivar los comandos de los switches
+                for switch_name, original_command in switches_with_commands:
+                    try:
+                        switch_obj = getattr(self, switch_name)
+                        switch_obj.configure(command=original_command)
+                        self.logger.debug(f"🔄 Comando reactivado para {switch_name}")
+                    except Exception as e:
+                        self.logger.error(f"❌ Error al reactivar comando de {switch_name}: {e}")
                 
         except Exception as e:
             self.logger.error(f"❌ Error crítico al cargar configuraciones actuales: {e}")

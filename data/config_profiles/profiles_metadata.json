@@ -1,0 +1,18 @@
+{
+  "profiles": {
+    "prueba1": {
+      "display_name": "prueba1",
+      "description": "probando un perfil",
+      "created_date": "2025-08-18T18:32:04.142242",
+      "files": [
+        "GameUserSettings.ini",
+        "Game.ini"
+      ],
+      "original_paths": {
+        "gameusersettings": "D:\\ASA\\Prueba\\ShooterGame\\Saved\\Config\\WindowsServer\\GameUserSettings.ini",
+        "game_ini": "D:\\ASA\\Prueba\\ShooterGame\\Saved\\Config\\WindowsServer\\Game.ini"
+      }
+    }
+  },
+  "last_updated": "2025-08-18T18:32:04.142329"
+}

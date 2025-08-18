@@ -4,5 +4,11 @@
   "cluster_data_path": "D:/ASA/Cluster",
   "allow_character_transfer": true,
   "allow_item_transfer": true,
-  "allow_dino_transfer": true
+  "allow_dino_transfer": true,
+  "prevent_download_survivors": false,
+  "prevent_download_items": false,
+  "prevent_download_dinos": false,
+  "prevent_upload_survivors": false,
+  "prevent_upload_items": false,
+  "prevent_upload_dinos": false
 }

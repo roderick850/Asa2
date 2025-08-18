@@ -1,7 +1,108 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import messagebox, filedialog
 import customtkinter as ctk
 import os
+
+
+class ToolTip:
+    """Clase mejorada para crear tooltips que muestran descripciones al pasar el mouse"""
+    def __init__(self, widget, text='tooltip info'):
+        self.widget = widget
+        self.text = text
+        self.tipwindow = None
+        self.id = None
+        self.hide_id = None
+        self.x = self.y = 0
+        
+        self.widget.bind('<Enter>', self.enter, add='+')
+        self.widget.bind('<Leave>', self.leave, add='+')
+        self.widget.bind('<Motion>', self.motion, add='+')
+        self.widget.bind('<Button-1>', self.leave, add='+')  # Ocultar al hacer clic
+
+    def enter(self, event=None):
+        self.cancel_hide()
+        self.schedule()
+
+    def leave(self, event=None):
+        self.unschedule()
+        self.schedule_hide()
+
+    def motion(self, event=None):
+        if self.tipwindow:
+            # Si ya está visible, mantenerlo
+            self.cancel_hide()
+        else:
+            # Si no está visible, programar para mostrar
+            self.unschedule()
+            self.schedule()
+
+    def schedule(self):
+        self.unschedule()
+        try:
+            self.id = self.widget.after(800, self.showtip)  # Aumentar delay a 800ms
+        except Exception:
+            pass
+
+    def unschedule(self):
+        if self.id:
+            self.widget.after_cancel(self.id)
+        self.id = None
+
+    def schedule_hide(self):
+        self.cancel_hide()
+        try:
+            self.hide_id = self.widget.after(100, self.hidetip)  # Ocultar rápidamente
+        except Exception:
+            pass
+
+    def cancel_hide(self):
+        if self.hide_id:
+            self.widget.after_cancel(self.hide_id)
+        self.hide_id = None
+
+    def showtip(self, event=None):
+        if self.tipwindow:
+            return  # Ya está visible
+            
+        try:
+            x = self.widget.winfo_rootx() + 25
+            y = self.widget.winfo_rooty() + 25
+            
+            # Crear ventana del tooltip
+            self.tipwindow = tw = tk.Toplevel(self.widget)
+            tw.wm_overrideredirect(True)
+            tw.wm_attributes('-topmost', True)  # Mantener encima
+            tw.wm_geometry(f"+{x}+{y}")
+            
+            # Estilo del tooltip mejorado
+            label = tk.Label(tw, text=self.text, justify='left',
+                            background='#ffffcc', relief='solid', borderwidth=1,
+                            font=('Segoe UI', '9', 'normal'), wraplength=350,
+                            padx=8, pady=6)
+            label.pack()
+            
+            # Auto-ocultar después de un tiempo
+            try:
+                tw.after(5000, self.hidetip)  # Auto-ocultar después de 5 segundos
+            except Exception:
+                pass
+            
+        except tk.TclError:
+            # El widget ya no existe
+            self.hidetip()
+
+    def hidetip(self):
+        try:
+            tw = self.tipwindow
+            self.tipwindow = None
+            if tw:
+                tw.destroy()
+        except (tk.TclError, AttributeError):
+            # Ignorar errores si el widget ya no existe
+            pass
+        finally:
+            self.cancel_hide()
+            self.unschedule()
 import json
 import re
 import logging
@@ -124,35 +225,144 @@ class PrincipalPanel:
         cluster_col2 = ctk.CTkFrame(cluster_columns_frame, fg_color="transparent")
         cluster_col2.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
         
-        # Switch para transferencia de personajes
+        # Switches para transferencias de clúster
         self.allow_character_transfer_var = ctk.BooleanVar(value=True)
         self.character_transfer_switch = ctk.CTkSwitch(
             cluster_col2,
             text="👤 Permitir Transferencia de Personajes",
             variable=self.allow_character_transfer_var,
-            font=("Arial", 10)
+            font=("Arial", 9),
+            command=self.save_cluster_configuration
         )
-        self.character_transfer_switch.pack(anchor="w", pady=5)
+        self.character_transfer_switch.pack(anchor="w", pady=2)
+        # Tooltip para transferencia de personajes
+        try:
+            ToolTip(self.character_transfer_switch, "NoTributeCharacterUploads / NoTributeCharacterDownloads")
+        except: pass
         
-        # Switch para transferencia de items
         self.allow_item_transfer_var = ctk.BooleanVar(value=True)
         self.item_transfer_switch = ctk.CTkSwitch(
             cluster_col2,
             text="🎒 Permitir Transferencia de Items",
             variable=self.allow_item_transfer_var,
-            font=("Arial", 10)
+            font=("Arial", 9),
+            command=self.save_cluster_configuration
         )
-        self.item_transfer_switch.pack(anchor="w", pady=5)
+        self.item_transfer_switch.pack(anchor="w", pady=2)
+        # Tooltip para transferencia de items
+        try:
+            ToolTip(self.item_transfer_switch, "NoTributeItemUploads / NoTributeItemDownloads")
+        except: pass
         
-        # Switch para transferencia de dinos
         self.allow_dino_transfer_var = ctk.BooleanVar(value=True)
         self.dino_transfer_switch = ctk.CTkSwitch(
             cluster_col2,
             text="🦕 Permitir Transferencia de Dinos",
             variable=self.allow_dino_transfer_var,
-            font=("Arial", 10)
+            font=("Arial", 9),
+            command=self.save_cluster_configuration
         )
-        self.dino_transfer_switch.pack(anchor="w", pady=5)
+        self.dino_transfer_switch.pack(anchor="w", pady=2)
+        # Tooltip para transferencia de dinos
+        try:
+            ToolTip(self.dino_transfer_switch, "NoTributeDinoUploads / NoTributeDinoDownloads")
+        except: pass
+        
+        # Separador para opciones de prevención
+        separator_frame = ctk.CTkFrame(cluster_col2, height=2, fg_color="gray")
+        separator_frame.pack(fill="x", pady=(10, 5))
+        
+        ctk.CTkLabel(
+            cluster_col2,
+            text="🚫 Opciones de Prevención (GameUserSettings.ini):",
+            font=("Arial", 10, "bold")
+        ).pack(anchor="w", pady=(5, 2))
+        
+        # Switches para PreventDownload
+        self.prevent_download_survivors_var = ctk.BooleanVar(value=False)
+        self.prevent_download_survivors_switch = ctk.CTkSwitch(
+            cluster_col2,
+            text="🚫👤 Prevenir Descarga de Personajes",
+            variable=self.prevent_download_survivors_var,
+            font=("Arial", 9),
+            command=self.save_cluster_configuration
+        )
+        self.prevent_download_survivors_switch.pack(anchor="w", pady=2)
+        # Tooltip para prevenir descarga de personajes
+        try:
+            ToolTip(self.prevent_download_survivors_switch, "PreventDownloadSurvivors=True")
+        except: pass
+        
+        self.prevent_download_items_var = ctk.BooleanVar(value=False)
+        self.prevent_download_items_switch = ctk.CTkSwitch(
+            cluster_col2,
+            text="🚫🎒 Prevenir Descarga de Items",
+            variable=self.prevent_download_items_var,
+            font=("Arial", 9),
+            command=self.save_cluster_configuration
+        )
+        self.prevent_download_items_switch.pack(anchor="w", pady=2)
+        # Tooltip para prevenir descarga de items
+        try:
+            ToolTip(self.prevent_download_items_switch, "PreventDownloadItems=True")
+        except: pass
+        
+        self.prevent_download_dinos_var = ctk.BooleanVar(value=False)
+        self.prevent_download_dinos_switch = ctk.CTkSwitch(
+            cluster_col2,
+            text="🚫🦕 Prevenir Descarga de Dinos",
+            variable=self.prevent_download_dinos_var,
+            font=("Arial", 9),
+            command=self.save_cluster_configuration
+        )
+        self.prevent_download_dinos_switch.pack(anchor="w", pady=2)
+        # Tooltip para prevenir descarga de dinos
+        try:
+            ToolTip(self.prevent_download_dinos_switch, "PreventDownloadDinos=True")
+        except: pass
+        
+        # Switches para PreventUpload
+        self.prevent_upload_survivors_var = ctk.BooleanVar(value=False)
+        self.prevent_upload_survivors_switch = ctk.CTkSwitch(
+            cluster_col2,
+            text="🚫👤 Prevenir Subida de Personajes",
+            variable=self.prevent_upload_survivors_var,
+            font=("Arial", 9),
+            command=self.save_cluster_configuration
+        )
+        self.prevent_upload_survivors_switch.pack(anchor="w", pady=2)
+        # Tooltip para prevenir subida de personajes
+        try:
+            ToolTip(self.prevent_upload_survivors_switch, "PreventUploadSurvivors=True")
+        except: pass
+        
+        self.prevent_upload_items_var = ctk.BooleanVar(value=False)
+        self.prevent_upload_items_switch = ctk.CTkSwitch(
+            cluster_col2,
+            text="🚫🎒 Prevenir Subida de Items",
+            variable=self.prevent_upload_items_var,
+            font=("Arial", 9),
+            command=self.save_cluster_configuration
+        )
+        self.prevent_upload_items_switch.pack(anchor="w", pady=2)
+        # Tooltip para prevenir subida de items
+        try:
+            ToolTip(self.prevent_upload_items_switch, "PreventUploadItems=True")
+        except: pass
+        
+        self.prevent_upload_dinos_var = ctk.BooleanVar(value=False)
+        self.prevent_upload_dinos_switch = ctk.CTkSwitch(
+            cluster_col2,
+            text="🚫🦕 Prevenir Subida de Dinos",
+            variable=self.prevent_upload_dinos_var,
+            font=("Arial", 9),
+            command=self.save_cluster_configuration
+        )
+        self.prevent_upload_dinos_switch.pack(anchor="w", pady=2)
+        # Tooltip para prevenir subida de dinos
+        try:
+            ToolTip(self.prevent_upload_dinos_switch, "PreventUploadDinos=True")
+        except: pass
         
         # Frame para parámetros básicos
         basic_frame = ctk.CTkFrame(main_frame)
@@ -401,59 +611,80 @@ class PrincipalPanel:
     def load_saved_config(self):
         """Cargar configuración guardada"""
         try:
-            # Cargar valores guardados
-            self.session_name_entry.insert(0, self.config_manager.get("server", "session_name", ""))
-            self.server_password_entry.insert(0, self.config_manager.get("server", "server_password", ""))
-            self.admin_password_entry.insert(0, self.config_manager.get("server", "admin_password", ""))
-            self.max_players_entry.insert(0, self.config_manager.get("server", "max_players", "70"))
-            self.query_port_entry.insert(0, self.config_manager.get("server", "query_port", "27015"))
-            self.port_entry.insert(0, self.config_manager.get("server", "port", "7777"))
-            self.multihome_entry.insert(0, self.config_manager.get("server", "multihome", "127.0.0.1"))
-            self.message_entry.insert(0, self.config_manager.get("server", "message", ""))
-            self.duration_entry.insert(0, self.config_manager.get("server", "duration", "60"))
+            # Desactivar temporalmente los comandos de los switches para evitar que se ejecuten durante la carga
+            switches_with_commands = []
             
-            # Cargar argumentos personalizados
-            custom_args = self.config_manager.get("server", "custom_args", "")
-            if custom_args:
-                self.custom_args_text.insert("1.0", custom_args)
+            # Identificar switches con comandos y guardar sus comandos originales
+            if hasattr(self, 'maxplayers_switch'):
+                original_command = getattr(self.maxplayers_switch, '_command', None)
+                if original_command:
+                    switches_with_commands.append(('maxplayers_switch', original_command))
+                    self.maxplayers_switch.configure(command=None)
             
-            # Cargar estado del switch de MaxPlayers como argumento
-            if hasattr(self, 'maxplayers_as_arg_var'):
-                maxplayers_as_arg = self.config_manager.get("server", "maxplayers_as_arg", False)
-                if isinstance(maxplayers_as_arg, str):
-                    maxplayers_as_arg = maxplayers_as_arg.lower() == 'true'
-                self.maxplayers_as_arg_var.set(maxplayers_as_arg)
-            
-            # Cargar estado de los checkboxes de argumentos opcionales
-            if hasattr(self, 'server_arg_var'):
-                server_arg = self.config_manager.get("server", "server_arg", True)
-                if isinstance(server_arg, str):
-                    server_arg = server_arg.lower() == 'true'
-                self.server_arg_var.set(server_arg)
+            try:
+                # Cargar valores guardados
+                self.session_name_entry.insert(0, self.config_manager.get("server", "session_name", ""))
+                self.server_password_entry.insert(0, self.config_manager.get("server", "server_password", ""))
+                self.admin_password_entry.insert(0, self.config_manager.get("server", "admin_password", ""))
+                self.max_players_entry.insert(0, self.config_manager.get("server", "max_players", "70"))
+                self.query_port_entry.insert(0, self.config_manager.get("server", "query_port", "27015"))
+                self.port_entry.insert(0, self.config_manager.get("server", "port", "7777"))
+                self.multihome_entry.insert(0, self.config_manager.get("server", "multihome", "127.0.0.1"))
+                self.message_entry.insert(0, self.config_manager.get("server", "message", ""))
+                self.duration_entry.insert(0, self.config_manager.get("server", "duration", "60"))
                 
-            if hasattr(self, 'log_arg_var'):
-                log_arg = self.config_manager.get("server", "log_arg", True)
-                if isinstance(log_arg, str):
-                    log_arg = log_arg.lower() == 'true'
-                self.log_arg_var.set(log_arg)
+                # Cargar argumentos personalizados
+                custom_args = self.config_manager.get("server", "custom_args", "")
+                if custom_args:
+                    self.custom_args_text.insert("1.0", custom_args)
                 
-            if hasattr(self, 'nobattleye_var'):
-                nobattleye_arg = self.config_manager.get("server", "nobattleye_arg", False)
-                if isinstance(nobattleye_arg, str):
-                    nobattleye_arg = nobattleye_arg.lower() == 'true'
-                self.nobattleye_var.set(nobattleye_arg)
+                # Cargar estado del switch de MaxPlayers como argumento
+                if hasattr(self, 'maxplayers_as_arg_var'):
+                    maxplayers_as_arg = self.config_manager.get("server", "maxplayers_as_arg", False)
+                    if isinstance(maxplayers_as_arg, str):
+                        maxplayers_as_arg = maxplayers_as_arg.lower() == 'true'
+                    self.maxplayers_as_arg_var.set(maxplayers_as_arg)
                 
-            if hasattr(self, 'servergamelog_var'):
-                servergamelog_arg = self.config_manager.get("server", "servergamelog_arg", False)
-                if isinstance(servergamelog_arg, str):
-                    servergamelog_arg = servergamelog_arg.lower() == 'true'
-                self.servergamelog_var.set(servergamelog_arg)
-                
-            if hasattr(self, 'servergamelogincludetribelogs_var'):
-                servergamelogincludetribelogs_arg = self.config_manager.get("server", "servergamelogincludetribelogs_arg", False)
-                if isinstance(servergamelogincludetribelogs_arg, str):
-                    servergamelogincludetribelogs_arg = servergamelogincludetribelogs_arg.lower() == 'true'
-                self.servergamelogincludetribelogs_var.set(servergamelogincludetribelogs_arg)
+                # Cargar estado de los checkboxes de argumentos opcionales
+                if hasattr(self, 'server_arg_var'):
+                    server_arg = self.config_manager.get("server", "server_arg", True)
+                    if isinstance(server_arg, str):
+                        server_arg = server_arg.lower() == 'true'
+                    self.server_arg_var.set(server_arg)
+                    
+                if hasattr(self, 'log_arg_var'):
+                    log_arg = self.config_manager.get("server", "log_arg", True)
+                    if isinstance(log_arg, str):
+                        log_arg = log_arg.lower() == 'true'
+                    self.log_arg_var.set(log_arg)
+                    
+                if hasattr(self, 'nobattleye_var'):
+                    nobattleye_arg = self.config_manager.get("server", "nobattleye_arg", False)
+                    if isinstance(nobattleye_arg, str):
+                        nobattleye_arg = nobattleye_arg.lower() == 'true'
+                    self.nobattleye_var.set(nobattleye_arg)
+                    
+                if hasattr(self, 'servergamelog_var'):
+                    servergamelog_arg = self.config_manager.get("server", "servergamelog_arg", False)
+                    if isinstance(servergamelog_arg, str):
+                        servergamelog_arg = servergamelog_arg.lower() == 'true'
+                    self.servergamelog_var.set(servergamelog_arg)
+                    
+                if hasattr(self, 'servergamelogincludetribelogs_var'):
+                    servergamelogincludetribelogs_arg = self.config_manager.get("server", "servergamelogincludetribelogs_arg", False)
+                    if isinstance(servergamelogincludetribelogs_arg, str):
+                        servergamelogincludetribelogs_arg = servergamelogincludetribelogs_arg.lower() == 'true'
+                    self.servergamelogincludetribelogs_var.set(servergamelogincludetribelogs_arg)
+                    
+            finally:
+                # Reactivar los comandos de los switches
+                for switch_name, original_command in switches_with_commands:
+                    try:
+                        switch_obj = getattr(self, switch_name)
+                        switch_obj.configure(command=original_command)
+                        self.logger.info(f"Comando reactivado para {switch_name}")
+                    except Exception as e:
+                        self.logger.error(f"Error al reactivar comando de {switch_name}: {e}")
                 
         except Exception as e:
             self.logger.error(f"Error al cargar configuración: {e}")
@@ -597,6 +828,33 @@ class PrincipalPanel:
                 sections_to_update['/Script/Engine.GameSession'] = {
                     'MaxPlayers': max_players if max_players else None
                 }
+            
+            # Agregar opciones de PreventDownload/Upload si el modo cluster está activo
+            if self.is_cluster_mode():
+                server_settings = sections_to_update.get('ServerSettings', {})
+                
+                # PreventDownload options
+                if hasattr(self, 'prevent_download_survivors_var') and self.prevent_download_survivors_var.get():
+                    server_settings['PreventDownloadSurvivors'] = 'true'
+                
+                if hasattr(self, 'prevent_download_items_var') and self.prevent_download_items_var.get():
+                    server_settings['PreventDownloadItems'] = 'true'
+                
+                if hasattr(self, 'prevent_download_dinos_var') and self.prevent_download_dinos_var.get():
+                    server_settings['PreventDownloadDinos'] = 'true'
+                
+                # PreventUpload options
+                if hasattr(self, 'prevent_upload_survivors_var') and self.prevent_upload_survivors_var.get():
+                    server_settings['PreventUploadSurvivors'] = 'true'
+                
+                if hasattr(self, 'prevent_upload_items_var') and self.prevent_upload_items_var.get():
+                    server_settings['PreventUploadItems'] = 'true'
+                
+                if hasattr(self, 'prevent_upload_dinos_var') and self.prevent_upload_dinos_var.get():
+                    server_settings['PreventUploadDinos'] = 'true'
+                
+                # Actualizar la sección ServerSettings
+                sections_to_update['ServerSettings'] = server_settings
             
             # Usar método personalizado para preservar el archivo existente
             self._update_ini_file_preserving_content(
@@ -1522,7 +1780,13 @@ class PrincipalPanel:
                 "cluster_data_path": self.cluster_data_entry.get(),
                 "allow_character_transfer": self.allow_character_transfer_var.get(),
                 "allow_item_transfer": self.allow_item_transfer_var.get(),
-                "allow_dino_transfer": self.allow_dino_transfer_var.get()
+                "allow_dino_transfer": self.allow_dino_transfer_var.get(),
+                "prevent_download_survivors": getattr(self, 'prevent_download_survivors_var', ctk.BooleanVar(value=False)).get(),
+                "prevent_download_items": getattr(self, 'prevent_download_items_var', ctk.BooleanVar(value=False)).get(),
+                "prevent_download_dinos": getattr(self, 'prevent_download_dinos_var', ctk.BooleanVar(value=False)).get(),
+                "prevent_upload_survivors": getattr(self, 'prevent_upload_survivors_var', ctk.BooleanVar(value=False)).get(),
+                "prevent_upload_items": getattr(self, 'prevent_upload_items_var', ctk.BooleanVar(value=False)).get(),
+                "prevent_upload_dinos": getattr(self, 'prevent_upload_dinos_var', ctk.BooleanVar(value=False)).get()
             }
             
             # Guardar en config_manager
@@ -1532,6 +1796,14 @@ class PrincipalPanel:
             self.config_manager.set("cluster", "allow_character_transfer", cluster_config["allow_character_transfer"])
             self.config_manager.set("cluster", "allow_item_transfer", cluster_config["allow_item_transfer"])
             self.config_manager.set("cluster", "allow_dino_transfer", cluster_config["allow_dino_transfer"])
+            
+            # Guardar opciones de prevención
+            self.config_manager.set("cluster", "prevent_download_survivors", cluster_config["prevent_download_survivors"])
+            self.config_manager.set("cluster", "prevent_download_items", cluster_config["prevent_download_items"])
+            self.config_manager.set("cluster", "prevent_download_dinos", cluster_config["prevent_download_dinos"])
+            self.config_manager.set("cluster", "prevent_upload_survivors", cluster_config["prevent_upload_survivors"])
+            self.config_manager.set("cluster", "prevent_upload_items", cluster_config["prevent_upload_items"])
+            self.config_manager.set("cluster", "prevent_upload_dinos", cluster_config["prevent_upload_dinos"])
             
             # También guardar en archivo JSON separado
             os.makedirs("data", exist_ok=True)
@@ -1544,6 +1816,19 @@ class PrincipalPanel:
     def load_cluster_configuration(self):
         """Cargar configuración del cluster"""
         try:
+            # Desactivar temporalmente los comandos de los switches para evitar guardado automático
+            original_cluster_command = self.cluster_switch.cget("command")
+            self.cluster_switch.configure(command=None)
+            
+            # Desactivar comandos de switches de transferencia
+            original_char_command = self.character_transfer_switch.cget("command")
+            original_item_command = self.item_transfer_switch.cget("command")
+            original_dino_command = self.dino_transfer_switch.cget("command")
+            
+            self.character_transfer_switch.configure(command=None)
+            self.item_transfer_switch.configure(command=None)
+            self.dino_transfer_switch.configure(command=None)
+            
             # Cargar desde config_manager
             cluster_enabled = self.config_manager.get("cluster", "enabled", False)
             if isinstance(cluster_enabled, str):
@@ -1556,6 +1841,14 @@ class PrincipalPanel:
             allow_character_transfer = self.config_manager.get("cluster", "allow_character_transfer", True)
             allow_item_transfer = self.config_manager.get("cluster", "allow_item_transfer", True)
             allow_dino_transfer = self.config_manager.get("cluster", "allow_dino_transfer", True)
+            
+            # Cargar opciones de PreventDownload/Upload
+            prevent_download_survivors = self.config_manager.get("cluster", "prevent_download_survivors", False)
+            prevent_download_items = self.config_manager.get("cluster", "prevent_download_items", False)
+            prevent_download_dinos = self.config_manager.get("cluster", "prevent_download_dinos", False)
+            prevent_upload_survivors = self.config_manager.get("cluster", "prevent_upload_survivors", False)
+            prevent_upload_items = self.config_manager.get("cluster", "prevent_upload_items", False)
+            prevent_upload_dinos = self.config_manager.get("cluster", "prevent_upload_dinos", False)
             
             # Aplicar configuración a los widgets
             self.cluster_enabled_var.set(cluster_enabled)
@@ -1575,14 +1868,57 @@ class PrincipalPanel:
             self.allow_item_transfer_var.set(allow_item_transfer)
             self.allow_dino_transfer_var.set(allow_dino_transfer)
             
+            # Aplicar configuración de PreventDownload/Upload
+            if isinstance(prevent_download_survivors, str):
+                prevent_download_survivors = prevent_download_survivors.lower() == 'true'
+            if isinstance(prevent_download_items, str):
+                prevent_download_items = prevent_download_items.lower() == 'true'
+            if isinstance(prevent_download_dinos, str):
+                prevent_download_dinos = prevent_download_dinos.lower() == 'true'
+            if isinstance(prevent_upload_survivors, str):
+                prevent_upload_survivors = prevent_upload_survivors.lower() == 'true'
+            if isinstance(prevent_upload_items, str):
+                prevent_upload_items = prevent_upload_items.lower() == 'true'
+            if isinstance(prevent_upload_dinos, str):
+                prevent_upload_dinos = prevent_upload_dinos.lower() == 'true'
+                
+            if hasattr(self, 'prevent_download_survivors_var'):
+                self.prevent_download_survivors_var.set(prevent_download_survivors)
+            if hasattr(self, 'prevent_download_items_var'):
+                self.prevent_download_items_var.set(prevent_download_items)
+            if hasattr(self, 'prevent_download_dinos_var'):
+                self.prevent_download_dinos_var.set(prevent_download_dinos)
+            if hasattr(self, 'prevent_upload_survivors_var'):
+                self.prevent_upload_survivors_var.set(prevent_upload_survivors)
+            if hasattr(self, 'prevent_upload_items_var'):
+                self.prevent_upload_items_var.set(prevent_upload_items)
+            if hasattr(self, 'prevent_upload_dinos_var'):
+                self.prevent_upload_dinos_var.set(prevent_upload_dinos)
+            
             # Aplicar el estado del cluster
             if cluster_enabled:
                 self.cluster_config_frame.pack(fill="x", padx=10, pady=(0, 10))
             else:
                 self.cluster_config_frame.pack_forget()
+            
+            # Reactivar todos los comandos de los switches
+            self.cluster_switch.configure(command=original_cluster_command)
+            self.character_transfer_switch.configure(command=original_char_command)
+            self.item_transfer_switch.configure(command=original_item_command)
+            self.dino_transfer_switch.configure(command=original_dino_command)
+            
+            self.logger.info(f"Configuración del cluster cargada: enabled={cluster_enabled}")
                 
         except Exception as e:
             self.logger.error(f"Error al cargar configuración del cluster: {e}")
+            # Reactivar los comandos de los switches en caso de error
+            try:
+                self.cluster_switch.configure(command=self.on_cluster_toggle)
+                self.character_transfer_switch.configure(command=self.save_cluster_configuration)
+                self.item_transfer_switch.configure(command=self.save_cluster_configuration)
+                self.dino_transfer_switch.configure(command=self.save_cluster_configuration)
+            except:
+                pass
     
     def is_cluster_mode(self):
         """Verificar si está en modo cluster"""
@@ -1598,7 +1934,13 @@ class PrincipalPanel:
             "cluster_data_path": self.cluster_data_entry.get(),
             "allow_character_transfer": self.allow_character_transfer_var.get(),
             "allow_item_transfer": self.allow_item_transfer_var.get(),
-            "allow_dino_transfer": self.allow_dino_transfer_var.get()
+            "allow_dino_transfer": self.allow_dino_transfer_var.get(),
+            "prevent_download_survivors": getattr(self, 'prevent_download_survivors_var', ctk.BooleanVar(value=False)).get(),
+            "prevent_download_items": getattr(self, 'prevent_download_items_var', ctk.BooleanVar(value=False)).get(),
+            "prevent_download_dinos": getattr(self, 'prevent_download_dinos_var', ctk.BooleanVar(value=False)).get(),
+            "prevent_upload_survivors": getattr(self, 'prevent_upload_survivors_var', ctk.BooleanVar(value=False)).get(),
+            "prevent_upload_items": getattr(self, 'prevent_upload_items_var', ctk.BooleanVar(value=False)).get(),
+            "prevent_upload_dinos": getattr(self, 'prevent_upload_dinos_var', ctk.BooleanVar(value=False)).get()
         }
     
     def save_server_config(self, server_name=None):

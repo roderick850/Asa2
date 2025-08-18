@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Tuple
 import logging
 import tkinter as tk
+from utils.config_profiles import ConfigProfileManager
+from gui.dialogs.profile_dialogs import SaveProfileDialog, LoadProfileDialog
 
 
 class ToolTip:
@@ -119,6 +121,9 @@ class IniConfigPanel(ctk.CTkFrame):
         # Rutas de archivos INI
         self.game_user_settings_path = None
         self.game_ini_path = None
+        
+        # Gestor de perfiles de configuración
+        self.profile_manager = ConfigProfileManager(logger)
         
         # Mapeo directo de campos del formulario a claves del archivo INI
         self.field_to_ini_mapping = {
@@ -313,7 +318,8 @@ class IniConfigPanel(ctk.CTkFrame):
             "ImplantSuicideCD": "implantsuicidecd",
             
             # Agregar más mapeos según sea necesario...
-            "alwaysNotifyPlayerJoined":"alwaysnotifyplayerjoined",
+            "AlwaysNotifyPlayerJoined":"alwaysnotifyplayerjoined",
+            "AlwaysNotifyPlayerLeft":"alwaysnotifyplayerleft",
             "LogChatMessages":"logchatmessages"
         }
         
@@ -469,7 +475,9 @@ class IniConfigPanel(ctk.CTkFrame):
             "RCONServerGameLogBuffer": "600",
             "GlobalPoweredBatteryDurabilityDecreasePerSecond": "4.0",
             "ImplantSuicideCD": "28800.0",
-            "alwaysNotifyPlayerJoined":"False",
+            "AlwaysNotifyPlayerJoined":"False",
+            "AlwaysNotifyPlayerLeft":"False",
+
             # Game.ini - [/Script/ShooterGame.ShooterGameMode] - Valores adicionales
             "bUseCorpseLocator": "True",
             "bDisableStructurePlacementCollision": "False",
@@ -623,6 +631,36 @@ class IniConfigPanel(ctk.CTkFrame):
             fg_color=("#4A90E2", "#357ABD")
         )
         self.create_gus_fields_button.pack(side="left", padx=(0, 5))
+        
+        # Separador visual
+        separator = ctk.CTkLabel(
+            control_frame,
+            text="|",
+            font=ctk.CTkFont(size=14),
+            text_color=("gray50", "gray50")
+        )
+        separator.pack(side="left", padx=(5, 5))
+        
+        # Botones de perfiles
+        self.save_profile_button = ctk.CTkButton(
+            control_frame,
+            text="💾 Guardar Perfil",
+            command=self.save_profile,
+            width=120,
+            height=28,
+            fg_color=("#9B59B6", "#8E44AD")
+        )
+        self.save_profile_button.pack(side="left", padx=(0, 5))
+        
+        self.load_profile_button = ctk.CTkButton(
+            control_frame,
+            text="📂 Cargar Perfil",
+            command=self.load_profile,
+            width=120,
+            height=28,
+            fg_color=("#3498DB", "#2980B9")
+        )
+        self.load_profile_button.pack(side="left", padx=(0, 5))
         
         # Indicador de estado
         self.status_label = ctk.CTkLabel(
@@ -1111,8 +1149,8 @@ class IniConfigPanel(ctk.CTkFrame):
             ]
         elif category == "NotificationsAndLogs":
             fields = [
-                ("alwaysNotifyPlayerJoined", "Siempre notificar jugador unido", "bool"),
-                ("alwaysNotifyPlayerLeft", "Siempre notificar jugador que se fue", "bool"),
+                ("AlwaysNotifyPlayerJoined", "Siempre notificar jugador unido", "bool"),
+                ("AlwaysNotifyPlayerLeft", "Siempre notificar jugador que se fue", "bool"),
                 ("AdminLogging", "Logging de administrador", "bool"),
                 ("LogChatMessages", "Los registros de chat se guardarán en formato json", "bool")
             ]
@@ -2614,37 +2652,147 @@ class IniConfigPanel(ctk.CTkFrame):
             # Crear directorio si no existe
             os.makedirs(os.path.dirname(self.game_user_settings_path), exist_ok=True)
             
-            # Crear configuración para GameUserSettings.ini si no existe
-            if "GameUserSettings" not in self.ini_data:
-                self.ini_data["GameUserSettings"] = configparser.ConfigParser()
-                self.ini_data["GameUserSettings"].optionxform = str  # Preservar mayúsculas/minúsculas
-                self.logger.info("Creado nuevo objeto ConfigParser para GameUserSettings.ini")
-            
-            # Si el archivo existe, cargarlo primero para no perder datos
-            if os.path.exists(self.game_user_settings_path):
-                self.load_single_ini_file(self.game_user_settings_path, "GameUserSettings")
-                self.logger.info("Archivo GameUserSettings.ini existente cargado")
-            
-            # Agregar campos faltantes
-            self.add_missing_gameusersettings_fields()
-            
-            # Guardar el archivo
-            self.save_single_ini_file(self.game_user_settings_path, self.ini_data["GameUserSettings"])
-            
-            # Recargar campos del formulario para mostrar los nuevos valores
-            self.populate_form_fields()
-            
-            # Actualizar estado
-            self.status_label.configure(
-                text="✅ Campos faltantes agregados a GameUserSettings.ini",
-                fg_color=("lightgreen", "darkgreen")
-            )
-            
-            self.logger.info("Proceso de agregar campos faltantes a GameUserSettings.ini completado")
+            # Crear archivo GameUserSettings.ini con campos básicos si no existe
+            if not os.path.exists(self.game_user_settings_path):
+                default_content = """[ServerSettings]
+SessionName=My ARK Server
+MaxPlayers=10
+DifficultyOffset=1.0
+ServerPassword=
+ServerAdminPassword=
+AllowFlyerCarryPvE=True
+RCONEnabled=True
+RCONPort=27020
+
+[/Script/ShooterGame.ShooterGameMode]
+bUseCorpseLocator=True
+bDisableStructurePlacementCollision=False
+"""
+                with open(self.game_user_settings_path, 'w', encoding='utf-8') as f:
+                    f.write(default_content)
+                self.logger.info(f"Archivo GameUserSettings.ini creado: {self.game_user_settings_path}")
+                
+            # Recargar archivos para mostrar los cambios
+            self.reload_ini_files()
             
         except Exception as e:
-            self.logger.error(f"Error al crear campos faltantes en GameUserSettings.ini: {e}")
-            self.status_label.configure(
-                text=f"❌ Error al agregar campos: {str(e)}",
-                fg_color=("red", "darkred")
+            self.logger.error(f"Error al crear campos de GameUserSettings.ini: {e}")
+            if hasattr(self, 'status_label'):
+                self.status_label.configure(
+                    text=f"❌ Error al crear campos: {str(e)}",
+                    fg_color=("red", "darkred")
+                )
+    
+    def save_profile(self):
+        """Abrir diálogo para guardar un perfil de configuración"""
+        try:
+            # Verificar que hay archivos para guardar
+            if not self.game_user_settings_path and not self.game_ini_path:
+                self.show_status_message("❌ No hay archivos INI cargados para guardar", "error")
+                return
+            
+            # Verificar que al menos uno de los archivos existe
+            gus_exists = self.game_user_settings_path and os.path.exists(self.game_user_settings_path)
+            game_exists = self.game_ini_path and os.path.exists(self.game_ini_path)
+            
+            if not gus_exists and not game_exists:
+                self.show_status_message("❌ Los archivos INI no existen en el disco", "error")
+                return
+            
+            # Guardar cambios pendientes antes de crear el perfil
+            self.save_all_changes()
+            
+            # Crear ventana principal temporal si no existe (para diálogos)
+            if not hasattr(self, 'winfo_toplevel'):
+                import tkinter as tk
+                temp_root = tk.Tk()
+                temp_root.withdraw()
+                parent = temp_root
+            else:
+                parent = self.winfo_toplevel()
+            
+            # Abrir diálogo de guardar perfil
+            dialog = SaveProfileDialog(
+                parent=parent,
+                profile_manager=self.profile_manager,
+                gameusersettings_path=self.game_user_settings_path,
+                game_ini_path=self.game_ini_path
             )
+            
+            result = dialog.show()
+            
+            if result and result.get('saved'):
+                self.show_status_message(f"✅ Perfil '{result['name']}' guardado exitosamente", "success")
+                self.logger.info(f"Perfil de configuración guardado: {result['name']}")
+            
+        except Exception as e:
+            self.logger.error(f"Error al guardar perfil: {e}")
+            self.show_status_message(f"❌ Error al guardar perfil: {str(e)}", "error")
+    
+    def load_profile(self):
+        """Abrir diálogo para cargar un perfil de configuración"""
+        try:
+            # Verificar que hay rutas de destino configuradas
+            if not self.game_user_settings_path and not self.game_ini_path:
+                self.show_status_message("❌ No hay rutas de archivos INI configuradas", "error")
+                return
+            
+            # Crear ventana principal temporal si no existe (para diálogos)
+            if not hasattr(self, 'winfo_toplevel'):
+                import tkinter as tk
+                temp_root = tk.Tk()
+                temp_root.withdraw()
+                parent = temp_root
+            else:
+                parent = self.winfo_toplevel()
+            
+            # Abrir diálogo de cargar perfil
+            dialog = LoadProfileDialog(
+                parent=parent,
+                profile_manager=self.profile_manager,
+                gameusersettings_dest=self.game_user_settings_path or "",
+                game_ini_dest=self.game_ini_path or ""
+            )
+            
+            result = dialog.show()
+            
+            if result and result.get('loaded'):
+                profile_name = result['profile']['display_name']
+                self.show_status_message(f"✅ Perfil '{profile_name}' cargado exitosamente", "success")
+                self.logger.info(f"Perfil de configuración cargado: {profile_name}")
+                
+                # Recargar archivos INI para mostrar los cambios
+                self.reload_ini_files()
+            
+        except Exception as e:
+            self.logger.error(f"Error al cargar perfil: {e}")
+            self.show_status_message(f"❌ Error al cargar perfil: {str(e)}", "error")
+    
+    def show_status_message(self, message: str, status_type: str = "info"):
+        """Mostrar mensaje de estado en la etiqueta de estado
+        
+        Args:
+            message: Mensaje a mostrar
+            status_type: Tipo de estado ('success', 'error', 'warning', 'info')
+        """
+        color_map = {
+            "success": ("lightgreen", "darkgreen"),
+            "error": ("lightcoral", "darkred"),
+            "warning": ("orange", "darkorange"),
+            "info": ("lightblue", "darkblue")
+        }
+        
+        colors = color_map.get(status_type, color_map["info"])
+        
+        if hasattr(self, 'status_label'):
+            self.status_label.configure(
+                text=message,
+                fg_color=colors
+            )
+            
+            # Programar para volver al estado normal después de 5 segundos
+            if status_type in ["success", "error", "warning"]:
+                self.after(5000, lambda: self.status_label.configure(
+                    text="✅ Archivos cargados correctamente",
+                    fg_color=("lightgreen", "darkgreen")
+                ))
