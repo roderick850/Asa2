@@ -241,7 +241,9 @@ Los eventos aparecerán aquí cuando:
             if not preserve_history:
                 self.log_display.delete("1.0", "end")
             
-            app_log_path = "logs/app.log"
+            # Usar ruta absoluta basada en la ubicación del proyecto
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            app_log_path = os.path.join(project_root, "logs", "app.log")
             if os.path.exists(app_log_path):
                 with open(app_log_path, 'r', encoding='utf-8', errors='ignore') as f:
                     lines = f.readlines()
@@ -266,7 +268,7 @@ Los eventos aparecerán aquí cuando:
                 # Scrollear al final para ver lo más reciente
                 self.log_display.see("end")
             else:
-                error_msg = "❌ No se encontró el archivo de log: logs/app.log"
+                error_msg = f"❌ No se encontró: {app_log_path}\n💡 El archivo se creará automáticamente cuando la app registre eventos"
                 if preserve_history:
                     separator = f"\n{'='*60}\n🔄 ACTUALIZACIÓN - {datetime.now().strftime('%H:%M:%S')}\n{'='*60}\n\n"
                     self.log_display.insert("end", separator + error_msg)

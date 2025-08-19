@@ -1,0 +1,9 @@
+2025-08-19 00:33:47 - ArkServerManager - INFO - GameUserSettings.ini encontrado en: D:\ASA\prueba3\ShooterGame\Saved\Config\WindowsServer\GameUserSettings.ini
+2025-08-19 00:33:47 - ArkServerManager - INFO - Game.ini encontrado en: D:\ASA\prueba3\ShooterGame\Saved\Config\WindowsServer\Game.ini
+2025-08-19 00:33:47 - ArkServerManager - INFO - Rutas INI cargadas - GUS: D:\ASA\prueba3\ShooterGame\Saved\Config\WindowsServer\GameUserSettings.ini, Game: D:\ASA\prueba3\ShooterGame\Saved\Config\WindowsServer\Game.ini
+2025-08-19 00:33:47 - ArkServerManager - ERROR - Error configurando auto-recarga: 'MockMainWindow' object has no attribute 'root'
+2025-08-19 00:33:47 - ArkServerManager - INFO - === INICIANDO add_missing_gameusersettings_fields ===
+2025-08-19 00:33:47 - ArkServerManager - INFO - Secciones actuales en GameUserSettings: ['ServerSettings', 'SessionSettings']
+2025-08-19 00:33:47 - ArkServerManager - INFO - Procesados 98 campos de GameUserSettings, agregados 98 campos faltantes
+2025-08-19 00:33:47 - ArkServerManager - INFO - Secciones finales en GameUserSettings: ['ServerSettings', 'SessionSettings']
+2025-08-19 00:33:47 - ArkServerManager - INFO - ✅ Agregados 98 campos faltantes a GameUserSettings.ini

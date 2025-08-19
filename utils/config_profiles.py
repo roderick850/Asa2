@@ -668,3 +668,79 @@ class ConfigProfileManager:
             if self.logger:
                 self.logger.error(f"Error al construir ruta de Game.ini: {e}")
             return None
+    
+    def update_profile(self, profile_name: str, gameusersettings_path: str = "", game_ini_path: str = "", description: str = None) -> bool:
+        """Actualizar un perfil existente con nuevos archivos de configuración
+        
+        Args:
+            profile_name: Nombre del perfil a actualizar
+            gameusersettings_path: Ruta al archivo GameUserSettings.ini actual
+            game_ini_path: Ruta al archivo Game.ini actual
+            description: Nueva descripción opcional (si no se proporciona, mantiene la actual)
+            
+        Returns:
+            bool: True si se actualizó exitosamente, False en caso contrario
+        """
+        try:
+            safe_name = self._sanitize_filename(profile_name)
+            profile_dir = self.profiles_dir / safe_name
+            
+            # Verificar que el perfil existe
+            metadata = self._load_metadata()
+            if safe_name not in metadata["profiles"]:
+                raise ValueError(f"El perfil '{profile_name}' no existe")
+            
+            if not profile_dir.exists():
+                # Crear directorio si no existe
+                profile_dir.mkdir(parents=True, exist_ok=True)
+                if self.logger:
+                    self.logger.info(f"Directorio del perfil creado: {profile_dir}")
+            
+            files_updated = []
+            
+            # Actualizar GameUserSettings.ini si se proporciona y existe
+            if gameusersettings_path and os.path.exists(gameusersettings_path):
+                dest_path = profile_dir / "GameUserSettings.ini"
+                shutil.copy2(gameusersettings_path, dest_path)
+                files_updated.append("GameUserSettings.ini")
+                if self.logger:
+                    self.logger.info(f"GameUserSettings.ini actualizado desde: {gameusersettings_path}")
+            
+            # Actualizar Game.ini si se proporciona y existe
+            if game_ini_path and os.path.exists(game_ini_path):
+                dest_path = profile_dir / "Game.ini"
+                shutil.copy2(game_ini_path, dest_path)
+                files_updated.append("Game.ini")
+                if self.logger:
+                    self.logger.info(f"Game.ini actualizado desde: {game_ini_path}")
+            
+            if not files_updated:
+                raise ValueError("No se encontraron archivos válidos para actualizar el perfil")
+            
+            # Actualizar metadatos
+            profile_data = metadata["profiles"][safe_name]
+            profile_data["files"] = files_updated
+            profile_data["last_updated"] = datetime.now().isoformat()
+            
+            # Actualizar descripción si se proporciona
+            if description is not None:
+                profile_data["description"] = description
+            
+            # Actualizar rutas originales
+            profile_data["original_paths"] = {
+                "gameusersettings": gameusersettings_path if os.path.exists(gameusersettings_path or "") else None,
+                "game_ini": game_ini_path if os.path.exists(game_ini_path or "") else None
+            }
+            
+            metadata["profiles"][safe_name] = profile_data
+            self._save_metadata(metadata)
+            
+            if self.logger:
+                self.logger.info(f"Perfil '{profile_name}' actualizado exitosamente con archivos: {', '.join(files_updated)}")
+            
+            return True
+            
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al actualizar perfil '{profile_name}': {e}")
+            return False

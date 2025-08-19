@@ -97,15 +97,19 @@ class LogsPanelNew(ctk.CTkFrame):
         
         # Agregar contenido del log de la aplicación
         try:
-            if os.path.exists("logs/app.log"):
-                with open("logs/app.log", 'r', encoding='utf-8', errors='ignore') as f:
+            # Usar ruta absoluta basada en la ubicación del proyecto
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            app_log_path = os.path.join(project_root, "logs", "app.log")
+            
+            if os.path.exists(app_log_path):
+                with open(app_log_path, 'r', encoding='utf-8', errors='ignore') as f:
                     lines = f.readlines()
                     
                 # Mostrar las últimas 20 líneas
                 recent_lines = lines[-20:] if len(lines) > 20 else lines
                 content += "\n".join(recent_lines)
             else:
-                content += "❌ No se encontró logs/app.log"
+                content += f"❌ No se encontró: {app_log_path}"
         except Exception as e:
             content += f"❌ Error al leer logs: {e}"
         

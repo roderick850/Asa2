@@ -23,15 +23,70 @@ for src, dst in essential_files:
 
 # Agregar directorios esenciales si existen
 essential_dirs = [
-    ('data', 'data'),
     ('examples', 'examples'),
     ('rcon', 'rcon'),
     ('ico', 'ico'),
 ]
 
+# Directorios opcionales (pueden no existir en otros equipos)
+optional_dirs = [
+    ('config', 'config'),
+    ('maps', 'maps'),
+    ('mods', 'mods'),
+    ('servers', 'servers'),
+    ('backups', 'backups'),
+    ('exports', 'exports'),
+]
+
+# Agregar directorios esenciales
 for src, dst in essential_dirs:
     if os.path.exists(src):
         datas.append((src, dst))
+    else:
+        print(f"⚠️ Directorio esencial no encontrado: {src}")
+
+# Agregar directorios opcionales sin generar errores
+for src, dst in optional_dirs:
+    try:
+        if os.path.exists(src) and os.access(src, os.R_OK):
+            datas.append((src, dst))
+            print(f"✅ Directorio incluido: {src}")
+        else:
+            print(f"ℹ️ Directorio opcional omitido: {src}")
+    except (OSError, PermissionError) as e:
+        print(f"⚠️ Error de permisos en {src}: {e}")
+
+# Manejar carpeta 'data' de forma especial
+data_dir = 'data'
+if os.path.exists(data_dir):
+    try:
+        # Verificar permisos de lectura
+        if os.access(data_dir, os.R_OK):
+            # Verificar si hay archivos accesibles
+            accessible_files = []
+            try:
+                for root, dirs, files in os.walk(data_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        try:
+                            if os.access(file_path, os.R_OK):
+                                accessible_files.append(file_path)
+                        except (OSError, PermissionError):
+                            continue
+                
+                if accessible_files:
+                    datas.append((data_dir, 'data'))
+                    print(f"✅ Carpeta 'data' incluida con {len(accessible_files)} archivos accesibles")
+                else:
+                    print("ℹ️ Carpeta 'data' existe pero no contiene archivos accesibles")
+            except (OSError, PermissionError) as e:
+                print(f"⚠️ Error al explorar carpeta 'data': {e}")
+        else:
+            print("⚠️ Carpeta 'data' sin permisos de lectura - omitida")
+    except (OSError, PermissionError) as e:
+        print(f"⚠️ Error de permisos en carpeta 'data': {e}")
+else:
+    print("ℹ️ Carpeta 'data' no existe - se creará automáticamente en tiempo de ejecución")
 
 # Imports ocultos esenciales
 hiddenimports = [
@@ -104,8 +159,10 @@ hiddenimports = [
     'gui.panels.logs_panel_new',
     'gui.panels.working_logs_panel',
     'gui.panels.test_logs_panel',
-    'gui.panel.cluster_panel',
+    'gui.panels.cluster_panel',
     'utils.config_manager',
+    'utils.config_profiles',
+    'utils.cluster_manager',
     'utils.logger',
     'utils.server_manager',
     'utils.app_settings',

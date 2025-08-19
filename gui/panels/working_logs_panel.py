@@ -163,7 +163,9 @@ class WorkingLogsPanel(ctk.CTkFrame):
 
 """
             
-            log_file = "logs/app.log"
+            # Usar ruta absoluta basada en la ubicación del proyecto
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            log_file = os.path.join(project_root, "logs", "app.log")
             if os.path.exists(log_file):
                 try:
                     with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:

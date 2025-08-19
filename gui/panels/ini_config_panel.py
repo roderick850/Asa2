@@ -220,6 +220,7 @@ class IniConfigPanel(ctk.CTkFrame):
             "PhotoModeRangeLimit": "photomoderangelimit",
             
             # TamingAndDinos
+            "TamingSpeedMultiplier": "tamingspeedmultiplier",
             "PassiveTameIntervalMultiplier": "passivetameintervalmultiplier",
             "bAllowTamedDinoRiding": "ballowtameddinoriding",
             "bDisableDinoRiding": "bdisabledinoriding",
@@ -784,6 +785,33 @@ class IniConfigPanel(ctk.CTkFrame):
         # Crear acordeones para Game.ini
         self.create_game_accordions()
         
+    def initialize_gus_field_mappings(self):
+        """Inicializar field_mappings para todos los campos de GameUserSettings.ini"""
+        # Mapear todos los campos de GUS sin necesidad de expandir acordeones
+        gus_field_definitions = {
+            "DifficultyAndProgression": [
+                ("DifficultyOffset", "Offset de dificultad", "float"),
+                ("OverrideOfficialDifficulty", "Anular dificultad oficial", "float"),
+                ("XPMultiplier", "Multiplicador de XP", "float"),
+                ("TamingSpeedMultiplier", "Multiplicador de velocidad de domesticación", "float"),
+                ("DinoCountMultiplier", "Multiplicador de conteo de dinos", "float"),
+                ("OverrideSecondsUntilBuriedTreasureAutoReveals", "Anular segundos hasta auto-revelar tesoro enterrado", "int"),
+                ("ServerHardcore", "Servidor hardcore", "bool")
+            ]
+            # Agregar más categorías según sea necesario
+        }
+        
+        # Mapear cada campo a su sección correspondiente
+        for category, fields in gus_field_definitions.items():
+            category_info = self.gus_categories.get(category, {})
+            if category_info:
+                for field_data in fields:
+                    field_name = field_data[0]
+                    self.field_mappings[field_name] = {
+                        'section': category_info['ini_section'],
+                        'file': category_info['ini_file']
+                    }
+    
     def create_gus_accordions(self):
         """Crear acordeones para GameUserSettings.ini"""
         # Configuración de categorías para GUS
@@ -962,6 +990,9 @@ class IniConfigPanel(ctk.CTkFrame):
             
             # Ocultar contenido inicialmente
             content_frame.pack_forget()
+        
+        # Inicializar field_mappings para todos los campos de GUS después de definir las categorías
+        self.initialize_gus_field_mappings()
             
     def create_gus_form_fields(self, form_frame, category):
         """Crear campos del formulario para GameUserSettings.ini"""
@@ -1026,8 +1057,8 @@ class IniConfigPanel(ctk.CTkFrame):
                 ("BabyImprintAmountMultiplier", "Multiplicador de cantidad de impronta", "float"),
                 ("BabyMatureSpeedMultiplier", "Multiplicador de velocidad de maduración", "float"),
                 ("BabyCuddleIntervalMultiplier", "Multiplicador de intervalo de mimos", "float"),
-                ("BabyCuddleGracePeriodMultiplier", "Multiplicador de período de gracia de mimos", "float"),
-                ("BabyCuddleLoseImprintQualitySpeedMultiplier", "Multiplicador de pérdida de calidad de impronta", "float"),
+                ("BabyCuddleGracePeriodMultiplier", "Escala cuánto tiempo después de retrasar el abrazo con el bebé antes de que la calidad de la impresión comience a disminuir", "float"),
+                ("BabyCuddleLoseImprintQualitySpeedMultiplier", "Escala la rapidez con la que disminuye la calidad de impresión después del período de gracia si aún no se ha acurrucado con el bebé.", "float"),
                 ("BabyFoodConsumptionSpeedMultiplier", "Multiplicador de consumo de comida de bebés", "float"),
                 ("DisableImprintDinoBuff", "Deshabilitar buff de impronta de dinos", "bool")
             ]
@@ -1347,17 +1378,17 @@ class IniConfigPanel(ctk.CTkFrame):
             ]
         elif category == "BreedingAndReproduction":
             fields = [
-                ("MatingIntervalMultiplier", "Multiplicador de intervalo de apareamiento", "float"),
-                ("MatingSpeedMultiplier", "Multiplicador de velocidad de apareamiento", "float"),
-                ("LayEggIntervalMultiplier", "Multiplicador de intervalo de puesta de huevos", "float"),
-                ("EggHatchSpeedMultiplier", "Multiplicador de velocidad de eclosión", "float"),
-                ("BabyCuddleGracePeriodMultiplier", "Multiplicador de período de gracia para mimar bebés", "float"),
-                ("BabyCuddleIntervalMultiplier", "Multiplicador de intervalo para mimar bebés", "float"),
-                ("BabyCuddleLoseImprintQualitySpeedMultiplier", "Multiplicador de pérdida de calidad de impronta", "float"),
-                ("BabyFoodConsumptionSpeedMultiplier", "Multiplicador de consumo de comida de bebés", "float"),
-                ("BabyImprintAmountMultiplier", "Multiplicador de cantidad de impronta de bebés", "float"),
-                ("BabyImprintingStatScaleMultiplier", "Multiplicador de escala de estadísticas por impronta", "float"),
-                ("BabyMatureSpeedMultiplier", "Multiplicador de velocidad de maduración de bebés", "float")
+                ("MatingIntervalMultiplier", "Intervalo de Apareamiento", "Multiplicador de intervalo de apareamiento", "float"),
+                ("MatingSpeedMultiplier", "Velocidad de Apareamiento", "Multiplicador de velocidad de apareamiento", "float"),
+                ("LayEggIntervalMultiplier", "Intervalo de Puesta", "Multiplicador de intervalo de puesta de huevos", "float"),
+                ("EggHatchSpeedMultiplier", "Velocidad de Eclosión", "Multiplicador de velocidad de eclosión", "float"),
+                ("BabyCuddleGracePeriodMultiplier", "Período de Gracia", "Multiplicador de período de gracia para mimar bebés", "float"),
+                ("BabyCuddleIntervalMultiplier", "Intervalo de Mimos", "Escala la frecuencia con la que los bebés necesitan atención para imprimir. Más a menudo significa que tendrás que acurrucarte con ellos con más frecuencia para ganar calidad de impresión", "float"),
+                ("BabyCuddleLoseImprintQualitySpeedMultiplier", "Pérdida de Impronta", "Multiplicador de pérdida de calidad de impronta", "float"),
+                ("BabyFoodConsumptionSpeedMultiplier", "Consumo de Comida", "Escala la velocidad a la que los bebés domesticados comen su comida. Un valor más bajo disminuye (en porcentaje) los alimentos consumidos por los bebés", "float"),
+                ("BabyImprintAmountMultiplier", "Cantidad de Impronta", "Escala el porcentaje que proporciona cada impresión. Un valor más alto, aumentará la cantidad de % de impronta en cada cuidado/abrazo del bebé, un valor más bajo lo disminuirá.", "float"),
+                ("BabyImprintingStatScaleMultiplier", "Efecto de Impronta", "Escala el efecto que tiene la calidad de impresión en las estadísticas. Establézcalo en 0 para deshabilitar efectivamente el sistema", "float"),
+                ("BabyMatureSpeedMultiplier", "Velocidad de Maduración", "Escala la velocidad de maduración de los bebés. Un número más alto disminuye (en porcentaje) el tiempo necesario para que las domas de bebés maduren", "float")
             ]
         elif category == "TamingAndDinos":
             fields = [
@@ -1458,12 +1489,19 @@ class IniConfigPanel(ctk.CTkFrame):
         form_frame.grid_columnconfigure(5, weight=0)  # Controles segunda columna
         
         # Crear campos para esta categoría en 2 columnas
-        for i, (field_name, field_label, field_type) in enumerate(fields):
+        for i, field_data in enumerate(fields):
+            # Determinar si el campo tiene descripción separada (4 elementos) o no (3 elementos)
+            if len(field_data) == 4:
+                field_name, field_label, field_description, field_type = field_data
+            else:
+                field_name, field_label, field_type = field_data
+                field_description = field_label  # Usar la etiqueta como descripción si no hay separación
+            
             # Calcular posición en la cuadrícula (2 columnas)
             grid_row = i // 2
             grid_col = (i % 2) * 3  # Cada campo ocupa 3 columnas
             
-            # Etiqueta del campo
+            # Etiqueta del campo (usar el nombre corto)
             label = ctk.CTkLabel(
                 form_frame,
                 text=field_label,
@@ -1567,8 +1605,8 @@ class IniConfigPanel(ctk.CTkFrame):
                 # Binding para cambios
                 field_widget.bind("<KeyRelease>", lambda e, name=field_name, w=field_widget: self.on_field_change(name, w.get()))
             
-            # Agregar tooltip con descripción al campo
-            tooltip_text = f"{field_name}\n\n{field_label}"
+            # Agregar tooltip con descripción completa al campo
+            tooltip_text = f"{field_name}\n\n{field_description}"
             if hasattr(field_widget, '_tkinter_widget'):
                 # Para widgets de CustomTkinter, usar el widget interno de tkinter
                 ToolTip(field_widget, tooltip_text)
@@ -1576,8 +1614,8 @@ class IniConfigPanel(ctk.CTkFrame):
                 # Para widgets normales
                 ToolTip(field_widget, tooltip_text)
             
-            # También agregar tooltip a la etiqueta
-            label_tooltip_text = f"Variable: {field_name}\nDescripción: {field_label}"
+            # También agregar tooltip a la etiqueta con información completa
+            label_tooltip_text = f"Variable: {field_name}\nDescripción: {field_description}"
             ToolTip(label, label_tooltip_text)
             
             # Guardar referencia al widget y mapeo
@@ -2671,9 +2709,24 @@ bDisableStructurePlacementCollision=False
                 with open(self.game_user_settings_path, 'w', encoding='utf-8') as f:
                     f.write(default_content)
                 self.logger.info(f"Archivo GameUserSettings.ini creado: {self.game_user_settings_path}")
-                
-            # Recargar archivos para mostrar los cambios
+            
+            # Recargar archivos para asegurar que ini_data esté actualizado
             self.reload_ini_files()
+            
+            # Agregar todos los campos faltantes usando la función existente
+            self.add_missing_gameusersettings_fields()
+            
+            # Guardar los cambios al archivo
+            self.save_ini_files()
+            
+            # Mostrar mensaje de éxito
+            if hasattr(self, 'status_label'):
+                self.status_label.configure(
+                    text="✅ Campos agregados correctamente a GameUserSettings.ini",
+                    fg_color=("green", "darkgreen")
+                )
+            
+            self.logger.info("✅ Campos faltantes agregados exitosamente a GameUserSettings.ini")
             
         except Exception as e:
             self.logger.error(f"Error al crear campos de GameUserSettings.ini: {e}")

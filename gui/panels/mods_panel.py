@@ -96,15 +96,17 @@ class ModsPanel(ctk.CTkFrame):
             self.refresh_mods_display()
             self.update_mods_ids_entry()
             
-            if self.favorite_mods or self.installed_mods:
-                status_msg = "✅ Mods cargados: "
-                if self.favorite_mods:
-                    status_msg += f"{len(self.favorite_mods)} favoritos "
-                if self.installed_mods:
-                    status_msg += f"{len(self.installed_mods)} instalados"
-                self.show_message(status_msg, "success")
-            else:
-                self.show_message("💡 Busca mods usando la barra de búsqueda o haz clic en 'Populares'", "info")
+            # Solo mostrar mensajes si está habilitado en configuración
+            if self.show_startup_messages:
+                if self.favorite_mods or self.installed_mods:
+                    status_msg = "✅ Mods cargados: "
+                    if self.favorite_mods:
+                        status_msg += f"{len(self.favorite_mods)} favoritos "
+                    if self.installed_mods:
+                        status_msg += f"{len(self.installed_mods)} instalados"
+                    self.show_message(status_msg, "success")
+                else:
+                    self.show_message("💡 Busca mods usando la barra de búsqueda o haz clic en 'Populares'", "info")
                 
         except Exception as e:
             if self.logger:

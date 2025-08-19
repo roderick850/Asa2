@@ -309,8 +309,12 @@ class LoadProfileDialog:
         action_frame.pack(fill="x", pady=(0, 10))
         
         # Botones de gestión
-        refresh_button = ctk.CTkButton(action_frame, text="🔄 Actualizar", command=self.load_profiles)
+        refresh_button = ctk.CTkButton(action_frame, text="🔄 Actualizar Lista", command=self.load_profiles)
         refresh_button.pack(side="left", padx=10, pady=10)
+        
+        self.update_profile_button = ctk.CTkButton(action_frame, text="⬆️ Actualizar Perfil", 
+                                                  command=self.update_selected_profile, state="disabled")
+        self.update_profile_button.pack(side="left", padx=(0, 10), pady=10)
         
         delete_button = ctk.CTkButton(action_frame, text="🗑️ Eliminar", command=self.delete_profile)
         delete_button.pack(side="left", padx=(0, 10), pady=10)
@@ -388,6 +392,7 @@ class LoadProfileDialog:
         selection = self.tree.selection()
         if not selection or not self.profiles:
             self.load_button.configure(state=tk.DISABLED)
+            self.update_profile_button.configure(state=tk.DISABLED)
             self.update_info_text("")
             return
         
@@ -400,8 +405,9 @@ class LoadProfileDialog:
         
         profile = self.profiles[index]
         
-        # Habilitar botón de cargar
+        # Habilitar botones
         self.load_button.configure(state="normal")
+        self.update_profile_button.configure(state="normal")
         
         # Mostrar información detallada
         info_text = f"Nombre: {profile['display_name']}\n"
@@ -416,6 +422,16 @@ class LoadProfileDialog:
                 info_text += f"Creado: {date_str}\n"
             except:
                 info_text += f"Creado: {profile['created_date']}\n"
+        
+        # Mostrar información de última actualización si está disponible
+        profile_info = self.profile_manager.get_profile_info(profile['display_name'])
+        if profile_info and profile_info.get('last_updated'):
+            try:
+                update_date_obj = datetime.fromisoformat(profile_info['last_updated'].replace('Z', '+00:00'))
+                update_date_str = update_date_obj.strftime('%d/%m/%Y a las %H:%M')
+                info_text += f"Última actualización: {update_date_str}\n"
+            except:
+                info_text += f"Última actualización: {profile_info['last_updated']}\n"
         
         if profile.get('files'):
             info_text += f"Archivos incluidos: {', '.join(profile['files'])}"
@@ -597,6 +613,49 @@ class LoadProfileDialog:
         except Exception as e:
             messagebox.showerror("Error", 
                                f"Error al importar el perfil:\n{str(e)}",
+                               parent=self.dialog)
+    
+    def update_selected_profile(self):
+        """Actualizar el perfil seleccionado con los archivos de configuración actuales"""
+        selection = self.tree.selection()
+        if not selection or not self.profiles:
+            return
+        
+        index = self.tree.index(selection[0])
+        if index >= len(self.profiles):
+            return
+        
+        profile = self.profiles[index]
+        
+        # Confirmar actualización
+        response = messagebox.askyesno("Confirmar actualización",
+                                     f"¿Estás seguro de que deseas actualizar el perfil '{profile['display_name']}'?\n\n"
+                                     "Esto sobrescribirá los archivos guardados en el perfil con los archivos de configuración actuales.",
+                                     parent=self.dialog)
+        if not response:
+            return
+        
+        # Actualizar perfil
+        try:
+            success = self.profile_manager.update_profile(
+                profile_name=profile['display_name'],
+                gameusersettings_path=self.gameusersettings_dest,
+                game_ini_path=self.game_ini_dest
+            )
+            
+            if success:
+                messagebox.showinfo("Éxito", 
+                                  f"El perfil '{profile['display_name']}' se ha actualizado exitosamente con los archivos actuales.",
+                                  parent=self.dialog)
+                self.load_profiles()  # Recargar lista para mostrar cambios
+            else:
+                messagebox.showerror("Error", 
+                                   "No se pudo actualizar el perfil. Revisa los logs para más detalles.",
+                                   parent=self.dialog)
+        
+        except Exception as e:
+            messagebox.showerror("Error", 
+                               f"Error al actualizar el perfil:\n{str(e)}",
                                parent=self.dialog)
     
     def cancel(self):

@@ -167,6 +167,7 @@ imports:
  &#8226;   <a href="#gui.panels.advanced_backup_panel">gui.panels.advanced_backup_panel</a>
  &#8226;   <a href="#gui.panels.advanced_restart_panel">gui.panels.advanced_restart_panel</a>
  &#8226;   <a href="#gui.panels.backup_panel">gui.panels.backup_panel</a>
+ &#8226;   <a href="#gui.panels.cluster_panel">gui.panels.cluster_panel</a>
  &#8226;   <a href="#gui.panels.config_panel">gui.panels.config_panel</a>
  &#8226;   <a href="#gui.panels.console_panel">gui.panels.console_panel</a>
  &#8226;   <a href="#gui.panels.direct_commands_panel">gui.panels.direct_commands_panel</a>
@@ -231,7 +232,9 @@ imports:
  &#8226;   <a href="#typing">typing</a>
  &#8226;   <a href="#urllib3">urllib3</a>
  &#8226;   <a href="#utils.app_settings">utils.app_settings</a>
+ &#8226;   <a href="#utils.cluster_manager">utils.cluster_manager</a>
  &#8226;   <a href="#utils.config_manager">utils.config_manager</a>
+ &#8226;   <a href="#utils.config_profiles">utils.config_profiles</a>
  &#8226;   <a href="#utils.dialogs">utils.dialogs</a>
  &#8226;   <a href="#utils.ini_cleaner">utils.ini_cleaner</a>
  &#8226;   <a href="#utils.logger">utils.logger</a>
@@ -6255,6 +6258,7 @@ imported by:
  &#8226;   <a href="#setuptools.dist">setuptools.dist</a>
  &#8226;   <a href="#setuptools.unicode_utils">setuptools.unicode_utils</a>
  &#8226;   <a href="#utils.config_manager">utils.config_manager</a>
+ &#8226;   <a href="#utils.config_profiles">utils.config_profiles</a>
  &#8226;   <a href="#utils.ini_cleaner">utils.ini_cleaner</a>
 
   </div>
@@ -6727,6 +6731,7 @@ imported by:
  &#8226;   <a href="#gui.dialogs.advanced_settings_dialog">gui.dialogs.advanced_settings_dialog</a>
  &#8226;   <a href="#gui.dialogs.custom_dialogs">gui.dialogs.custom_dialogs</a>
  &#8226;   <a href="#gui.dialogs.initial_setup">gui.dialogs.initial_setup</a>
+ &#8226;   <a href="#gui.dialogs.profile_dialogs">gui.dialogs.profile_dialogs</a>
  &#8226;   <a href="#gui.main_window">gui.main_window</a>
  &#8226;   <a href="#gui.panels.advanced_backup_panel">gui.panels.advanced_backup_panel</a>
  &#8226;   <a href="#gui.panels.advanced_restart_panel">gui.panels.advanced_restart_panel</a>
@@ -7972,6 +7977,7 @@ imported by:
  &#8226;   <a href="#_strptime">_strptime</a>
  &#8226;   <a href="#calendar">calendar</a>
  &#8226;   <a href="#email.utils">email.utils</a>
+ &#8226;   <a href="#gui.dialogs.profile_dialogs">gui.dialogs.profile_dialogs</a>
  &#8226;   <a href="#gui.main_window">gui.main_window</a>
  &#8226;   <a href="#gui.panels.advanced_backup_panel">gui.panels.advanced_backup_panel</a>
  &#8226;   <a href="#gui.panels.advanced_restart_panel">gui.panels.advanced_restart_panel</a>
@@ -8001,6 +8007,7 @@ imported by:
  &#8226;   <a href="#tomllib._re">tomllib._re</a>
  &#8226;   <a href="#urllib3.connection">urllib3.connection</a>
  &#8226;   <a href="#utils.cluster_manager">utils.cluster_manager</a>
+ &#8226;   <a href="#utils.config_profiles">utils.config_profiles</a>
  &#8226;   <a href="#utils.dialogs">utils.dialogs</a>
  &#8226;   <a href="#utils.logger">utils.logger</a>
  &#8226;   <a href="#utils.scheduled_commands">utils.scheduled_commands</a>
@@ -11613,6 +11620,7 @@ imported by:
     <a href="#gui.dialogs.advanced_settings_dialog">gui.dialogs.advanced_settings_dialog</a>
  &#8226;   <a href="#gui.dialogs.custom_dialogs">gui.dialogs.custom_dialogs</a>
  &#8226;   <a href="#gui.dialogs.initial_setup">gui.dialogs.initial_setup</a>
+ &#8226;   <a href="#gui.dialogs.profile_dialogs">gui.dialogs.profile_dialogs</a>
 
   </div>
 
@@ -11685,6 +11693,30 @@ imports:
   <div class="import">
 imported by:
     <a href="#main.py">main.py</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="gui.dialogs.profile_dialogs"></a>
+  <a target="code" href="///C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/Asa2/gui/dialogs/profile_dialogs.py" type="text/plain"><tt>gui.dialogs.profile_dialogs</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#customtkinter">customtkinter</a>
+ &#8226;   <a href="#datetime">datetime</a>
+ &#8226;   <a href="#gui.dialogs">gui.dialogs</a>
+ &#8226;   <a href="#os">os</a>
+ &#8226;   <a href="#tkinter">tkinter</a>
+ &#8226;   <a href="#tkinter.filedialog">tkinter.filedialog</a>
+ &#8226;   <a href="#tkinter.messagebox">tkinter.messagebox</a>
+ &#8226;   <a href="#tkinter.ttk">tkinter.ttk</a>
+ &#8226;   <a href="#typing">typing</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#gui.panels.ini_config_panel">gui.panels.ini_config_panel</a>
 
   </div>
 
@@ -11883,6 +11915,7 @@ imports:
   <div class="import">
 imported by:
     <a href="#gui.main_window">gui.main_window</a>
+ &#8226;   <a href="#main.py">main.py</a>
 
   </div>
 
@@ -12002,6 +12035,7 @@ imports:
     <a href="#configparser">configparser</a>
  &#8226;   <a href="#customtkinter">customtkinter</a>
  &#8226;   <a href="#gui.dialogs.custom_dialogs">gui.dialogs.custom_dialogs</a>
+ &#8226;   <a href="#gui.dialogs.profile_dialogs">gui.dialogs.profile_dialogs</a>
  &#8226;   <a href="#gui.panels">gui.panels</a>
  &#8226;   <a href="#logging">logging</a>
  &#8226;   <a href="#os">os</a>
@@ -12010,6 +12044,7 @@ imports:
  &#8226;   <a href="#tkinter">tkinter</a>
  &#8226;   <a href="#traceback">traceback</a>
  &#8226;   <a href="#typing">typing</a>
+ &#8226;   <a href="#utils.config_profiles">utils.config_profiles</a>
 
   </div>
   <div class="import">
@@ -13718,6 +13753,7 @@ imported by:
  &#8226;   <a href="#utils.app_settings">utils.app_settings</a>
  &#8226;   <a href="#utils.cluster_manager">utils.cluster_manager</a>
  &#8226;   <a href="#utils.config_manager">utils.config_manager</a>
+ &#8226;   <a href="#utils.config_profiles">utils.config_profiles</a>
  &#8226;   <a href="#utils.dialogs">utils.dialogs</a>
  &#8226;   <a href="#utils.scheduled_commands">utils.scheduled_commands</a>
 
@@ -15147,6 +15183,7 @@ imported by:
  &#8226;   <a href="#gettext">gettext</a>
  &#8226;   <a href="#glob">glob</a>
  &#8226;   <a href="#gui.dialogs.initial_setup">gui.dialogs.initial_setup</a>
+ &#8226;   <a href="#gui.dialogs.profile_dialogs">gui.dialogs.profile_dialogs</a>
  &#8226;   <a href="#gui.main_window">gui.main_window</a>
  &#8226;   <a href="#gui.panels.advanced_backup_panel">gui.panels.advanced_backup_panel</a>
  &#8226;   <a href="#gui.panels.advanced_restart_panel">gui.panels.advanced_restart_panel</a>
@@ -15311,6 +15348,7 @@ imported by:
  &#8226;   <a href="#utils.app_settings">utils.app_settings</a>
  &#8226;   <a href="#utils.cluster_manager">utils.cluster_manager</a>
  &#8226;   <a href="#utils.config_manager">utils.config_manager</a>
+ &#8226;   <a href="#utils.config_profiles">utils.config_profiles</a>
  &#8226;   <a href="#utils.ini_cleaner">utils.ini_cleaner</a>
  &#8226;   <a href="#utils.logger">utils.logger</a>
  &#8226;   <a href="#utils.scheduled_commands">utils.scheduled_commands</a>
@@ -15853,6 +15891,7 @@ imported by:
  &#8226;   <a href="#utils.app_settings">utils.app_settings</a>
  &#8226;   <a href="#utils.cluster_manager">utils.cluster_manager</a>
  &#8226;   <a href="#utils.config_manager">utils.config_manager</a>
+ &#8226;   <a href="#utils.config_profiles">utils.config_profiles</a>
  &#8226;   <a href="#utils.logger">utils.logger</a>
  &#8226;   <a href="#utils.server_logger">utils.server_logger</a>
  &#8226;   <a href="#utils.server_manager">utils.server_manager</a>
@@ -22336,6 +22375,7 @@ imported by:
  &#8226;   <a href="#setuptools.compat.py311">setuptools.compat.py311</a>
  &#8226;   <a href="#tarfile">tarfile</a>
  &#8226;   <a href="#tempfile">tempfile</a>
+ &#8226;   <a href="#utils.config_profiles">utils.config_profiles</a>
  &#8226;   <a href="#utils.server_manager">utils.server_manager</a>
  &#8226;   <a href="#webbrowser">webbrowser</a>
  &#8226;   <a href="#zipfile">zipfile</a>
@@ -22703,6 +22743,7 @@ imported by:
  &#8226;   <a href="#shutil">shutil</a>
  &#8226;   <a href="#site">site</a>
  &#8226;   <a href="#tarfile">tarfile</a>
+ &#8226;   <a href="#utils.config_profiles">utils.config_profiles</a>
  &#8226;   <a href="#zipfile">zipfile</a>
  &#8226;   <a href="#zipfile._path">zipfile._path</a>
 
@@ -23560,6 +23601,7 @@ imported by:
  &#8226;   <a href="#customtkinter.windows.widgets.scaling.scaling_tracker">customtkinter.windows.widgets.scaling.scaling_tracker</a>
  &#8226;   <a href="#gui.dialogs.advanced_settings_dialog">gui.dialogs.advanced_settings_dialog</a>
  &#8226;   <a href="#gui.dialogs.initial_setup">gui.dialogs.initial_setup</a>
+ &#8226;   <a href="#gui.dialogs.profile_dialogs">gui.dialogs.profile_dialogs</a>
  &#8226;   <a href="#gui.main_window">gui.main_window</a>
  &#8226;   <a href="#gui.panels.advanced_backup_panel">gui.panels.advanced_backup_panel</a>
  &#8226;   <a href="#gui.panels.advanced_restart_panel">gui.panels.advanced_restart_panel</a>
@@ -23659,6 +23701,7 @@ imported by:
     <a href="#customtkinter">customtkinter</a>
  &#8226;   <a href="#gui.dialogs.advanced_settings_dialog">gui.dialogs.advanced_settings_dialog</a>
  &#8226;   <a href="#gui.dialogs.initial_setup">gui.dialogs.initial_setup</a>
+ &#8226;   <a href="#gui.dialogs.profile_dialogs">gui.dialogs.profile_dialogs</a>
  &#8226;   <a href="#gui.main_window">gui.main_window</a>
  &#8226;   <a href="#gui.panels.advanced_backup_panel">gui.panels.advanced_backup_panel</a>
  &#8226;   <a href="#gui.panels.config_panel">gui.panels.config_panel</a>
@@ -23703,6 +23746,7 @@ imports:
   <div class="import">
 imported by:
     <a href="#gui.dialogs.initial_setup">gui.dialogs.initial_setup</a>
+ &#8226;   <a href="#gui.dialogs.profile_dialogs">gui.dialogs.profile_dialogs</a>
  &#8226;   <a href="#gui.main_window">gui.main_window</a>
  &#8226;   <a href="#gui.panels.advanced_restart_panel">gui.panels.advanced_restart_panel</a>
  &#8226;   <a href="#gui.panels.cluster_panel">gui.panels.cluster_panel</a>
@@ -23751,6 +23795,7 @@ imports:
 imported by:
     <a href="#customtkinter.windows.widgets.core_widget_classes.ctk_base_class">customtkinter.windows.widgets.core_widget_classes.ctk_base_class</a>
  &#8226;   <a href="#gui.dialogs.advanced_settings_dialog">gui.dialogs.advanced_settings_dialog</a>
+ &#8226;   <a href="#gui.dialogs.profile_dialogs">gui.dialogs.profile_dialogs</a>
  &#8226;   <a href="#gui.main_window">gui.main_window</a>
  &#8226;   <a href="#gui.panels.cluster_panel">gui.panels.cluster_panel</a>
  &#8226;   <a href="#gui.panels.server_panel">gui.panels.server_panel</a>
@@ -24213,6 +24258,7 @@ imported by:
  &#8226;   <a href="#darkdetect._dummy">darkdetect._dummy</a>
  &#8226;   <a href="#darkdetect._mac_detect">darkdetect._mac_detect</a>
  &#8226;   <a href="#functools">functools</a>
+ &#8226;   <a href="#gui.dialogs.profile_dialogs">gui.dialogs.profile_dialogs</a>
  &#8226;   <a href="#gui.panels.cluster_panel">gui.panels.cluster_panel</a>
  &#8226;   <a href="#gui.panels.ini_config_panel">gui.panels.ini_config_panel</a>
  &#8226;   <a href="#idna.core">idna.core</a>
@@ -24357,6 +24403,7 @@ imported by:
  &#8226;   <a href="#urllib3.util.url">urllib3.util.url</a>
  &#8226;   <a href="#urllib3.util.util">urllib3.util.util</a>
  &#8226;   <a href="#utils.cluster_manager">utils.cluster_manager</a>
+ &#8226;   <a href="#utils.config_profiles">utils.config_profiles</a>
  &#8226;   <a href="#utils.scheduled_commands">utils.scheduled_commands</a>
 
   </div>
@@ -25792,6 +25839,7 @@ imported by:
     <a href="#utils.app_settings">utils.app_settings</a>
  &#8226;   <a href="#utils.cluster_manager">utils.cluster_manager</a>
  &#8226;   <a href="#utils.config_manager">utils.config_manager</a>
+ &#8226;   <a href="#utils.config_profiles">utils.config_profiles</a>
  &#8226;   <a href="#utils.dialogs">utils.dialogs</a>
  &#8226;   <a href="#utils.ini_cleaner">utils.ini_cleaner</a>
  &#8226;   <a href="#utils.logger">utils.logger</a>
@@ -25849,6 +25897,7 @@ imports:
 imported by:
     <a href="#gui.panels.cluster_panel">gui.panels.cluster_panel</a>
  &#8226;   <a href="#gui.panels.principal_panel">gui.panels.principal_panel</a>
+ &#8226;   <a href="#main.py">main.py</a>
 
   </div>
 
@@ -25874,7 +25923,35 @@ imported by:
  &#8226;   <a href="#gui.panels.server_panel">gui.panels.server_panel</a>
  &#8226;   <a href="#main.py">main.py</a>
  &#8226;   <a href="#utils.cluster_manager">utils.cluster_manager</a>
+ &#8226;   <a href="#utils.config_profiles">utils.config_profiles</a>
  &#8226;   <a href="#utils.server_manager">utils.server_manager</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="utils.config_profiles"></a>
+  <a target="code" href="///C:/Users/roder/OneDrive/Desktop/Nuevacarpeta/Asa2/utils/config_profiles.py" type="text/plain"><tt>utils.config_profiles</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#configparser">configparser</a>
+ &#8226;   <a href="#datetime">datetime</a>
+ &#8226;   <a href="#json">json</a>
+ &#8226;   <a href="#os">os</a>
+ &#8226;   <a href="#pathlib">pathlib</a>
+ &#8226;   <a href="#shutil">shutil</a>
+ &#8226;   <a href="#stat">stat</a>
+ &#8226;   <a href="#typing">typing</a>
+ &#8226;   <a href="#utils">utils</a>
+ &#8226;   <a href="#utils.config_manager">utils.config_manager</a>
+ &#8226;   <a href="#zipfile">zipfile</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#gui.panels.ini_config_panel">gui.panels.ini_config_panel</a>
+ &#8226;   <a href="#main.py">main.py</a>
 
   </div>
 
@@ -26758,6 +26835,7 @@ imported by:
  &#8226;   <a href="#setuptools.command.bdist_wheel">setuptools.command.bdist_wheel</a>
  &#8226;   <a href="#setuptools.wheel">setuptools.wheel</a>
  &#8226;   <a href="#shutil">shutil</a>
+ &#8226;   <a href="#utils.config_profiles">utils.config_profiles</a>
  &#8226;   <a href="#utils.server_manager">utils.server_manager</a>
  &#8226;   <a href="#zipfile._path">zipfile._path</a>
 

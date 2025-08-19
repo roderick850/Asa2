@@ -17,6 +17,9 @@ class ArkServerManager:
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
         
+        # Crear carpetas esenciales temprano para evitar errores de permisos
+        self._ensure_essential_directories()
+        
         # Inicializar configuraciones con manejo de errores
         try:
             self.config_manager = ConfigManager()
@@ -138,6 +141,42 @@ class ArkServerManager:
                 
         except Exception as e:
             self.logger.error(f"Error al mostrar mensaje de configuración: {e}")
+    
+    def _ensure_essential_directories(self):
+        """Crear directorios esenciales al inicio para evitar errores de permisos"""
+        try:
+            # Obtener directorio base de la aplicación
+            if hasattr(sys, '_MEIPASS'):
+                # Si estamos en un ejecutable de PyInstaller
+                base_dir = os.path.dirname(sys.executable)
+            else:
+                # Si estamos en desarrollo
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+            
+            # Lista de directorios esenciales
+            essential_dirs = [
+                'data',
+                'logs',
+                'config',
+                'backups',
+                'exports'
+            ]
+            
+            # Crear cada directorio si no existe
+            for dir_name in essential_dirs:
+                dir_path = os.path.join(base_dir, dir_name)
+                try:
+                    os.makedirs(dir_path, exist_ok=True)
+                    # Verificar que el directorio es accesible
+                    if os.access(dir_path, os.W_OK):
+                        print(f"✅ Directorio creado/verificado: {dir_name}")
+                    else:
+                        print(f"⚠️ Directorio sin permisos de escritura: {dir_name}")
+                except (OSError, PermissionError) as e:
+                    print(f"❌ Error creando directorio {dir_name}: {e}")
+                    
+        except Exception as e:
+            print(f"❌ Error general creando directorios esenciales: {e}")
 
 def main():
     """Función principal"""
