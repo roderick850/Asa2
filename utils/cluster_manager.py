@@ -328,14 +328,35 @@ class ClusterManager:
                     self.cluster_config = json.load(f)
                 
                 self.cluster_id = self.cluster_config.get("cluster_id", "default_cluster")
-                self.cluster_name = self.cluster_config.get("cluster_name", "Mi Cluster ARK")
+                # Si no hay cluster_name, usar el cluster_id como nombre
+                self.cluster_name = self.cluster_config.get("cluster_name", self.cluster_id)
+                
+                # Limpiar servidores existentes antes de cargar
+                self.servers.clear()
                 
                 # Crear instancias de servidores
                 servers_config = self.cluster_config.get("servers", {})
-                for server_name, server_config in servers_config.items():
-                    self.servers[server_name] = ServerInstance(server_name, server_config, self)
+                self.logger.info(f"Cargando {len(servers_config)} servidores desde configuración...")
                 
-                self.logger.info(f"Configuración del cluster cargada: {self.cluster_name} ({len(self.servers)} servidores)")
+                for server_name, server_config in servers_config.items():
+                    try:
+                        # Crear instancia del servidor
+                        server_instance = ServerInstance(server_name, server_config, self)
+                        self.servers[server_name] = server_instance
+                        self.logger.info(f"✓ Servidor {server_name} cargado - Mapa: {server_config.get('map', 'N/A')}, Puerto: {server_config.get('port', 'N/A')}")
+                    except Exception as e:
+                        self.logger.error(f"❌ Error creando instancia del servidor {server_name}: {e}")
+                
+                self.logger.info(f"🌐 Configuración del cluster cargada: {self.cluster_name} ({len(self.servers)} servidores)")
+                
+                # Log detallado de servidores disponibles
+                if self.servers:
+                    self.logger.info("📋 Servidores disponibles en el cluster:")
+                    for server_name, server_instance in self.servers.items():
+                        self.logger.info(f"   - {server_name}: {server_instance.config.get('map', 'Unknown')} (Estado: {server_instance.status})")
+                else:
+                    self.logger.warning("⚠️ No se cargaron servidores en el cluster")
+                    
             else:
                 self.logger.info("No se encontró configuración de cluster, creando configuración por defecto")
                 self.create_default_cluster_config()
@@ -702,7 +723,13 @@ class ClusterManager:
     
     def get_server(self, server_name: str) -> Optional[ServerInstance]:
         """Obtener instancia de servidor específico"""
-        return self.servers.get(server_name)
+        server = self.servers.get(server_name)
+        if server:
+            self.logger.debug(f"Servidor {server_name} encontrado en cluster")
+            return server
+        else:
+            self.logger.warning(f"Servidor {server_name} no encontrado en el cluster. Servidores disponibles: {list(self.servers.keys())}")
+            return None
     
     def get_active_servers(self) -> List[str]:
         """Obtener lista de servidores activos"""

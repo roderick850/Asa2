@@ -11,6 +11,7 @@ from utils.config_manager import ConfigManager
 from utils.app_settings import AppSettings
 from utils.system_tray import SystemTray
 from utils.server_logger import ServerEventLogger
+from utils.player_monitor import PlayerMonitor
 from .panels.principal_panel import PrincipalPanel
 from .panels.server_panel import ServerPanel
 from .panels.config_panel import ConfigPanel
@@ -54,6 +55,12 @@ class MainWindow:
         
         # Inicializar logger de eventos del servidor
         self.server_event_logger = ServerEventLogger("default")
+        
+        # Inicializar monitor de jugadores
+        self.player_monitor = PlayerMonitor()
+        self.player_monitor.register_callback('join', self.on_player_join)
+        self.player_monitor.register_callback('left', self.on_player_left)
+        self.player_monitor.register_callback('count_changed', self.on_player_count_changed)
         
         # Inicializar componentes
         self.server_manager = None
@@ -382,19 +389,37 @@ class MainWindow:
         self.server_version_label = ctk.CTkLabel(server_version_container, text="No detectado", fg_color=("gray90", "gray20"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
         self.server_version_label.pack(pady=(2, 0))
         
-        # Columna 4: Steam y Actualizaciones
+        # Columna 4: Jugadores en Línea
         col4_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
-        col4_frame.pack(side="left", fill="y")
+        col4_frame.pack(side="left", fill="y", padx=(0, 10))
+        
+        # Jugadores en línea del servidor actual
+        players_container = ctk.CTkFrame(col4_frame, fg_color="transparent")
+        players_container.pack(fill="x", pady=2)
+        ctk.CTkLabel(players_container, text="Jugadores:", font=("Arial", 10)).pack()
+        self.online_players_label = ctk.CTkLabel(players_container, text="👥 0", fg_color=("blue", "darkblue"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
+        self.online_players_label.pack(pady=(2, 0))
+        
+        # Total de jugadores en cluster
+        cluster_players_container = ctk.CTkFrame(col4_frame, fg_color="transparent")
+        cluster_players_container.pack(fill="x", pady=2)
+        ctk.CTkLabel(cluster_players_container, text="Total Cluster:", font=("Arial", 10)).pack()
+        self.cluster_players_label = ctk.CTkLabel(cluster_players_container, text="🌐 0", fg_color=("purple", "#4B0082"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
+        self.cluster_players_label.pack(pady=(2, 0))
+        
+        # Columna 5: Steam y Actualizaciones
+        col5_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
+        col5_frame.pack(side="left", fill="y")
         
         # Versión de Steam
-        steam_version_container = ctk.CTkFrame(col4_frame, fg_color="transparent")
+        steam_version_container = ctk.CTkFrame(col5_frame, fg_color="transparent")
         steam_version_container.pack(fill="x", pady=2)
         ctk.CTkLabel(steam_version_container, text="Steam:", font=("Arial", 10)).pack()
         self.steam_version_label = ctk.CTkLabel(steam_version_container, text="Verificando...", fg_color=("orange", "orange"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
         self.steam_version_label.pack(pady=(2, 0))
         
         # Estado de actualizaciones
-        update_container = ctk.CTkFrame(col4_frame, fg_color="transparent")
+        update_container = ctk.CTkFrame(col5_frame, fg_color="transparent")
         update_container.pack(fill="x", pady=2)
         ctk.CTkLabel(update_container, text="Actualizaciones:", font=("Arial", 10)).pack()
         self.update_status_label = ctk.CTkLabel(update_container, text="Al día", fg_color=("green", "green"), corner_radius=5, padx=8, pady=2, font=("Arial", 9))
@@ -486,16 +511,16 @@ class MainWindow:
     def create_logs_bar(self):
         """Crear barra de logs siempre visible en la parte inferior"""
         # Frame para la barra de logs
-        logs_frame = ctk.CTkFrame(self.root, height=85, corner_radius=0)
+        logs_frame = ctk.CTkFrame(self.root, height=150, corner_radius=0)
         logs_frame.grid(row=2, column=0, sticky="ew", padx=0, pady=0)
         
         # Título de la barra de logs
         logs_title = ctk.CTkLabel(logs_frame, text="Logs del Sistema", font=("Arial", 11, "bold"))
-        logs_title.pack(pady=(3, 0))
+        logs_title.pack(pady=(5, 0))
         
         # Área de texto para los logs
-        self.logs_text = ctk.CTkTextbox(logs_frame, height=60, state="disabled")
-        self.logs_text.pack(fill="both", expand=True, padx=5, pady=3)
+        self.logs_text = ctk.CTkTextbox(logs_frame, height=120, state="disabled")
+        self.logs_text.pack(fill="both", expand=True, padx=5, pady=5)
         
         # Mensaje inicial
         self.add_log_message("🚀 Aplicación iniciada correctamente")
@@ -1210,6 +1235,13 @@ class MainWindow:
                 server_path = os.path.join(root_path, server_name)
                 self.config_manager.set("server", "server_path", server_path)
                 self.logger.info(f"🔄 Ruta del servidor actualizada: {server_path}")
+                
+                # Configurar PlayerMonitor para el servidor seleccionado
+                if hasattr(self, 'player_monitor'):
+                    log_path = os.path.join(server_path, "ShooterGame", "Saved", "Logs", "ShooterGame.log")
+                    self.player_monitor.add_server(server_name, log_path)
+                    self.player_monitor.start_monitoring()
+                    self.logger.info(f"🎮 Monitoreo de jugadores iniciado para: {server_name}")
         
         # Actualizar el logger del servidor
         if hasattr(self, 'server_event_logger'):
@@ -2332,6 +2364,21 @@ Versión de la app: {self.APP_VERSION}
             if hasattr(self, 'principal_panel') and server_name and map_name:
                 if hasattr(self.principal_panel, 'update_server_info'):
                     self.principal_panel.update_server_info(server_name, map_name)
+            
+            # Configurar monitoreo de jugadores para el servidor seleccionado
+            if server_name:
+                root_path = self.config_manager.get("server", "root_path", "")
+                self.logger.info(f"🔍 DEBUG: Configurando monitoreo para {server_name}, root_path: {root_path}")
+                if root_path:
+                    server_path = os.path.join(root_path, server_name)
+                    self.logger.info(f"🔍 DEBUG: Server path: {server_path}, exists: {os.path.exists(server_path)}")
+                    if os.path.exists(server_path):
+                        self.logger.info(f"🔍 DEBUG: Llamando setup_single_server_player_monitoring para {server_name}")
+                        self.setup_single_server_player_monitoring(server_name, server_path)
+                    else:
+                        self.logger.warning(f"⚠️ Ruta del servidor no existe: {server_path}")
+                else:
+                    self.logger.warning(f"⚠️ Root path no configurado para monitoreo de jugadores")
                     
             self.logger.info(f"Paneles actualizados con servidor: {server_name}, mapa: {map_name}")
             
@@ -2621,9 +2668,18 @@ Versión de la app: {self.APP_VERSION}
     def on_cluster_mode_changed(self, is_cluster_mode):
         """Manejar el cambio de modo cluster"""
         try:
+            self.logger.info(f"🔄 MainWindow: on_cluster_mode_changed llamado con is_cluster_mode={is_cluster_mode}")
             if is_cluster_mode:
                 # Modo cluster activado
                 self.logger.info("🌐 Cambiando a modo cluster")
+                
+                # Configurar PlayerMonitor para múltiples servidores
+                self.logger.info(f"🔍 DEBUG: Verificando player_monitor - hasattr: {hasattr(self, 'player_monitor')}")
+                if hasattr(self, 'player_monitor'):
+                    self.logger.info("🔍 DEBUG: player_monitor encontrado, llamando _setup_cluster_player_monitoring")
+                    self._setup_cluster_player_monitoring()
+                else:
+                    self.logger.warning("⚠️ DEBUG: player_monitor no encontrado")
                 
                 # Ocultar/modificar elementos de servidor único
                 if hasattr(self, 'server_selection_frame'):
@@ -2669,7 +2725,10 @@ Versión de la app: {self.APP_VERSION}
             
             # Actualizar otros paneles que puedan necesitar saber del cambio de modo
             if hasattr(self, 'console_panel') and hasattr(self.console_panel, 'on_cluster_mode_changed'):
+                self.logger.info(f"🔄 MainWindow: Llamando a console_panel.on_cluster_mode_changed({is_cluster_mode})")
                 self.console_panel.on_cluster_mode_changed(is_cluster_mode)
+            else:
+                self.logger.warning("⚠️ MainWindow: console_panel no disponible o no tiene on_cluster_mode_changed")
             
             if hasattr(self, 'server_panel') and hasattr(self.server_panel, 'on_cluster_mode_changed'):
                 self.server_panel.on_cluster_mode_changed(is_cluster_mode)
@@ -2689,3 +2748,126 @@ Versión de la app: {self.APP_VERSION}
                 
         except Exception as e:
             self.logger.error(f"Error al restaurar desde bandeja: {e}")
+    
+    # Métodos callback para el monitor de jugadores
+    def on_player_join(self, player_event):
+        """Callback cuando un jugador se une al servidor"""
+        try:
+            self.logger.info(f"Jugador {player_event.player_name} se unió al servidor {player_event.server_name}")
+            self.update_player_counts()
+        except Exception as e:
+            self.logger.error(f"Error en callback de player join: {e}")
+    
+    def on_player_left(self, player_event):
+        """Callback cuando un jugador deja el servidor"""
+        try:
+            self.logger.info(f"Jugador {player_event.player_name} dejó el servidor {player_event.server_name}")
+            self.update_player_counts()
+        except Exception as e:
+            self.logger.error(f"Error en callback de player left: {e}")
+    
+    def on_player_count_changed(self, server_name, count):
+        """Callback cuando cambia el conteo de jugadores"""
+        try:
+            self.logger.debug(f"Conteo de jugadores en {server_name}: {count}")
+            self.update_player_counts()
+        except Exception as e:
+            self.logger.error(f"Error en callback de player count changed: {e}")
+    
+    def update_player_counts(self):
+        """Actualizar los contadores de jugadores en la UI"""
+        try:
+            # Obtener conteo del servidor actual
+            current_server = getattr(self.server_panel, 'selected_server', None) if hasattr(self, 'server_panel') else None
+            current_count = 0
+            total_count = 0
+            
+            if current_server:
+                current_count = self.player_monitor.get_player_count(current_server)
+            
+            # Obtener conteo total de todos los servidores
+            all_servers = self.player_monitor.get_all_servers()
+            for server in all_servers:
+                total_count += self.player_monitor.get_player_count(server)
+            
+            # Actualizar labels de forma segura
+            def update_ui():
+                if hasattr(self, 'online_players_label'):
+                    self.online_players_label.configure(text=f"👥 {current_count}")
+                if hasattr(self, 'cluster_players_label'):
+                    self.cluster_players_label.configure(text=f"🌐 {total_count}")
+                    
+                # Actualizar cluster panel si existe
+                if hasattr(self, 'cluster_panel') and hasattr(self.cluster_panel, 'update_player_counts'):
+                    self.cluster_panel.update_player_counts()
+            
+            self._safe_schedule_ui_update(update_ui)
+        except Exception as e:
+            self.logger.error(f"Error actualizando conteos de jugadores: {e}")
+    
+    def setup_single_server_player_monitoring(self, server_name, server_path):
+        """Configurar monitoreo de jugadores para un servidor individual"""
+        try:
+            # Construir ruta del log
+            log_path = os.path.join(server_path, "ShooterGame", "Saved", "Logs", "ShooterGame.log")
+            
+            if os.path.exists(os.path.dirname(log_path)):
+                # Limpiar servidores anteriores
+                self.player_monitor.stop_monitoring()
+                
+                # Agregar el servidor actual
+                self.player_monitor.add_server(server_name, log_path)
+                self.player_monitor.start_monitoring()
+                self.logger.info(f"🎮 Monitoreo de jugadores iniciado para servidor: {server_name}")
+            else:
+                self.logger.warning(f"Directorio de logs no encontrado para {server_name}: {os.path.dirname(log_path)}")
+                
+        except Exception as e:
+            self.logger.error(f"Error configurando monitoreo de servidor individual: {e}")
+    
+    def _setup_cluster_player_monitoring(self):
+        """Configurar monitoreo de jugadores para múltiples servidores en modo cluster"""
+        try:
+            self.logger.info("🔍 DEBUG: Iniciando configuración de monitoreo de cluster")
+            # Obtener lista de servidores del cluster
+            root_path = self.config_manager.get("server", "root_path", "")
+            self.logger.info(f"🔍 DEBUG: Root path para cluster: {root_path}")
+            if not root_path or not os.path.exists(root_path):
+                self.logger.warning("Ruta raíz no configurada para monitoreo de cluster")
+                return
+            
+            # Limpiar servidores anteriores
+            self.logger.info("🔍 DEBUG: Deteniendo monitoreo anterior")
+            self.player_monitor.stop_monitoring()
+            
+            # Buscar todos los servidores en la ruta raíz
+            servers = []
+            self.logger.info(f"🔍 DEBUG: Buscando servidores en {root_path}")
+            for item in os.listdir(root_path):
+                server_path = os.path.join(root_path, item)
+                if os.path.isdir(server_path):
+                    # Verificar si es un servidor ARK válido
+                    log_path = os.path.join(server_path, "ShooterGame", "Saved", "Logs", "ShooterGame.log")
+                    log_dir_exists = os.path.exists(os.path.dirname(log_path))
+                    self.logger.info(f"🔍 DEBUG: Servidor {item} - Log dir exists: {log_dir_exists}")
+                    if log_dir_exists:
+                        servers.append((item, log_path))
+            
+            self.logger.info(f"🔍 DEBUG: Encontrados {len(servers)} servidores válidos")
+            
+            # Configurar PlayerMonitor para todos los servidores
+            for server_name, log_path in servers:
+                self.player_monitor.add_server(server_name, log_path)
+                self.logger.info(f"🎮 Servidor agregado al monitoreo: {server_name}")
+            
+            # Iniciar monitoreo
+            if servers:
+                self.player_monitor.start_monitoring()
+                self.logger.info(f"🌐 Monitoreo de cluster iniciado para {len(servers)} servidores")
+                self.logger.info(f"🔍 DEBUG: Estado del monitoreo: {self.player_monitor.monitoring}")
+                self.logger.info(f"🔍 DEBUG: Servidores monitoreados: {self.player_monitor.get_all_servers()}")
+            else:
+                self.logger.warning("⚠️ No se encontraron servidores válidos para monitorear")
+            
+        except Exception as e:
+            self.logger.error(f"Error configurando monitoreo de cluster: {e}")

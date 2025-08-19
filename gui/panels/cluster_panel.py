@@ -478,21 +478,21 @@ class ClusterPanel(ctk.CTkFrame):
         # Crear frames para servidores existentes
         self.refresh_server_frames()
         
-        # Frame de logs compacto
+        # Frame de logs expandido
         logs_frame = ctk.CTkFrame(main_frame, fg_color=("gray85", "gray25"))
-        logs_frame.pack(fill="x", pady=(10, 0))
+        logs_frame.pack(fill="both", expand=True, pady=(10, 0))
         
         # Título de logs
         logs_title = ctk.CTkLabel(logs_frame, text="📋 Logs del Cluster", 
                                  font=("Arial", 14, "bold"))
         logs_title.pack(pady=(10, 5))
         
-        # Text widget para logs
+        # Text widget para logs con altura expandida
         logs_container = ctk.CTkFrame(logs_frame, fg_color="transparent")
-        logs_container.pack(fill="x", padx=10, pady=(0, 10))
+        logs_container.pack(fill="both", expand=True, padx=10, pady=(0, 10))
         
-        self.logs_text = ctk.CTkTextbox(logs_container, height=120, wrap="word")
-        self.logs_text.pack(fill="x", pady=(0, 10))
+        self.logs_text = ctk.CTkTextbox(logs_container, height=200, wrap="word")
+        self.logs_text.pack(fill="both", expand=True, pady=(0, 10))
         
         # Botones de logs compactos
         logs_buttons_frame = ctk.CTkFrame(logs_container, fg_color="transparent")
@@ -511,6 +511,13 @@ class ClusterPanel(ctk.CTkFrame):
             frame.destroy()
         self.server_frames.clear()
         
+        # Recargar configuración del cluster para asegurar sincronización
+        try:
+            self.cluster_manager.load_cluster_config()
+            self.logger.info(f"Configuración del cluster recargada - {len(self.cluster_manager.servers)} servidores")
+        except Exception as e:
+            self.logger.error(f"Error recargando configuración del cluster: {e}")
+        
         # Verificar si hay servidores
         if not self.cluster_manager.servers:
             # Mostrar mensaje si no hay servidores
@@ -522,6 +529,7 @@ class ClusterPanel(ctk.CTkFrame):
                 text_color="gray"
             )
             no_servers_label.pack(expand=True, pady=40)
+            self.logger.warning("No hay servidores configurados en el cluster")
             return
         
         # Crear frames para servidores actuales
@@ -530,13 +538,16 @@ class ClusterPanel(ctk.CTkFrame):
                 frame = ServerStatusFrame(self.servers_frame, server_name, server_instance, self)
                 frame.pack(fill="x", pady=2)
                 self.server_frames[server_name] = frame
-                self.logger.info(f"Frame creado para servidor: {server_name}")
+                self.logger.info(f"✓ Frame creado para servidor: {server_name} - Puerto: {server_instance.config.get('port', 'N/A')}")
             except Exception as e:
                 self.logger.error(f"Error creando frame para servidor {server_name}: {e}")
         
         # Log para debug
         self.logger.info(f"Servidores cargados en cluster: {list(self.cluster_manager.servers.keys())}")
         self.logger.info(f"Frames de servidores creados: {len(self.server_frames)}")
+        
+        # Actualizar estadísticas del cluster
+        self.update_cluster_stats()
     
     def start_auto_update(self):
         """Iniciar actualización automática de la UI"""
@@ -1147,3 +1158,34 @@ class AddServerDialog:
         """Cancelar diálogo"""
         self.result = False
         self.dialog.destroy()
+
+# Agregar método al ClusterPanel para actualizar conteos de jugadores
+def update_player_counts(self):
+    """Actualizar conteos de jugadores usando el PlayerMonitor"""
+    try:
+        if not hasattr(self.main_window, 'player_monitor'):
+            return
+            
+        player_monitor = self.main_window.player_monitor
+        
+        # Actualizar conteo individual de cada servidor
+        for server_name, server_frame in self.server_frames.items():
+            if hasattr(server_frame, 'players_label'):
+                count = player_monitor.get_player_count(server_name)
+                server_frame.players_label.configure(text=f"👥 {count}")
+        
+        # Actualizar conteo total del cluster
+        total_players = 0
+        all_servers = player_monitor.get_all_servers()
+        for server in all_servers:
+            total_players += player_monitor.get_player_count(server)
+        
+        if hasattr(self, 'total_players_label'):
+            self.total_players_label.configure(text=str(total_players))
+            
+    except Exception as e:
+        if hasattr(self, 'logger'):
+            self.logger.error(f"Error actualizando conteos de jugadores en cluster: {e}")
+
+# Agregar el método a la clase ClusterPanel
+ClusterPanel.update_player_counts = update_player_counts

@@ -1,5 +1,5 @@
 {
-  "enabled": false,
+  "enabled": true,
   "cluster_id": "MiClusterARK",
   "cluster_data_path": "D:/ASA/Cluster",
   "allow_character_transfer": true,
@@ -10,5 +10,37 @@
   "prevent_download_dinos": false,
   "prevent_upload_survivors": false,
   "prevent_upload_items": false,
-  "prevent_upload_dinos": false
+  "prevent_upload_dinos": false,
+  "servers": {
+    "prueba": {
+      "name": "prueba",
+      "map": "TheIsland_WP",
+      "port": 7777,
+      "query_port": 27015,
+      "rcon_port": 32330,
+      "priority": 1,
+      "auto_start": true,
+      "transfer_allowed": true
+    },
+    "prueba2": {
+      "name": "prueba2",
+      "map": "TheCenter_WP",
+      "port": 7767,
+      "query_port": 26015,
+      "rcon_port": 32330,
+      "priority": 2,
+      "auto_start": true,
+      "transfer_allowed": true
+    },
+    "prueba3": {
+      "name": "prueba3",
+      "map": "TheIsland_WP",
+      "port": 7787,
+      "query_port": 28015,
+      "rcon_port": 32330,
+      "priority": 3,
+      "auto_start": true,
+      "transfer_allowed": true
+    }
+  }
 }

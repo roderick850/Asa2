@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 import customtkinter as ctk
 import os
+import json
+import time
 
 
 class ToolTip:
@@ -1829,26 +1831,37 @@ class PrincipalPanel:
             self.item_transfer_switch.configure(command=None)
             self.dino_transfer_switch.configure(command=None)
             
-            # Cargar desde config_manager
-            cluster_enabled = self.config_manager.get("cluster", "enabled", False)
+            # Cargar desde cluster_config.json
+            cluster_config_file = self.config_manager.get_data_file_path("cluster_config.json")
+            cluster_config = {}
+            
+            if os.path.exists(cluster_config_file):
+                try:
+                    with open(cluster_config_file, 'r', encoding='utf-8') as f:
+                        cluster_config = json.load(f)
+                except Exception as e:
+                    self.logger.error(f"Error leyendo cluster_config.json: {e}")
+            
+            # Obtener valores de configuración
+            cluster_enabled = cluster_config.get("enabled", False)
             if isinstance(cluster_enabled, str):
                 cluster_enabled = cluster_enabled.lower() == 'true'
             
-            cluster_id = self.config_manager.get("cluster", "cluster_id", "MiClusterARK")
+            cluster_id = cluster_config.get("cluster_id", "MiClusterARK")
             # Establecer carpeta por defecto 'Cluster' en la raíz si no hay configuración previa
             default_cluster_path = os.path.join(os.getcwd(), "Cluster")
-            cluster_data_path = self.config_manager.get("cluster", "cluster_data_path", default_cluster_path)
-            allow_character_transfer = self.config_manager.get("cluster", "allow_character_transfer", True)
-            allow_item_transfer = self.config_manager.get("cluster", "allow_item_transfer", True)
-            allow_dino_transfer = self.config_manager.get("cluster", "allow_dino_transfer", True)
+            cluster_data_path = cluster_config.get("cluster_data_path", default_cluster_path)
+            allow_character_transfer = cluster_config.get("allow_character_transfer", True)
+            allow_item_transfer = cluster_config.get("allow_item_transfer", True)
+            allow_dino_transfer = cluster_config.get("allow_dino_transfer", True)
             
             # Cargar opciones de PreventDownload/Upload
-            prevent_download_survivors = self.config_manager.get("cluster", "prevent_download_survivors", False)
-            prevent_download_items = self.config_manager.get("cluster", "prevent_download_items", False)
-            prevent_download_dinos = self.config_manager.get("cluster", "prevent_download_dinos", False)
-            prevent_upload_survivors = self.config_manager.get("cluster", "prevent_upload_survivors", False)
-            prevent_upload_items = self.config_manager.get("cluster", "prevent_upload_items", False)
-            prevent_upload_dinos = self.config_manager.get("cluster", "prevent_upload_dinos", False)
+            prevent_download_survivors = cluster_config.get("prevent_download_survivors", False)
+            prevent_download_items = cluster_config.get("prevent_download_items", False)
+            prevent_download_dinos = cluster_config.get("prevent_download_dinos", False)
+            prevent_upload_survivors = cluster_config.get("prevent_upload_survivors", False)
+            prevent_upload_items = cluster_config.get("prevent_upload_items", False)
+            prevent_upload_dinos = cluster_config.get("prevent_upload_dinos", False)
             
             # Aplicar configuración a los widgets
             self.cluster_enabled_var.set(cluster_enabled)
@@ -1906,6 +1919,11 @@ class PrincipalPanel:
             self.character_transfer_switch.configure(command=original_char_command)
             self.item_transfer_switch.configure(command=original_item_command)
             self.dino_transfer_switch.configure(command=original_dino_command)
+            
+            # Programar notificación al main_window sobre el estado inicial del cluster
+            # Se hace con delay para asegurar que todos los paneles estén inicializados
+            if self.main_window and hasattr(self.main_window, 'on_cluster_mode_changed'):
+                self.main_window.root.after(500, lambda: self.main_window.on_cluster_mode_changed(cluster_enabled))
             
             self.logger.info(f"Configuración del cluster cargada: enabled={cluster_enabled}")
                 

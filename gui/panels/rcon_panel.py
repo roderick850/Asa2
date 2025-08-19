@@ -1352,6 +1352,24 @@ class RconPanel(ctk.CTkFrame):
         except Exception as e:
             self.add_result(f"Error al actualizar información del servidor: {str(e)}")
     
+    def find_rcon_executable(self):
+        """Buscar el ejecutable RCON en múltiples ubicaciones"""
+        search_paths = [
+            Path("rcon"),  # Carpeta rcon relativa
+            Path(__file__).parent.parent.parent / "rcon",  # Carpeta rcon desde el script
+            Path.cwd() / "rcon",  # Carpeta rcon desde directorio de trabajo
+            Path(__file__).parent.parent.parent,  # Directorio raíz del proyecto
+            Path.cwd(),  # Directorio actual
+        ]
+        
+        for search_path in search_paths:
+            if search_path.exists():
+                # Buscar archivos .exe en la carpeta
+                for file in search_path.glob("*.exe"):
+                    if "rcon" in file.name.lower():
+                        return str(file)
+        return None
+
     def execute_rcon_command_sync(self, command):
         """Ejecutar comando RCON de forma síncrona y retornar resultado"""
         try:

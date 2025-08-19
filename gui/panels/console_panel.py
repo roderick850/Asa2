@@ -3,6 +3,7 @@ import threading
 import time
 import os
 import psutil
+import queue
 from datetime import datetime
 
 
@@ -29,6 +30,10 @@ class ConsolePanel:
         self.server_consoles = {}  # Diccionario de widgets de consola por servidor
         self.server_threads = {}  # Diccionario de threads de monitoreo por servidor
         
+        # Cola thread-safe para comunicación entre hilos
+        self.message_queue = queue.Queue()
+        self.queue_processor_running = False
+        
         # Referencia al server_manager para acceder a la consola
         if main_window and hasattr(main_window, 'server_panel'):
             self.server_manager = main_window.server_panel.server_manager
@@ -43,151 +48,115 @@ class ConsolePanel:
         if self.parent is None:
             return
             
-        # Frame principal
+        # Frame principal con padding mínimo
         self.main_frame = ctk.CTkFrame(self.parent)
-        self.main_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        self.main_frame.pack(fill="both", expand=True, padx=2, pady=2)
         
-        # Frame de título y selección de servidor
-        title_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        title_frame.pack(fill="x", pady=(5, 10))
+        # Frame de título y pestañas combinado - ultra compacto
+        title_frame = ctk.CTkFrame(self.main_frame, fg_color=("gray90", "gray20"), height=35)
+        title_frame.pack(fill="x", pady=(2, 2))
+        title_frame.pack_propagate(False)  # Mantener altura fija
         
-        # Título
+        # Título más compacto
         self.title_label = ctk.CTkLabel(
             title_frame, 
             text="🖥️ Consola del Servidor", 
-            font=ctk.CTkFont(size=16, weight="bold")
+            font=ctk.CTkFont(size=12, weight="bold")
         )
-        self.title_label.pack(side="left", padx=(10, 20))
+        self.title_label.pack(side="left", padx=(6, 10), pady=4)
         
-        # Frame de selección de servidor (solo visible en modo cluster)
-        self.server_selection_frame = ctk.CTkFrame(title_frame, fg_color="transparent")
+        # Frame para pestañas de servidores (en la misma línea que el título)
+        self.server_tabs_frame = ctk.CTkFrame(title_frame, fg_color="transparent")
+        self.server_tabs_frame.pack(side="left", padx=(10, 0), pady=2)
         
-        # Label para selección de servidor
-        self.server_label = ctk.CTkLabel(
-            self.server_selection_frame,
-            text="Servidor:",
-            font=ctk.CTkFont(size=12)
-        )
-        self.server_label.pack(side="left", padx=(0, 5))
+        # Diccionario para almacenar pestañas de servidores
+        self.server_tabs = {}
+        self.server_tab_buttons = {}
+        self.active_server_tab = None
         
-        # Dropdown para selección de servidor
-        self.server_dropdown = ctk.CTkOptionMenu(
-            self.server_selection_frame,
-            values=["Ningún servidor"],
-            command=self.on_server_selected,
-            width=200
-        )
-        self.server_dropdown.pack(side="left", padx=(0, 10))
+        # Eliminado: Frame de selección de servidor ya no es necesario con las pestañas
         
-        # Inicialmente oculto (solo se muestra en modo cluster)
-        # self.server_selection_frame.pack_forget()
+        # Frame de controles ultra-compacto - todo en una línea
+        controls_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent", height=30)
+        controls_frame.pack(fill="x", padx=3, pady=(0, 2))
+        controls_frame.pack_propagate(False)  # Mantener altura fija
         
-        # Frame de controles
-        controls_frame = ctk.CTkFrame(self.main_frame)
-        controls_frame.pack(fill="x", padx=5, pady=5)
-        
-        # Frame para el switch de visibilidad de consola (modo servidor único)
-        self.single_console_visibility_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
-        self.single_console_visibility_frame.pack(fill="x", padx=10, pady=5)
-        
-        # Switch para mostrar/ocultar consola del servidor (modo único)
+        # Switch para mostrar/ocultar consola del servidor (modo único) - lado izquierdo
         self.console_visibility_var = ctk.BooleanVar(value=self.config_manager.get("app", "show_server_console", default="true").lower() == "true")
         self.show_console_switch = ctk.CTkSwitch(
-            self.single_console_visibility_frame,
-            text="Mostrar Consola del Servidor",
+            controls_frame,
+            text="Consola",
             command=self.toggle_server_console_visibility,
-            variable=self.console_visibility_var
+            variable=self.console_visibility_var,
+            width=70
         )
-        self.show_console_switch.pack(side="left", padx=(0, 20))
+        self.show_console_switch.pack(side="left", padx=(3, 10))
         
-        # Etiqueta explicativa
-        ctk.CTkLabel(
-            self.single_console_visibility_frame, 
-            text="Controla si la ventana de consola del servidor es visible o se ejecuta en segundo plano",
-            font=("Arial", 10),
-            text_color=("gray50", "gray70")
-        ).pack(side="left", padx=(0, 20))
-        
-        # Frame para switches individuales de visibilidad (modo cluster)
+        # Frame para switches individuales de visibilidad (modo cluster) - oculto inicialmente
         self.cluster_console_visibility_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
-        # Inicialmente oculto
         
         # Diccionario para almacenar switches individuales de cada servidor
         self.server_console_switches = {}
         self.server_console_vars = {}
         
-        # Frame para botones de control
-        buttons_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
-        buttons_frame.pack(fill="x", padx=10, pady=5)
-        
-        # Label informativo
-        info_label = ctk.CTkLabel(
-            buttons_frame,
-            text="La consola del servidor se muestra automáticamente",
-            font=ctk.CTkFont(size=12),
-            text_color="green"
-        )
-        info_label.pack(side="left", padx=10, pady=5)
-        
-        # Botón para limpiar consola
+        # Botones de control - lado derecho, más pequeños
         self.clear_button = ctk.CTkButton(
-            buttons_frame,
-            text="🧹 Limpiar Consola",
+            controls_frame,
+            text="🧹",
             command=self.clear_console,
-            width=120,
-            height=30
+            width=30,
+            height=22
         )
-        self.clear_button.pack(side="right", padx=10, pady=5)
+        self.clear_button.pack(side="right", padx=1)
         
-        # Botón para guardar consola
         self.save_button = ctk.CTkButton(
-            buttons_frame,
-            text="💾 Guardar Consola",
+            controls_frame,
+            text="💾",
             command=self.save_console,
-            width=120,
-            height=30
+            width=30,
+            height=22
         )
-        self.save_button.pack(side="right", padx=5, pady=5)
+        self.save_button.pack(side="right", padx=1)
         
-        # Botón para forzar recarga del contenido del archivo de log
         self.reload_content_button = ctk.CTkButton(
-            buttons_frame,
-            text="📄 Recargar Contenido",
+            controls_frame,
+            text="📄",
             command=self.force_reload_content,
-            width=140,
-            height=30
+            width=30,
+            height=22
         )
-        self.reload_content_button.pack(side="right", padx=5, pady=5)
+        self.reload_content_button.pack(side="right", padx=1)
         
-        # Botón para iniciar monitoreo de consola (se eliminará - siempre monitorear)
         self.start_monitoring_button = ctk.CTkButton(
-            buttons_frame,
-            text="🔄 Reiniciar Monitoreo",
+            controls_frame,
+            text="🔄",
             command=self.start_console,
-            width=140,
-            height=30
+            width=30,
+            height=22
         )
-        self.start_monitoring_button.pack(side="right", padx=5, pady=5)
+        self.start_monitoring_button.pack(side="right", padx=1)
         
-        # Frame para comandos
-        command_frame = ctk.CTkFrame(self.main_frame)
-        command_frame.pack(fill="x", padx=5, pady=5)
+        # Frame para comandos - ultra compacto
+        command_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent", height=28)
+        command_frame.pack(fill="x", padx=3, pady=(0, 2))
+        command_frame.pack_propagate(False)  # Mantener altura fija
         
-        # Label para comandos
+        # Label y entrada de comando en la misma línea
         command_label = ctk.CTkLabel(
             command_frame,
             text="Comando:",
-            font=ctk.CTkFont(size=12)
+            font=ctk.CTkFont(size=10),
+            width=55
         )
-        command_label.pack(side="left", padx=(10, 5), pady=5)
+        command_label.pack(side="left", padx=(3, 3))
         
         # Entrada de comando
         self.command_entry = ctk.CTkEntry(
             command_frame,
             placeholder_text="Escribe un comando del servidor...",
-            width=300
+            height=24
         )
-        self.command_entry.pack(side="left", padx=5, pady=5)
+        self.command_entry.pack(side="left", padx=3, fill="x", expand=True)
         
         # Enlazar la tecla Enter para enviar comandos
         self.command_entry.bind("<Return>", lambda event: self.send_command())
@@ -197,49 +166,53 @@ class ConsolePanel:
             command_frame,
             text="📤 Enviar",
             command=self.send_command,
-            width=80,
-            height=30
+            width=70,
+            height=24
         )
-        self.send_button.pack(side="left", padx=5, pady=5)
+        self.send_button.pack(side="right", padx=3)
         
-        # Frame de consola
-        console_frame = ctk.CTkFrame(self.main_frame)
-        console_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        # Frame de consola (para modo servidor único) - padding mínimo
+        self.console_frame = ctk.CTkFrame(self.main_frame)
+        self.console_frame.pack(fill="both", expand=True, padx=2, pady=(0, 2))
         
-        # Título de la consola
+        # Título de la consola - más compacto
         console_title = ctk.CTkLabel(
-            console_frame, 
+            self.console_frame, 
             text="Salida del Servidor:", 
-            font=ctk.CTkFont(size=12, weight="bold")
+            font=ctk.CTkFont(size=10, weight="bold")
         )
-        console_title.pack(pady=(5, 2))
+        console_title.pack(pady=(2, 1))
         
-        # Área de texto para la consola (con scrollbar)
+        # Área de texto para la consola (con scrollbar) - padding mínimo
         self.console_text = ctk.CTkTextbox(
-            console_frame, 
+            self.console_frame, 
             state="disabled",
-            font=ctk.CTkFont(family="Consolas", size=10)
+            font=ctk.CTkFont(family="Consolas", size=9),
+            height=250  # Altura mínima reducida
         )
-        self.console_text.pack(fill="both", expand=True, padx=5, pady=5)
+        self.console_text.pack(fill="both", expand=True, padx=2, pady=(1, 2))
         
-        # Frame de estado
-        status_frame = ctk.CTkFrame(self.main_frame)
-        status_frame.pack(fill="x", padx=5, pady=5)
+        # Frame de estado - ultra compacto
+        status_frame = ctk.CTkFrame(self.main_frame, height=25)
+        status_frame.pack(fill="x", padx=2, pady=(0, 2))
+        status_frame.pack_propagate(False)  # Mantener altura fija
         
-        # Estado de la consola
+        # Estado de la consola - texto más pequeño
         self.status_label = ctk.CTkLabel(
             status_frame, 
             text="Estado: Iniciando automáticamente...", 
-            text_color="blue"
+            text_color="blue",
+            font=ctk.CTkFont(size=9)
         )
-        self.status_label.pack(side="left", padx=10, pady=5)
+        self.status_label.pack(side="left", padx=4, pady=2)
         
-        # Contador de líneas
+        # Contador de líneas - texto más pequeño
         self.lines_label = ctk.CTkLabel(
             status_frame, 
-            text="Líneas: 0"
+            text="Líneas: 0",
+            font=ctk.CTkFont(size=9)
         )
-        self.lines_label.pack(side="right", padx=10, pady=5)
+        self.lines_label.pack(side="right", padx=4, pady=2)
         
         # Mensaje inicial
         self.add_console_message("Consola del servidor inicializada. Iniciando monitoreo automático...")
@@ -657,8 +630,14 @@ class ConsolePanel:
         """Agregar mensaje a la consola"""
         if not self.parent:
             return
-            
+        
         try:
+            # Si estamos en modo cluster con pestañas, agregar a la pestaña activa
+            if self.is_cluster_mode and self.active_server_tab and self.active_server_tab in self.server_tabs:
+                self.add_console_message_to_tab(self.active_server_tab, message)
+                return
+            
+            # Modo servidor único o fallback
             # Habilitar el texto para edición
             self.console_text.configure(state="normal")
             
@@ -817,16 +796,33 @@ class ConsolePanel:
         self.stop_console()
         if self.console_thread and self.console_thread.is_alive():
             self.console_thread.join(timeout=1.0)
+        
+        # Detener todos los hilos de monitoreo de servidores
+        for server_name in list(self.server_tabs.keys()):
+            if server_name in self.server_tabs:
+                self.server_tabs[server_name]['monitoring'] = False
+        
+        # Esperar a que terminen los hilos de monitoreo
+        for server_name, thread in list(self.server_threads.items()):
+            if thread.is_alive():
+                thread.join(timeout=1.0)
+        
+        self.server_threads.clear()
+        
+        # Detener el procesador de cola
+        self.queue_processor_running = False
 
-    def _get_latest_game_log(self):
-        """Obtener la ruta del archivo de log del juego más reciente"""
+    def _get_latest_game_log(self, server_name=None):
+        """Obtener la ruta del archivo de log del juego más reciente para un servidor específico"""
         try:
-            if hasattr(self.main_window, 'selected_server') and self.main_window.selected_server:
-                server_name = self.main_window.selected_server
+            # Usar servidor específico o el seleccionado globalmente
+            target_server = server_name or (self.main_window.selected_server if hasattr(self.main_window, 'selected_server') else None)
+            
+            if target_server:
                 # Construir la ruta al directorio de logs del juego
                 root_path = self.config_manager.get("server", "root_path")
                 if root_path:
-                    logs_dir = os.path.join(root_path, server_name, "ShooterGame", "Saved", "Logs")
+                    logs_dir = os.path.join(root_path, target_server, "ShooterGame", "Saved", "Logs")
                     if os.path.exists(logs_dir):
                         # Buscar archivos ShooterGame*.log
                         log_files = []
@@ -840,14 +836,15 @@ class ConsolePanel:
                             log_files.sort(key=lambda x: x[1], reverse=True)
                             latest_log = log_files[0][0]
                             
-                            # Si el archivo de log cambió, resetear la posición
-                            if not hasattr(self, '_current_log_file') or self._current_log_file != latest_log:
-                                self._current_log_file = latest_log
-                                self._last_file_position = None
+                            # Si el archivo de log cambió, resetear la posición para este servidor
+                            server_key = f"_current_log_file_{target_server}"
+                            if not hasattr(self, server_key) or getattr(self, server_key) != latest_log:
+                                setattr(self, server_key, latest_log)
+                                setattr(self, f"_last_file_position_{target_server}", None)
                             
                             return latest_log
         except Exception as e:
-            self.logger.error(f"Error obteniendo archivo de log del juego: {e}")
+            self.logger.error(f"Error obteniendo archivo de log del juego para {target_server}: {e}")
         
         return None
 
@@ -1097,33 +1094,37 @@ class ConsolePanel:
     def on_cluster_mode_changed(self, is_cluster_mode):
         """Manejar el cambio de modo cluster"""
         try:
+            self.logger.info(f"🔄 Console panel: on_cluster_mode_changed llamado con is_cluster_mode={is_cluster_mode}")
             self.is_cluster_mode = is_cluster_mode
             
             if is_cluster_mode:
-                # Mostrar selección de servidor
-                self.server_selection_frame.pack(side="right", padx=(0, 10))
+                # Crear pestañas dinámicas para servidores
+                self.create_server_tabs()
                 self.title_label.configure(text="🌐 Consola del Cluster")
                 
                 # Ocultar switch único y mostrar switches individuales
-                self.single_console_visibility_frame.pack_forget()
-                self.cluster_console_visibility_frame.pack(fill="x", padx=10, pady=5)
+                self.show_console_switch.pack_forget()
+                self.cluster_console_visibility_frame.pack(fill="x", padx=5, pady=2)
                 
-                # Actualizar lista de servidores
-                self.update_server_list()
+                # Eliminado: update_server_list ya no es necesario sin el desplegable
                 
                 # Crear switches individuales para cada servidor
                 self.create_individual_console_switches()
                 
-                self.logger.info("🌐 Console panel cambiado a modo cluster")
+                self.logger.info("🌐 Console panel cambiado a modo cluster con pestañas dinámicas")
                 
             else:
-                # Ocultar selección de servidor
-                self.server_selection_frame.pack_forget()
+                # Limpiar pestañas de servidor y mostrar consola única
+                self.clear_server_tabs()
                 self.title_label.configure(text="🖥️ Consola del Servidor")
+                
+                # Mostrar consola única
+                if hasattr(self, 'console_frame'):
+                    self.console_frame.pack(fill="both", expand=True, padx=5, pady=5)
                 
                 # Mostrar switch único y ocultar switches individuales
                 self.cluster_console_visibility_frame.pack_forget()
-                self.single_console_visibility_frame.pack(fill="x", padx=10, pady=5)
+                self.show_console_switch.pack(side="left", padx=(5, 15))
                 
                 # Limpiar datos del cluster
                 self.cluster_servers.clear()
@@ -1135,72 +1136,9 @@ class ConsolePanel:
         except Exception as e:
             self.logger.error(f"Error al cambiar modo cluster en console panel: {e}")
     
-    def update_server_list(self):
-        """Actualizar la lista de servidores disponibles"""
-        try:
-            if not self.is_cluster_mode:
-                return
-            
-            # Obtener lista de servidores del cluster desde el main_window
-            server_names = ["Ningún servidor"]
-            
-            if self.main_window and hasattr(self.main_window, 'cluster_panel'):
-                cluster_panel = self.main_window.cluster_panel
-                if hasattr(cluster_panel, 'servers') and cluster_panel.servers:
-                    server_names = [f"{server['name']} ({server['map']})" for server in cluster_panel.servers.values()]
-                    server_names.insert(0, "Ningún servidor")
-            
-            # Actualizar el dropdown
-            self.server_dropdown.configure(values=server_names)
-            
-            if len(server_names) > 1 and self.current_server_id is None:
-                self.server_dropdown.set(server_names[1])  # Seleccionar el primer servidor
-                self.on_server_selected(server_names[1])
-            
-            # Actualizar switches individuales si están visibles
-            if self.cluster_console_visibility_frame.winfo_viewable():
-                self.create_individual_console_switches()
-            
-        except Exception as e:
-            self.logger.error(f"Error al actualizar lista de servidores: {e}")
+    # Eliminado: update_server_list ya no es necesario sin el desplegable
     
-    def on_server_selected(self, server_name):
-        """Manejar la selección de un servidor"""
-        try:
-            if server_name == "Ningún servidor":
-                self.current_server_id = None
-                self.add_console_message("ℹ️ Ningún servidor seleccionado")
-                return
-            
-            # Extraer el nombre del servidor del texto del dropdown
-            if " (" in server_name:
-                server_id = server_name.split(" (")[0]
-            else:
-                server_id = server_name
-            
-            self.current_server_id = server_id
-            
-            # Cambiar el monitoreo al servidor seleccionado
-            self.add_console_message(f"🔄 Cambiando a servidor: {server_name}")
-            
-            # Aplicar configuración de visibilidad específica del servidor
-            if self.is_cluster_mode and server_id in self.server_console_vars:
-                is_visible = self.server_console_vars[server_id].get()
-                if hasattr(self, 'server_manager') and self.server_manager:
-                    if is_visible:
-                        self.server_manager.show_console_window()
-                    else:
-                        self.server_manager.hide_console_window()
-            
-            # Reiniciar el monitoreo para el nuevo servidor
-            self.stop_console()
-            time.sleep(0.5)  # Pequeña pausa
-            self.start_console()
-            
-            self.logger.info(f"Servidor seleccionado: {server_name}")
-            
-        except Exception as e:
-            self.logger.error(f"Error al seleccionar servidor: {e}")
+    # Eliminado: on_server_selected ya no es necesario sin el desplegable
     
     def get_current_server_log_path(self):
         """Obtener la ruta del log del servidor actual"""
@@ -1227,7 +1165,7 @@ class ConsolePanel:
         """Agregar un servidor al cluster"""
         try:
             self.cluster_servers[server_id] = server_info
-            self.update_server_list()
+            # Eliminado: update_server_list ya no es necesario sin el desplegable
             self.logger.info(f"Servidor agregado al cluster: {server_id}")
             
         except Exception as e:
@@ -1242,9 +1180,6 @@ class ConsolePanel:
                 # Si era el servidor actual, cambiar a ninguno
                 if self.current_server_id == server_id:
                     self.current_server_id = None
-                    self.server_dropdown.set("Ningún servidor")
-                
-                self.update_server_list()
                 self.logger.info(f"Servidor removido del cluster: {server_id}")
                 
         except Exception as e:
@@ -1363,8 +1298,394 @@ class ConsolePanel:
             self.logger.error(f"Error al alternar consola individual del servidor {server_id}: {e}")
             self.add_console_message("❌ No se encontró proceso del servidor para reconectar")
             return False
+    
+    def create_server_tabs(self):
+        """Crear pestañas dinámicas para cada servidor del cluster"""
+        try:
+            self.logger.info("🔄 Iniciando creación de pestañas de servidores...")
+            # Limpiar pestañas existentes
+            self.clear_server_tabs()
+            
+            if not self.main_window or not hasattr(self.main_window, 'cluster_panel'):
+                self.logger.warning("❌ No se encontró main_window o cluster_panel")
+                return
+            
+            cluster_panel = self.main_window.cluster_panel
+            if not hasattr(cluster_panel, 'cluster_manager') or not cluster_panel.cluster_manager:
+                self.logger.warning("❌ No se encontró cluster_manager")
+                return
+            
+            if not hasattr(cluster_panel.cluster_manager, 'servers') or not cluster_panel.cluster_manager.servers:
+                self.logger.warning("❌ No se encontraron servidores en cluster_manager")
+                return
+            
+            self.logger.info(f"✅ Encontrados {len(cluster_panel.cluster_manager.servers)} servidores para crear pestañas")
+            
+            # Ocultar consola única
+            if hasattr(self, 'console_frame'):
+                self.console_frame.pack_forget()
+            
+            # Mostrar el frame de pestañas en la línea del título
+            self.server_tabs_frame.pack(side="left", padx=(20, 0))
+            
+            # Crear una pestaña para cada servidor
+            for i, (server_name, server_instance) in enumerate(cluster_panel.cluster_manager.servers.items()):
+                server_map = server_instance.config.get('map', 'Unknown')
+                
+                # Crear botón de pestaña con closure correcto
+                def create_tab_command(sname):
+                    return lambda: self.switch_server_tab(sname)
+                
+                tab_button = ctk.CTkButton(
+                    self.server_tabs_frame,
+                    text=f"{server_name}\n({server_map})",
+                    command=create_tab_command(server_name),
+                    width=120,
+                    height=50,
+                    font=ctk.CTkFont(size=10),
+                    fg_color=("blue", "darkblue") if i == 0 else ("gray", "darkgray")
+                )
+                tab_button.pack(side="left", padx=2, pady=2)
+                
+                self.server_tab_buttons[server_name] = tab_button
+                
+                # Crear área de consola para este servidor
+                console_area = ctk.CTkTextbox(
+                    self.main_frame,
+                    state="disabled",
+                    font=ctk.CTkFont(family="Consolas", size=10),
+                    height=300  # Altura mínima para evitar que aparezca muy pequeña
+                )
+                
+                self.server_tabs[server_name] = {
+                    'console': console_area,
+                    'lines': 0,
+                    'monitoring': False
+                }
+                
+                # Iniciar monitoreo de logs para este servidor (solo si no existe ya)
+                if server_name not in self.server_threads or not self.server_threads[server_name].is_alive():
+                    self.start_server_log_monitoring(server_name)
+                else:
+                    # Reactivar monitoreo existente
+                    if server_name in self.server_tabs:
+                        self.server_tabs[server_name]['monitoring'] = True
+                    self.logger.info(f"🔄 Reutilizando hilo de monitoreo existente para servidor: {server_name}")
+                
+                # Ocultar inicialmente (excepto el primero)
+                if i == 0:
+                    self.active_server_tab = server_name
+                    console_area.pack(fill="both", expand=True, padx=5, pady=5)
+                
+            # Eliminado: server_selection_frame ya no existe
+            
+            self.logger.info(f"Creadas {len(self.server_tab_buttons)} pestañas de servidor")
             
         except Exception as e:
-            self.logger.error(f"Error en reconexión al servidor: {e}")
-            self.add_console_message(f"❌ Error en reconexión: {e}")
-            return False
+            self.logger.error(f"Error al crear pestañas de servidor: {e}")
+    
+    def switch_server_tab(self, server_name):
+        """Cambiar a una pestaña de servidor específica"""
+        try:
+            if server_name not in self.server_tabs:
+                return
+            
+            # Ocultar la consola activa actual
+            if self.active_server_tab and self.active_server_tab in self.server_tabs:
+                self.server_tabs[self.active_server_tab]['console'].pack_forget()
+                
+                # Actualizar color del botón anterior
+                if self.active_server_tab in self.server_tab_buttons:
+                    self.server_tab_buttons[self.active_server_tab].configure(
+                        fg_color=("gray", "darkgray")
+                    )
+            
+            # Mostrar la nueva consola
+            self.server_tabs[server_name]['console'].pack(fill="both", expand=True, padx=5, pady=5)
+            self.active_server_tab = server_name
+            
+            # Actualizar color del botón activo
+            if server_name in self.server_tab_buttons:
+                self.server_tab_buttons[server_name].configure(
+                    fg_color=("blue", "darkblue")
+                )
+            
+            # Actualizar el servidor actual para el monitoreo
+            self.current_server_id = server_name
+            
+            # Obtener información del servidor
+            display_name = server_name
+            if self.main_window and hasattr(self.main_window, 'cluster_panel'):
+                cluster_panel = self.main_window.cluster_panel
+                if (hasattr(cluster_panel, 'cluster_manager') and 
+                    cluster_panel.cluster_manager and 
+                    hasattr(cluster_panel.cluster_manager, 'servers') and 
+                    server_name in cluster_panel.cluster_manager.servers):
+                    server_instance = cluster_panel.cluster_manager.servers[server_name]
+                    server_map = server_instance.config.get('map', 'Unknown')
+                    display_name = f"{server_name} ({server_map})"
+            
+            # Actualizar título
+            self.title_label.configure(text=f"🌐 Consola: {display_name}")
+            
+            # Agregar mensaje a la consola activa
+            self.add_console_message_to_tab(server_name, f"🔄 Cambiado a servidor: {display_name}")
+            
+            self.logger.info(f"Cambiado a pestaña de servidor: {display_name}")
+            
+        except Exception as e:
+            self.logger.error(f"Error al cambiar pestaña de servidor: {e}")
+    
+    def clear_server_tabs(self):
+        """Limpiar todas las pestañas de servidor"""
+        try:
+            # NO detener monitoreo de logs - mantener hilos activos para cuando se vuelva al modo cluster
+            # Solo marcar como no monitoreando en la UI
+            for server_name in list(self.server_tabs.keys()):
+                if server_name in self.server_tabs:
+                    self.server_tabs[server_name]['monitoring'] = False
+            
+            # NO detener ni limpiar hilos - mantenerlos para reutilizar
+            # Los hilos seguirán funcionando en segundo plano
+            
+            # Ocultar frame de pestañas
+            self.server_tabs_frame.pack_forget()
+            
+            # Destruir botones de pestañas
+            for button in self.server_tab_buttons.values():
+                button.destroy()
+            self.server_tab_buttons.clear()
+            
+            # Ocultar y limpiar áreas de consola
+            for server_data in self.server_tabs.values():
+                console = server_data['console']
+                console.pack_forget()
+                console.destroy()
+            
+            self.server_tabs.clear()
+            self.active_server_tab = None
+            
+            # Eliminado: server_selection_frame ya no existe
+            
+            # Mostrar consola única
+            if hasattr(self, 'console_frame'):
+                self.console_frame.pack(fill="both", expand=True, padx=5, pady=5)
+            
+            # Restaurar título original
+            self.title_label.configure(text="🖥️ Consola del Servidor")
+            
+        except Exception as e:
+            self.logger.error(f"Error al limpiar pestañas de servidor: {e}")
+    
+    def add_console_message_to_tab(self, server_id, message):
+        """Agregar mensaje a una pestaña específica de servidor usando cola thread-safe"""
+        try:
+            if server_id not in self.server_tabs:
+                return
+            
+            # Enviar línea al PlayerMonitor para detectar eventos de jugadores
+            if hasattr(self.main_window, 'player_monitor'):
+                self.main_window.player_monitor.process_log_line(server_id, message)
+            
+            # Agregar mensaje a la cola thread-safe
+            self.message_queue.put((server_id, message))
+            
+            # Iniciar procesador de cola si no está corriendo
+            if not self.queue_processor_running:
+                self.start_queue_processor()
+                
+        except Exception as e:
+            self.logger.error(f"Error al agregar mensaje a cola para {server_id}: {e}")
+    
+    def _update_console_tab_safe(self, server_id, message):
+        """Actualizar consola de forma segura en el hilo principal"""
+        def do_update():
+            try:
+                if server_id not in self.server_tabs:
+                    return
+                
+                console = self.server_tabs[server_id]['console']
+                
+                # Habilitar edición temporalmente
+                console.configure(state="normal")
+                
+                # Agregar mensaje con timestamp
+                timestamp = datetime.now().strftime("%H:%M:%S")
+                formatted_message = f"[{timestamp}] {message}\n"
+                console.insert("end", formatted_message)
+                
+                # Mantener límite de líneas
+                lines = int(console.index("end-1c").split(".")[0])
+                if lines > self.max_lines:
+                    console.delete("1.0", f"{lines - self.max_lines}.0")
+                
+                # Scroll automático al final
+                console.see("end")
+                
+                # Deshabilitar edición
+                console.configure(state="disabled")
+                
+                # Actualizar contador de líneas
+                self.server_tabs[server_id]['lines'] = lines
+                
+            except Exception as e:
+                self.logger.error(f"Error en actualización de consola {server_id}: {e}")
+        
+        # Ejecutar la actualización usando after_idle para asegurar que se ejecute en el hilo principal
+        try:
+            if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'root'):
+                self.main_window.root.after_idle(do_update)
+            else:
+                do_update()  # Fallback
+        except Exception as e:
+            self.logger.error(f"Error programando actualización de consola {server_id}: {e}")
+    
+    def start_queue_processor(self):
+        """Iniciar el procesador de cola de mensajes en el hilo principal"""
+        if not self.queue_processor_running:
+            self.queue_processor_running = True
+            self.process_message_queue()
+    
+    def process_message_queue(self):
+        """Procesar mensajes de la cola en el hilo principal"""
+        try:
+            # Procesar todos los mensajes disponibles en la cola
+            while not self.message_queue.empty():
+                try:
+                    server_id, message = self.message_queue.get_nowait()
+                    self._update_console_tab_safe(server_id, message)
+                except queue.Empty:
+                    break
+                except Exception as e:
+                    self.logger.error(f"Error procesando mensaje de cola: {e}")
+            
+            # Programar la próxima verificación de la cola
+            if self.queue_processor_running and hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'root'):
+                self.main_window.root.after(100, self.process_message_queue)
+            
+        except Exception as e:
+            self.logger.error(f"Error en procesador de cola: {e}")
+            self.queue_processor_running = False
+    
+    def start_server_log_monitoring(self, server_name):
+        """Iniciar monitoreo de logs para un servidor específico"""
+        try:
+            self.logger.info(f"🔍 DEBUG: Intentando iniciar monitoreo para {server_name}")
+            
+            if server_name in self.server_threads:
+                # Ya hay un hilo monitoreando este servidor
+                self.logger.info(f"🔍 DEBUG: Ya existe hilo para {server_name}, saltando")
+                return
+            
+            # Crear y iniciar hilo de monitoreo para este servidor
+            monitor_thread = threading.Thread(
+                target=self._monitor_server_log,
+                args=(server_name,),
+                daemon=True,
+                name=f"LogMonitor-{server_name}"
+            )
+            monitor_thread.start()
+            self.server_threads[server_name] = monitor_thread
+            
+            # Marcar como monitoreando
+            if server_name in self.server_tabs:
+                self.server_tabs[server_name]['monitoring'] = True
+                self.logger.info(f"🔍 DEBUG: Marcado {server_name} como monitoring=True")
+            
+            self.logger.info(f"🔍 Iniciado monitoreo de logs para servidor: {server_name} (Hilo: {monitor_thread.name})")
+            
+        except Exception as e:
+            self.logger.error(f"Error iniciando monitoreo de logs para {server_name}: {e}")
+    
+    def _monitor_server_log(self, server_name):
+        """Monitorear el archivo de log de un servidor específico"""
+        consecutive_empty_reads = 0
+        max_empty_reads = 10
+        
+        # Variables específicas para este servidor
+        server_position_key = f"_last_file_position_{server_name}"
+        server_file_key = f"_current_log_file_{server_name}"
+        server_loaded_key = f"_content_loaded_{server_name}"
+        
+        self.logger.info(f"🔍 DEBUG: Iniciando bucle de monitoreo para {server_name}")
+        
+        while (server_name in self.server_tabs and 
+               self.server_tabs[server_name].get('monitoring', False)):
+            try:
+                # Obtener archivo de log para este servidor específico
+                game_log_path = self._get_latest_game_log(server_name)
+                self.logger.debug(f"🔍 DEBUG: {server_name} - Ruta de log: {game_log_path}")
+                
+                if game_log_path and os.path.exists(game_log_path):
+                    try:
+                        with open(game_log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                            # Si es la primera vez que leemos este archivo
+                            if (not hasattr(self, server_position_key) or 
+                                getattr(self, server_position_key) is None or
+                                not hasattr(self, server_file_key) or
+                                getattr(self, server_file_key) != game_log_path or
+                                not hasattr(self, server_loaded_key) or
+                                not getattr(self, server_loaded_key)):
+                                
+                                # Leer contenido existente (últimas 50 líneas)
+                                f.seek(0, 0)
+                                all_lines = f.readlines()
+                                if len(all_lines) > 50:
+                                    lines_to_show = all_lines[-50:]
+                                else:
+                                    lines_to_show = all_lines
+                                
+                                for line in lines_to_show:
+                                    line = line.strip()
+                                    if line:
+                                        self.add_console_message_to_tab(server_name, line)
+                                
+                                # Posicionarse al final para futuras lecturas
+                                f.seek(0, 2)
+                                setattr(self, server_position_key, f.tell())
+                                setattr(self, server_file_key, game_log_path)
+                                setattr(self, server_loaded_key, True)
+                            else:
+                                # Ir a la posición donde nos quedamos
+                                f.seek(getattr(self, server_position_key))
+                            
+                            # Leer nuevas líneas
+                            new_lines_count = 0
+                            while True:
+                                line = f.readline()
+                                if line:
+                                    consecutive_empty_reads = 0
+                                    line = line.strip()
+                                    if line:
+                                        new_lines_count += 1
+                                        self.add_console_message_to_tab(server_name, line)
+                                    
+                                    # Actualizar posición
+                                    setattr(self, server_position_key, f.tell())
+                                else:
+                                    break
+                            
+                            if new_lines_count > 0:
+                                self.logger.debug(f"🔍 DEBUG: {server_name} - Leídas {new_lines_count} nuevas líneas")
+                            
+                    except Exception as e:
+                        self.logger.error(f"Error leyendo archivo de log para {server_name}: {e}")
+                        time.sleep(0.5)
+                else:
+                    consecutive_empty_reads += 1
+                    if consecutive_empty_reads >= max_empty_reads:
+                        time.sleep(2.0)
+                    else:
+                        time.sleep(0.5)
+                
+            except Exception as e:
+                self.logger.error(f"Error en monitoreo de logs para {server_name}: {e}")
+                time.sleep(1.0)
+            
+            time.sleep(0.1)  # Pequeña pausa entre lecturas
+        
+        # Limpiar al terminar
+        if server_name in self.server_threads:
+            del self.server_threads[server_name]
+        
+        self.logger.info(f"🔍 Monitoreo de logs terminado para servidor: {server_name}")
