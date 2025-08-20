@@ -494,6 +494,19 @@ class ModsPanel(ctk.CTkFrame):
         )
         clear_button.pack(side="left", padx=3)
         
+        # NUEVO: Botón para limpiar duplicados
+        clear_duplicates_button = ctk.CTkButton(
+            buttons_frame,
+            text="🧹 Limpiar Duplicados",
+            command=self.clean_duplicates_manually,
+            height=28,
+            width=130,
+            font=ctk.CTkFont(size=10),
+            fg_color="#9C27B0",
+            hover_color="#7B1FA2"
+        )
+        clear_duplicates_button.pack(side="left", padx=3)
+        
         refresh_button = ctk.CTkButton(
             buttons_frame,
             text="🔄 Actualizar",
@@ -709,8 +722,8 @@ class ModsPanel(ctk.CTkFrame):
         downloads_label.pack(side="left")
         
         # Estado del mod
-        is_favorite = any(fav.get("id") == str(mod_id) for fav in self.favorite_mods)
-        is_installed = any(inst.get("id") == str(mod_id) for inst in self.installed_mods)
+        is_favorite = any(str(fav.get("id", "")) == str(mod_id) for fav in self.favorite_mods)
+        is_installed = any(str(inst.get("id", "")) == str(mod_id) for inst in self.installed_mods)
         
         if is_favorite:
             fav_label = ctk.CTkLabel(
@@ -740,8 +753,8 @@ class ModsPanel(ctk.CTkFrame):
             width=24,
             height=20,
             font=ctk.CTkFont(size=8),
-            fg_color="#FF9800" if is_favorite else "#607D8B",
-            hover_color="#F57C00" if is_favorite else "#455A64"
+            fg_color="#FFD700" if is_favorite else "#4A4A4A",
+            hover_color="#FFC107" if is_favorite else "#666666"
         )
         fav_btn.pack(side="left", padx=1)
         
@@ -749,13 +762,13 @@ class ModsPanel(ctk.CTkFrame):
         if is_installed:
             install_btn = ctk.CTkButton(
                 buttons_frame,
-                text="🗑️",
+                text="✅",
                 command=lambda m=mod: self.uninstall_mod(m),
                 width=24,
                 height=20,
                 font=ctk.CTkFont(size=8),
-                fg_color="#f44336",
-                hover_color="#d32f2f"
+                fg_color="#2E7D32",
+                hover_color="#1B5E20"
             )
             install_btn.pack(side="left", padx=1)
         else:
@@ -766,8 +779,8 @@ class ModsPanel(ctk.CTkFrame):
                 width=24,
                 height=20,
                 font=ctk.CTkFont(size=8),
-                fg_color="#4CAF50",
-                hover_color="#388E3C"
+                fg_color="#1976D2",
+                hover_color="#1565C0"
             )
             install_btn.pack(side="left", padx=1)
         
@@ -894,8 +907,8 @@ class ModsPanel(ctk.CTkFrame):
             width=24,
             height=20,
             font=ctk.CTkFont(size=8),
-            fg_color="#FF9800" if is_favorite else "#607D8B",
-            hover_color="#F57C00" if is_favorite else "#455A64"
+            fg_color="#FFD700" if is_favorite else "#4A4A4A",
+            hover_color="#FFC107" if is_favorite else "#666666"
         )
         fav_btn.pack(pady=1)
         
@@ -903,13 +916,13 @@ class ModsPanel(ctk.CTkFrame):
         if is_installed:
             install_btn = ctk.CTkButton(
                 buttons_frame,
-                text="🗑️",
+                text="✅",
                 command=lambda m=mod: self.uninstall_mod(m),
                 width=24,
                 height=20,
                 font=ctk.CTkFont(size=8),
-                fg_color="#f44336",
-                hover_color="#d32f2f"
+                fg_color="#2E7D32",
+                hover_color="#1B5E20"
             )
             install_btn.pack(pady=1)
         else:
@@ -920,8 +933,8 @@ class ModsPanel(ctk.CTkFrame):
                 width=24,
                 height=20,
                 font=ctk.CTkFont(size=8),
-                fg_color="#4CAF50",
-                hover_color="#388E3C"
+                fg_color="#1976D2",
+                hover_color="#1565C0"
             )
             install_btn.pack(pady=1)
         
@@ -1150,8 +1163,8 @@ class ModsPanel(ctk.CTkFrame):
             mod_id = str(mod.get("id", ""))
             mod_name = mod.get("name", "Sin nombre")
             
-            # Remover de la lista de instalados
-            self.installed_mods = [inst for inst in self.installed_mods if inst.get("id") != mod_id]
+            # Remover de la lista de instalados - mejorar comparación
+            self.installed_mods = [inst for inst in self.installed_mods if str(inst.get("id", "")) != mod_id]
             self.save_installed_mods()
             
             # Actualizar entrada de IDs
@@ -1174,12 +1187,12 @@ class ModsPanel(ctk.CTkFrame):
             mod_id = str(mod.get("id", ""))
             mod_name = mod.get("name", "Sin nombre")
             
-            # Verificar si ya está en favoritos
-            is_favorite = any(fav.get("id") == mod_id for fav in self.favorite_mods)
+            # Verificar si ya está en favoritos - mejorar comparación
+            is_favorite = any(str(fav.get("id", "")) == mod_id for fav in self.favorite_mods)
             
             if is_favorite:
                 # Remover de favoritos
-                self.favorite_mods = [fav for fav in self.favorite_mods if fav.get("id") != mod_id]
+                self.favorite_mods = [fav for fav in self.favorite_mods if str(fav.get("id", "")) != mod_id]
                 self.save_favorite_mods()
                 self.show_message(f"💔 Mod '{mod_name}' removido de favoritos", "info")
             else:
@@ -1456,6 +1469,91 @@ class ModsPanel(ctk.CTkFrame):
             if self.logger:
                 self.logger.error(f"Error al limpiar mods automáticamente: {e}")
     
+    def remove_duplicate_mods(self):
+        """Remover mods duplicados basándose en su ID"""
+        try:
+            if not self.installed_mods:
+                return 0
+            
+            # Identificar duplicados
+            seen_ids = set()
+            unique_mods = []
+            duplicates_count = 0
+            
+            for mod in self.installed_mods:
+                mod_id = str(mod.get("id", ""))
+                if mod_id and mod_id not in seen_ids:
+                    seen_ids.add(mod_id)
+                    unique_mods.append(mod)
+                elif mod_id:
+                    duplicates_count += 1
+            
+            # Actualizar lista solo si hay duplicados
+            if duplicates_count > 0:
+                self.installed_mods = unique_mods
+                self.save_installed_mods()
+                
+                if self.logger:
+                    self.logger.info(f"Eliminados {duplicates_count} mods duplicados. Mods únicos: {len(unique_mods)}")
+            
+            return duplicates_count
+            
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al remover mods duplicados: {e}")
+            return 0
+
+    def clean_duplicates_manually(self):
+        """Limpiar duplicados manualmente (llamado por el botón)"""
+        try:
+            duplicates_removed = self.remove_duplicate_mods()
+            
+            if duplicates_removed > 0:
+                # Actualizar visualización
+                self.refresh_mods_display()
+                self.update_mods_ids_entry()
+                self.update_stats()
+                
+                self.show_message(f"🧹 Se eliminaron {duplicates_removed} mods duplicados", "success")
+            else:
+                self.show_message("ℹ️ No se encontraron mods duplicados", "info")
+                
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error al limpiar duplicados manualmente: {e}")
+            self.show_message(f"❌ Error al limpiar duplicados: {e}", "error")
+
+    def _clean_duplicates_internal(self):
+        """Eliminar duplicados en listas basadas en ID; devuelve (rem_fav, rem_inst)"""
+        removed_fav = 0
+        removed_inst = 0
+        try:
+            # Favoritos
+            seen = set()
+            new_favs = []
+            for m in self.favorite_mods:
+                mid = str(m.get("id", ""))
+                if mid and mid not in seen:
+                    seen.add(mid)
+                    new_favs.append(m)
+            removed_fav = max(0, len(self.favorite_mods) - len(new_favs))
+            self.favorite_mods = new_favs
+
+            # Instalados
+            seen = set()
+            new_inst = []
+            for m in self.installed_mods:
+                mid = str(m.get("id", ""))
+                if mid and mid not in seen:
+                    seen.add(mid)
+                    new_inst.append(m)
+            removed_inst = max(0, len(self.installed_mods) - len(new_inst))
+            self.installed_mods = new_inst
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error interno al limpiar duplicados: {e}")
+        return removed_fav, removed_inst
+
     def load_current_server_map(self):
         """Cargar servidor y mapa actuales"""
         try:
@@ -1568,9 +1666,14 @@ class ModsPanel(ctk.CTkFrame):
             if os.path.exists(mods_file):
                 with open(mods_file, 'r', encoding='utf-8') as f:
                     self.installed_mods = json.load(f)
-                    
+                
+                # NUEVO: Limpiar duplicados automáticamente al cargar
+                duplicates_removed = self.remove_duplicate_mods()
+                
                 if self.logger:
                     self.logger.info(f"Mods instalados cargados: {len(self.installed_mods)} mods para {mods_key}")
+                    if duplicates_removed > 0:
+                        self.logger.info(f"Se eliminaron automáticamente {duplicates_removed} duplicados")
             else:
                 self.installed_mods = []
                 if self.logger:
@@ -1691,13 +1794,20 @@ class ModsPanel(ctk.CTkFrame):
             )
             close_btn.pack()
             
-            # Auto-cerrar después de 3 segundos para mensajes de éxito
-            if msg_type == "success":
-                try:
-                    if msg_window.winfo_exists():
-                        msg_window.after(3000, msg_window.destroy)
-                except Exception:
-                    pass
+            # Auto-cerrar después de unos segundos según el tipo de mensaje
+            auto_close_times = {
+                "success": 2000,  # 2 segundos
+                "info": 3000,     # 3 segundos
+                "warning": 4000,  # 4 segundos
+                "error": 5000     # 5 segundos
+            }
+            
+            auto_close_time = auto_close_times.get(msg_type, 3000)
+            try:
+                if msg_window.winfo_exists():
+                    msg_window.after(auto_close_time, lambda: msg_window.destroy() if msg_window.winfo_exists() else None)
+            except Exception:
+                pass
                 
         except Exception as e:
             if self.logger:
