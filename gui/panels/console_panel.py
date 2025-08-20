@@ -1531,24 +1531,74 @@ class ConsolePanel:
             except Exception as e:
                 self.logger.error(f"Error en actualización de consola {server_id}: {e}")
         
-        # Ejecutar la actualización usando after_idle para asegurar que se ejecute en el hilo principal
+        # Verificar si estamos en el hilo principal y si la ventana existe
         try:
-            if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'root'):
-                self.main_window.root.after_idle(do_update)
+            import threading
+            current_thread = threading.current_thread()
+            is_main_thread = isinstance(current_thread, threading._MainThread)
+            
+            if (is_main_thread and 
+                hasattr(self, 'main_window') and self.main_window and 
+                hasattr(self.main_window, 'root')):
+                try:
+                    # Verificar si la ventana aún existe
+                    if self.main_window.root.winfo_exists():
+                        do_update()
+                    else:
+                        # La ventana ya no existe, no hacer nada
+                        return
+                except Exception:
+                    # Si hay error verificando la ventana, no hacer nada
+                    return
             else:
-                do_update()  # Fallback
+                # No estamos en el hilo principal o no hay ventana válida
+                # Simplemente no actualizar para evitar el error
+                return
+                
         except Exception as e:
-            self.logger.error(f"Error programando actualización de consola {server_id}: {e}")
+            # Si hay cualquier error en la verificación, simplemente no actualizar
+            # para evitar spam de errores en los logs
+            pass
     
     def start_queue_processor(self):
         """Iniciar el procesador de cola de mensajes en el hilo principal"""
-        if not self.queue_processor_running:
-            self.queue_processor_running = True
-            self.process_message_queue()
+        try:
+            # Verificar que estamos en el hilo principal
+            import threading
+            current_thread = threading.current_thread()
+            is_main_thread = isinstance(current_thread, threading._MainThread)
+            
+            if not is_main_thread:
+                # Si no estamos en el hilo principal, programar el inicio para el hilo principal
+                if (hasattr(self, 'main_window') and self.main_window and 
+                    hasattr(self.main_window, 'root')):
+                    try:
+                        if self.main_window.root.winfo_exists():
+                            self.main_window.root.after_idle(self.start_queue_processor)
+                    except Exception:
+                        pass
+                return
+            
+            if not self.queue_processor_running:
+                self.queue_processor_running = True
+                self.process_message_queue()
+                
+        except Exception as e:
+            self.logger.error(f"Error iniciando procesador de cola: {e}")
     
     def process_message_queue(self):
         """Procesar mensajes de la cola en el hilo principal"""
         try:
+            # Verificar que estamos en el hilo principal
+            import threading
+            current_thread = threading.current_thread()
+            is_main_thread = isinstance(current_thread, threading._MainThread)
+            
+            if not is_main_thread:
+                # Si no estamos en el hilo principal, detener el procesador
+                self.queue_processor_running = False
+                return
+            
             # Procesar todos los mensajes disponibles en la cola
             while not self.message_queue.empty():
                 try:
@@ -1559,9 +1609,18 @@ class ConsolePanel:
                 except Exception as e:
                     self.logger.error(f"Error procesando mensaje de cola: {e}")
             
-            # Programar la próxima verificación de la cola
-            if self.queue_processor_running and hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'root'):
-                self.main_window.root.after(100, self.process_message_queue)
+            # Programar la próxima verificación de la cola solo si estamos en el hilo principal
+            if (self.queue_processor_running and 
+                hasattr(self, 'main_window') and self.main_window and 
+                hasattr(self.main_window, 'root')):
+                try:
+                    # Verificar que la ventana aún existe
+                    if self.main_window.root.winfo_exists():
+                        self.main_window.root.after(100, self.process_message_queue)
+                    else:
+                        self.queue_processor_running = False
+                except Exception:
+                    self.queue_processor_running = False
             
         except Exception as e:
             self.logger.error(f"Error en procesador de cola: {e}")

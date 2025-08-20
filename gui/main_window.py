@@ -30,7 +30,7 @@ from .panels.cluster_panel import ClusterPanel
 
 class MainWindow:
 
-    APP_VERSION = "3.4"
+    APP_VERSION = "3.5"
     
     def __init__(self, root, config_manager, logger):
         """Inicializar la ventana principal"""

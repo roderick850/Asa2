@@ -1478,6 +1478,142 @@ class IniConfigPanel(ctk.CTkFrame):
             # Poblar los campos cuando se expande
             self.populate_category_fields(category)
             
+    def get_ark_wiki_description(self, field_name):
+        """Obtener descripción detallada de parámetros ARK desde la wiki oficial"""
+        ark_descriptions = {
+            # Dificultad y Progresión
+            "DifficultyOffset": "Controla la dificultad del servidor. Valores más altos aumentan el nivel de las criaturas salvajes y la calidad del loot. Rango: 0.0-1.0 (por defecto: 0.2)",
+            "OverrideOfficialDifficulty": "Anula la dificultad oficial del servidor. Permite valores superiores a 1.0 para mayor dificultad. Valor por defecto: 5.0",
+            "XPMultiplier": "Multiplicador de experiencia ganada por jugadores. Valores más altos aceleran la progresión. Valor por defecto: 1.0",
+            "TamingSpeedMultiplier": "Multiplicador de velocidad de domesticación. Valores más altos reducen el tiempo necesario para domesticar criaturas. Valor por defecto: 1.0",
+            "DinoCountMultiplier": "Multiplicador de la cantidad de dinosaurios que aparecen en el mundo. Valores más altos aumentan la densidad de población. Valor por defecto: 1.0",
+            
+            # Recolección y Recursos
+            "HarvestAmountMultiplier": "Multiplicador de la cantidad de recursos obtenidos al recolectar. Valores más altos proporcionan más recursos por recolección. Valor por defecto: 1.0",
+            "HarvestHealthMultiplier": "Multiplicador de la salud de los nodos de recursos. Valores más altos hacen que los recursos duren más tiempo al ser recolectados. Valor por defecto: 1.0",
+            "ResourcesRespawnPeriodMultiplier": "Multiplicador del tiempo de reaparición de recursos. Valores más bajos hacen que los recursos reaparezcan más rápido. Valor por defecto: 1.0",
+            
+            # Crianza y Reproducción
+            "BabyMatureSpeedMultiplier": "Multiplicador de velocidad de maduración de bebés. Valores más altos aceleran el crecimiento de las crías. Valor por defecto: 1.0",
+            "BabyImprintingStatScaleMultiplier": "Multiplicador del bonus de estadísticas por impronta. Valores más altos aumentan el beneficio de la impronta. Valor por defecto: 1.0",
+            "BabyImprintAmountMultiplier": "Multiplicador de la cantidad de impronta ganada por interacción. Valores más altos aceleran el proceso de impronta. Valor por defecto: 1.0",
+            "BabyCuddleIntervalMultiplier": "Multiplicador del intervalo entre sesiones de mimos. Valores más bajos reducen el tiempo de espera entre mimos. Valor por defecto: 1.0",
+            "BabyFoodConsumptionSpeedMultiplier": "Multiplicador del consumo de comida de bebés. Valores más bajos reducen la velocidad de consumo de alimento. Valor por defecto: 1.0",
+            
+            # Jugadores y Tribus
+            "MaxNumbersofPlayersInTribe": "Número máximo de jugadores permitidos en una tribu. Valor por defecto: 0 (sin límite)",
+            "MaxAlliancesPerTribe": "Número máximo de alianzas que puede tener una tribu. Valor por defecto: 10",
+            "MaxTribeLogs": "Número máximo de entradas en el registro de la tribu. Valor por defecto: 100",
+            "MaxTamedDinos": "Número máximo de dinosaurios domesticados por tribu. Valor por defecto: 0 (sin límite)",
+            "MaxPersonalTamedDinos": "Número máximo de dinosaurios domesticados por jugador individual. Valor por defecto: 0 (sin límite)",
+            
+            # Estructuras y Construcción
+            "StructureDamageMultiplier": "Multiplicador del daño recibido por las estructuras. Valores más altos hacen las estructuras más frágiles. Valor por defecto: 1.0",
+            "StructureResistanceMultiplier": "Multiplicador de resistencia de las estructuras. Valores más altos hacen las estructuras más resistentes. Valor por defecto: 1.0",
+            "MaxStructuresInRange": "Número máximo de estructuras permitidas en un área determinada. Valor por defecto: 10500",
+            "StructurePickupTimeAfterPlacement": "Tiempo en segundos durante el cual se puede recoger una estructura después de colocarla. Valor por defecto: 30.0",
+            
+            # Día/Noche y Clima
+            "DayCycleSpeedScale": "Multiplicador de velocidad del ciclo completo día/noche. Valores más altos aceleran el paso del tiempo. Valor por defecto: 1.0",
+            "NightTimeSpeedScale": "Multiplicador específico para la velocidad de la noche. Valores más altos hacen que la noche pase más rápido. Valor por defecto: 1.0",
+            "DayTimeSpeedScale": "Multiplicador específico para la velocidad del día. Valores más altos hacen que el día pase más rápido. Valor por defecto: 1.0",
+            "BaseTemperatureMultiplier": "Multiplicador de la temperatura base del mundo. Afecta qué tan caliente o frío es el ambiente. Valor por defecto: 1.0",
+            
+            # PvE/PvP y Reglas
+            "ServerPVE": "Habilita el modo PvE (Jugador vs Entorno). En este modo, los jugadores no pueden dañarse entre sí directamente. Valor por defecto: False",
+            "PvEDinoDecayPeriodMultiplier": "Multiplicador del período de decaimiento de dinosaurios en modo PvE. Valores más altos aumentan el tiempo antes del decaimiento. Valor por defecto: 1.0",
+            "PvEStructureDecayPeriodMultiplier": "Multiplicador del período de decaimiento de estructuras en modo PvE. Valores más altos aumentan el tiempo antes del decaimiento. Valor por defecto: 1.0",
+            
+            # Domesticación y Dinos
+            "PassiveTameIntervalMultiplier": "Multiplicador del intervalo entre alimentaciones para domesticación pasiva. Valores más bajos reducen el tiempo de espera. Valor por defecto: 1.0",
+            "TamedDinoCharacterFoodDrainMultiplier": "Multiplicador del consumo de comida de dinosaurios domesticados. Valores más bajos reducen el consumo. Valor por defecto: 1.0",
+            "WildDinoCharacterFoodDrainMultiplier": "Multiplicador del consumo de comida de dinosaurios salvajes. Valores más bajos reducen el consumo. Valor por defecto: 1.0",
+            "DinoCharacterStaminaDrainMultiplier": "Multiplicador del consumo de stamina de dinosaurios. Valores más bajos reducen el consumo de stamina. Valor por defecto: 1.0",
+            "DinoCharacterHealthRecoveryMultiplier": "Multiplicador de recuperación de salud de dinosaurios. Valores más altos aceleran la regeneración. Valor por defecto: 1.0",
+            
+            # Jugador
+            "PlayerCharacterWaterDrainMultiplier": "Multiplicador del consumo de agua del jugador. Valores más bajos reducen la sed. Valor por defecto: 1.0",
+            "PlayerCharacterFoodDrainMultiplier": "Multiplicador del consumo de comida del jugador. Valores más bajos reducen el hambre. Valor por defecto: 1.0",
+            "PlayerCharacterStaminaDrainMultiplier": "Multiplicador del consumo de stamina del jugador. Valores más bajos reducen el cansancio. Valor por defecto: 1.0",
+            "PlayerCharacterHealthRecoveryMultiplier": "Multiplicador de recuperación de salud del jugador. Valores más altos aceleran la regeneración. Valor por defecto: 1.0",
+            
+            # Ítems y Crafteo
+            "ItemStackSizeMultiplier": "Multiplicador del tamaño máximo de pila de ítems. Valores más altos permiten apilar más ítems. Valor por defecto: 1.0",
+            "CraftingSkillBonusMultiplier": "Multiplicador del bonus de habilidad de crafteo. Valores más altos aumentan la efectividad del crafteo. Valor por defecto: 1.0",
+            
+            # Decay y Tiempos
+            "GlobalItemDecompositionTimeMultiplier": "Multiplicador del tiempo de descomposición de ítems en el suelo. Valores más altos hacen que los ítems duren más. Valor por defecto: 1.0",
+            "GlobalCorpseDecompositionTimeMultiplier": "Multiplicador del tiempo de descomposición de cadáveres. Valores más altos hacen que los cuerpos duren más. Valor por defecto: 1.0",
+            "GlobalSpoilingTimeMultiplier": "Multiplicador del tiempo de descomposición de alimentos perecederos. Valores más altos hacen que la comida dure más. Valor por defecto: 1.0",
+            "AutoSavePeriodMinutes": "Intervalo en minutos entre guardados automáticos del servidor. Valor por defecto: 15.0",
+            
+            # Loot y Calidad
+            "SupplyCrateLootQualityMultiplier": "Multiplicador de la calidad del loot en cajas de suministro. Valores más altos mejoran la calidad de los ítems. Valor por defecto: 1.0",
+            "FishingLootQualityMultiplier": "Multiplicador de la calidad del loot obtenido pescando. Valores más altos mejoran la calidad de los ítems pescados. Valor por defecto: 1.0",
+            
+            # Notificaciones y HUD
+            "ServerCrosshair": "Habilita la mira del servidor. Cuando está activado, muestra una mira en el centro de la pantalla. Valor por defecto: False",
+            "ShowMapPlayerLocation": "Muestra la ubicación del jugador en el mapa. Cuando está activado, el jugador aparece como un punto en el mapa. Valor por defecto: False",
+            "ShowFloatingDamageText": "Muestra números de daño flotantes cuando se inflige daño. Útil para ver el daño exacto causado. Valor por defecto: False",
+            "AllowHitMarkers": "Permite marcadores de impacto cuando se golpea a un objetivo. Proporciona retroalimentación visual de los golpes. Valor por defecto: True",
+            
+            # Defensas y Torretas
+            "bLimitTurretsInRange": "Limita el número de torretas que pueden colocarse en un área determinada. Ayuda a prevenir el spam de torretas. Valor por defecto: False",
+            "LimitTurretsRange": "Rango en unidades para el límite de torretas. Define el área donde se aplica el límite. Valor por defecto: 10000",
+            "LimitTurretsNum": "Número máximo de torretas permitidas en el rango especificado. Valor por defecto: 100",
+            
+            # Transferencias y Tributos
+            "PreventDownloadSurvivors": "Previene la descarga de personajes desde otros servidores. Valor por defecto: False",
+            "PreventDownloadItems": "Previene la descarga de ítems desde otros servidores. Valor por defecto: False",
+            "PreventDownloadDinos": "Previene la descarga de dinosaurios desde otros servidores. Valor por defecto: False",
+            "PreventUploadSurvivors": "Previene la subida de personajes a otros servidores. Valor por defecto: False",
+            "PreventUploadItems": "Previene la subida de ítems a otros servidores. Valor por defecto: False",
+            "PreventUploadDinos": "Previene la subida de dinosaurios a otros servidores. Valor por defecto: False",
+            "MaxTributeDinos": "Número máximo de dinosaurios que pueden almacenarse en el sistema de tributos. Valor por defecto: 20",
+            "MaxTributeItems": "Número máximo de ítems que pueden almacenarse en el sistema de tributos. Valor por defecto: 50",
+            
+            # Configuraciones Booleanas Adicionales
+            "PreventTribeAlliances": "Previene la formación de alianzas entre tribus. Cuando está activado, las tribus no pueden aliarse. Valor por defecto: False",
+            "AllowAnyoneBabyImprintCuddle": "Permite que cualquier jugador de la tribu pueda mimar a los bebés para impronta. Valor por defecto: False",
+            "PreventMateBoost": "Previene el bonus de estadísticas por tener una pareja cerca. Valor por defecto: False",
+            "bDisableDinoRiding": "Deshabilita completamente la capacidad de montar dinosaurios. Valor por defecto: False",
+            "bDisableDinoTaming": "Deshabilita completamente la domesticación de dinosaurios. Valor por defecto: False",
+            "bForceCanRideFliers": "Fuerza la capacidad de montar criaturas voladoras incluso en mapas donde normalmente está restringido. Valor por defecto: False",
+            "ForceAllowCaveFlyers": "Permite el uso de criaturas voladoras dentro de cuevas. Valor por defecto: False",
+            "bAllowFlyingStaminaRecovery": "Permite que las criaturas voladoras recuperen stamina mientras vuelan. Valor por defecto: False",
+            "DisableWeatherFog": "Deshabilita los efectos de niebla climática. Mejora la visibilidad durante el mal tiempo. Valor por defecto: False",
+            "EnablePVEGamma": "Habilita el ajuste de gamma en servidores PvE. Permite a los jugadores ajustar el brillo. Valor por defecto: False",
+            "UseOptimizedHarvestingHealth": "Utiliza un sistema optimizado para la salud de recolección. Mejora el rendimiento. Valor por defecto: False",
+            "ClampResourceHarvestDamage": "Limita el daño de recolección de recursos para evitar valores extremos. Valor por defecto: False",
+            "DisableImprintDinoBuff": "Deshabilita el bonus de estadísticas por impronta en dinosaurios. Valor por defecto: False",
+            "ServerHardcore": "Habilita el modo hardcore donde los jugadores pierden todo al morir. Valor por defecto: False",
+            "AlwaysNotifyPlayerJoined": "Siempre notifica cuando un jugador se une al servidor. Valor por defecto: False",
+            "AlwaysNotifyPlayerLeft": "Siempre notifica cuando un jugador abandona el servidor. Valor por defecto: False",
+            "AdminLogging": "Habilita el registro detallado de acciones de administrador. Valor por defecto: False",
+            "bDisableLootCrates": "Deshabilita completamente las cajas de loot/suministro en el servidor. Valor por defecto: False",
+            "RandomSupplyCratePoints": "Hace que las cajas de suministro aparezcan en ubicaciones aleatorias. Valor por defecto: False",
+            "ClampItemSpoilingTimes": "Limita los tiempos de descomposición de ítems para evitar valores extremos. Valor por defecto: False",
+            "AutoDestroyDecayedDinos": "Destruye automáticamente los dinosaurios que han decaído completamente. Valor por defecto: False",
+            "PreventSpawnAnimations": "Previene las animaciones de aparición para mejorar el rendimiento. Valor por defecto: False",
+            "PreventDiseases": "Previene completamente las enfermedades en el servidor. Valor por defecto: False",
+            "NonPermanentDiseases": "Hace que las enfermedades no sean permanentes y se curen con el tiempo. Valor por defecto: False",
+            
+            # Parámetros específicos de Game.ini
+            "CraftXPMultiplier": "Multiplicador de experiencia obtenida al crear objetos. Valores más altos otorgan más XP por crafteo. Valor por defecto: 1.0",
+            "bAllowFlyerSpeedLeveling": "Permite subir de nivel la velocidad de las criaturas voladoras. Cuando está habilitado, los jugadores pueden invertir puntos de estadística en velocidad para flyers. Valor por defecto: False",
+            "bAllowCustomRecipes": "Permite a los jugadores crear recetas personalizadas en las ollas de cocina. Cuando está habilitado, los jugadores pueden experimentar con ingredientes para crear nuevas recetas. Valor por defecto: True",
+            "CustomRecipeEffectivenessMultiplier": "Multiplicador de efectividad para las recetas personalizadas. Valores más altos hacen que las recetas personalizadas sean más efectivas. Valor por defecto: 1.0",
+            "ResourceNoReplenishRadiusStructures": "Multiplicador del radio alrededor de estructuras donde los recursos no se regeneran. Valores más bajos permiten que los recursos reaparezcan más cerca de las estructuras. Valor por defecto: 1.0",
+            "CropDecaySpeedMultiplier": "Multiplicador de la velocidad de decaimiento de cultivos. Valores más altos hacen que los cultivos se deterioren más rápido. Valor por defecto: 1.0",
+            "bDisableStructurePlacementCollision": "Deshabilita la detección de colisiones al colocar estructuras. Permite colocar estructuras en ubicaciones que normalmente no serían válidas. Valor por defecto: False",
+            "bDisableFriendlyFire": "Deshabilita el fuego amigo entre miembros de la misma tribu. Cuando está activado, los miembros de la tribu no pueden dañarse entre sí. Valor por defecto: False",
+            "KickIdlePlayersPeriod": "Período en segundos después del cual los jugadores inactivos son expulsados del servidor. Un valor de 0 deshabilita esta función. Valor por defecto: 0",
+            "bAutoUnlockAllEngrams": "Desbloquea automáticamente todos los engramas para todos los jugadores. Cuando está habilitado, los jugadores tendrán acceso a todas las recetas sin necesidad de aprenderlas. Valor por defecto: False",
+            "bDisableGenesisMissions": "Deshabilita las misiones específicas de Genesis. Cuando está activado, las misiones de Genesis no estarán disponibles. Valor por defecto: False"
+        }
+        
+        return ark_descriptions.get(field_name, "")
+    
     def create_fields_grid(self, form_frame, fields, category, file_type):
         """Crear campos del formulario en una cuadrícula de 2 columnas"""
         # Configurar columnas para el layout de 2 columnas
@@ -1605,8 +1741,14 @@ class IniConfigPanel(ctk.CTkFrame):
                 # Binding para cambios
                 field_widget.bind("<KeyRelease>", lambda e, name=field_name, w=field_widget: self.on_field_change(name, w.get()))
             
+            # Obtener descripción detallada de la wiki de ARK
+            wiki_description = self.get_ark_wiki_description(field_name)
+            
+            # Usar descripción de la wiki si está disponible, sino usar la descripción básica
+            final_description = wiki_description if wiki_description else field_description
+            
             # Agregar tooltip con descripción completa al campo
-            tooltip_text = f"{field_name}\n\n{field_description}"
+            tooltip_text = f"{field_name}\n\n{final_description}"
             if hasattr(field_widget, '_tkinter_widget'):
                 # Para widgets de CustomTkinter, usar el widget interno de tkinter
                 ToolTip(field_widget, tooltip_text)
@@ -1615,7 +1757,7 @@ class IniConfigPanel(ctk.CTkFrame):
                 ToolTip(field_widget, tooltip_text)
             
             # También agregar tooltip a la etiqueta con información completa
-            label_tooltip_text = f"Variable: {field_name}\nDescripción: {field_description}"
+            label_tooltip_text = f"Variable: {field_name}\nDescripción: {final_description}"
             ToolTip(label, label_tooltip_text)
             
             # Guardar referencia al widget y mapeo
