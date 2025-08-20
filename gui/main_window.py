@@ -12,6 +12,7 @@ from utils.app_settings import AppSettings
 from utils.system_tray import SystemTray
 from utils.server_logger import ServerEventLogger
 from utils.player_monitor import PlayerMonitor
+from utils.health_monitor import HealthMonitor
 from .panels.principal_panel import PrincipalPanel
 from .panels.server_panel import ServerPanel
 from .panels.config_panel import ConfigPanel
@@ -30,7 +31,7 @@ from .panels.cluster_panel import ClusterPanel
 
 class MainWindow:
 
-    APP_VERSION = "3.6"
+    APP_VERSION = "3.7"
     
     def __init__(self, root, config_manager, logger):
         """Inicializar la ventana principal"""
@@ -61,6 +62,9 @@ class MainWindow:
         self.player_monitor.register_callback('join', self.on_player_join)
         self.player_monitor.register_callback('left', self.on_player_left)
         self.player_monitor.register_callback('count_changed', self.on_player_count_changed)
+        
+        # Inicializar monitor de salud
+        self.health_monitor = None
         
         # Inicializar componentes
         self.server_manager = None
@@ -98,6 +102,9 @@ class MainWindow:
         
         # Configurar auto-inicio si es necesario
         self.check_auto_start_fallback()
+        
+        # Inicializar monitor de salud
+        self._initialize_health_monitor()
     
     def _safe_schedule_ui_update(self, callback):
         """Programar actualización de UI de forma segura verificando que la ventana principal exista"""
@@ -672,6 +679,11 @@ class MainWindow:
     def cleanup_and_exit(self):
         """Limpiar recursos y salir"""
         try:
+            # Detener monitor de salud
+            if hasattr(self, 'health_monitor') and self.health_monitor:
+                self.health_monitor.stop_all_monitoring()
+                self.logger.info("Monitor de salud detenido")
+            
             # Guardar configuraciones
             if hasattr(self, 'app_settings'):
                 self.save_window_position()
@@ -2871,3 +2883,65 @@ Versión de la app: {self.APP_VERSION}
             
         except Exception as e:
             self.logger.error(f"Error configurando monitoreo de cluster: {e}")
+    
+    def _initialize_health_monitor(self):
+        """Inicializar el monitor de salud automático"""
+        try:
+            if hasattr(self, 'app_settings') and hasattr(self, 'server_manager'):
+                cluster_manager = getattr(self, 'cluster_manager', None)
+                
+                self.health_monitor = HealthMonitor(
+                    app_settings=self.app_settings,
+                    server_manager=self.server_manager,
+                    cluster_manager=cluster_manager,
+                    main_window=self,  # Pasar referencia al main_window
+                    logger=self.logger
+                )
+                
+                # Configurar callbacks para notificaciones
+                if hasattr(self, 'system_tray') and self.system_tray:
+                    self.health_monitor.set_notification_callback(
+                        lambda title, msg: self.system_tray.show_notification(title, msg)
+                    )
+                    
+                self.health_monitor.set_status_callback(
+                    lambda msg: self.add_log_message(f"🔍 Monitor: {msg}")
+                )
+                
+                self.logger.info("✅ Monitor de salud inicializado")
+                
+                # Iniciar monitoreo si está habilitado
+                self._start_health_monitoring_if_enabled()
+                
+        except Exception as e:
+            self.logger.error(f"Error inicializando monitor de salud: {e}")
+            
+    def _start_health_monitoring_if_enabled(self):
+        """Iniciar monitoreo automático si está habilitado en configuración"""
+        try:
+            if not self.health_monitor:
+                return
+                
+            # Verificar si el monitoreo del servidor está habilitado
+            if self.app_settings.get_setting('auto_check_server_health', False):
+                self.health_monitor.start_server_monitoring()
+                self.add_log_message("🔍 Monitoreo automático del servidor activado")
+                
+            # Verificar si el monitoreo del cluster está habilitado
+            if self.app_settings.get_setting('auto_check_cluster_health', False):
+                self.health_monitor.start_cluster_monitoring()
+                self.add_log_message("🌐 Monitoreo automático del cluster activado")
+                
+        except Exception as e:
+            self.logger.error(f"Error iniciando monitoreo automático: {e}")
+            
+    def restart_health_monitoring(self):
+        """Reiniciar monitoreo de salud (útil cuando cambian las configuraciones)"""
+        try:
+            if self.health_monitor:
+                self.health_monitor.stop_all_monitoring()
+                time.sleep(1)  # Pequeña pausa
+                self._start_health_monitoring_if_enabled()
+                self.add_log_message("🔄 Monitoreo de salud reiniciado")
+        except Exception as e:
+            self.logger.error(f"Error reiniciando monitoreo de salud: {e}")

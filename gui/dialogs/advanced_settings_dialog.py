@@ -213,8 +213,84 @@ class AdvancedSettingsDialog:
             text_color="gray"
         ).pack(side="left", padx=(10, 0), pady=10)
         
-        # Cargar configuraciones después de crear todas las variables
-        self.load_current_settings()
+        # Separador
+        ctk.CTkLabel(
+            main_frame,
+            text="Monitoreo Automático de Servidores",
+            font=("Arial", 14, "bold")
+        ).pack(pady=(20, 10))
+        
+        # Verificación automática del servidor
+        server_health_frame = ctk.CTkFrame(main_frame)
+        server_health_frame.pack(fill="x", pady=5)
+        
+        self.auto_check_server_var = ctk.BooleanVar(value=False)
+        ctk.CTkSwitch(
+            server_health_frame,
+            text="🔍 Verificar estado del servidor",
+            variable=self.auto_check_server_var
+        ).pack(side="left", padx=10, pady=10)
+        
+        ctk.CTkLabel(
+            server_health_frame,
+            text="Verifica automáticamente si el servidor está activo y lo reinicia si es necesario",
+            text_color="gray"
+        ).pack(side="left", padx=(10, 0), pady=10)
+        
+        # Verificación automática del cluster
+        cluster_health_frame = ctk.CTkFrame(main_frame)
+        cluster_health_frame.pack(fill="x", pady=5)
+        
+        self.auto_check_cluster_var = ctk.BooleanVar(value=False)
+        ctk.CTkSwitch(
+            cluster_health_frame,
+            text="🌐 Verificar estado del cluster",
+            variable=self.auto_check_cluster_var
+        ).pack(side="left", padx=10, pady=10)
+        
+        ctk.CTkLabel(
+            cluster_health_frame,
+            text="Verifica automáticamente si todos los servidores del cluster están activos",
+            text_color="gray"
+        ).pack(side="left", padx=(10, 0), pady=10)
+        
+        # Configuración de intervalos
+        intervals_frame = ctk.CTkFrame(main_frame)
+        intervals_frame.pack(fill="x", pady=5)
+        
+        ctk.CTkLabel(
+            intervals_frame,
+            text="⏱️ Intervalo de verificación (minutos):",
+            font=("Arial", 12, "bold")
+        ).pack(side="left", padx=10, pady=10)
+        
+        # Intervalo servidor
+        ctk.CTkLabel(
+            intervals_frame,
+            text="Servidor:"
+        ).pack(side="left", padx=(20, 5), pady=10)
+        
+        self.server_interval_var = ctk.StringVar(value="5")
+        server_interval_entry = ctk.CTkEntry(
+            intervals_frame,
+            textvariable=self.server_interval_var,
+            width=60
+        )
+        server_interval_entry.pack(side="left", padx=5, pady=10)
+        
+        # Intervalo cluster
+        ctk.CTkLabel(
+            intervals_frame,
+            text="Cluster:"
+        ).pack(side="left", padx=(20, 5), pady=10)
+        
+        self.cluster_interval_var = ctk.StringVar(value="10")
+        cluster_interval_entry = ctk.CTkEntry(
+            intervals_frame,
+            textvariable=self.cluster_interval_var,
+            width=60
+        )
+        cluster_interval_entry.pack(side="left", padx=5, pady=10)
         
     def create_behavior_tab(self):
         """Crear pestaña de comportamiento"""
@@ -611,6 +687,10 @@ class AdvancedSettingsDialog:
                 "startup_with_windows": self.startup_var.get(),
                 "auto_start_server": self.autostart_var.get(),
                 "auto_start_server_with_windows": self.autostart_windows_var.get(),
+                "auto_check_server_health": self.auto_check_server_var.get(),
+                "auto_check_cluster_health": self.auto_check_cluster_var.get(),
+                "server_health_check_interval": int(self.server_interval_var.get()) * 60,  # Convertir minutos a segundos
+                "cluster_health_check_interval": int(self.cluster_interval_var.get()) * 60,  # Convertir minutos a segundos
                 "start_minimized": self.start_minimized_var.get(),
                 "auto_backup_on_start": self.auto_backup_var.get(),
                 "minimize_to_tray": self.minimize_tray_var.get(),
@@ -687,6 +767,23 @@ class AdvancedSettingsDialog:
             
             if verification_passed:
                 self.logger.info("🎉 TODAS LAS CONFIGURACIONES VERIFICADAS EXITOSAMENTE")
+                
+                # Reiniciar monitoreo de salud si las configuraciones relacionadas cambiaron
+                health_settings_changed = any(key in settings_to_save for key in [
+                    'auto_check_server_health', 
+                    'auto_check_cluster_health',
+                    'server_health_check_interval',
+                    'cluster_health_check_interval'
+                ])
+                
+                if health_settings_changed and hasattr(self.parent, 'restart_health_monitoring'):
+                    try:
+                        self.logger.info("🔄 Reiniciando monitoreo de salud debido a cambios en configuración...")
+                        self.parent.restart_health_monitoring()
+                        self.logger.info("✅ Monitoreo de salud reiniciado exitosamente")
+                    except Exception as e:
+                        self.logger.error(f"❌ Error reiniciando monitoreo de salud: {e}")
+                
                 show_info(self.dialog, "Éxito", "✅ Configuraciones guardadas y verificadas correctamente")
             else:
                 self.logger.error("❌ FALLÓ LA VERIFICACIÓN DE ALGUNAS CONFIGURACIONES")
@@ -757,12 +854,13 @@ class AdvancedSettingsDialog:
     
     def load_current_settings(self):
         """Cargar configuraciones actuales en la interfaz"""
+        switches_with_commands = []
+        theme_combo_original_command = None
+        
         try:
             self.logger.info("🔄 Iniciando sincronización de configuraciones...")
             
             # Desactivar temporalmente los comandos de los switches para evitar que se ejecuten durante la carga
-            switches_with_commands = []
-            
             # Identificar switches con comandos y guardar sus comandos originales
             if hasattr(self, 'startup_switch'):
                 original_command = getattr(self.startup_switch, '_command', None)
@@ -776,79 +874,83 @@ class AdvancedSettingsDialog:
                     switches_with_commands.append(('always_ontop_switch', original_command))
                     self.always_ontop_switch.configure(command=None)
             
+            # ✅ CORRECCIÓN: Manejar ComboBox de forma diferente
             if hasattr(self, 'theme_combo'):
-                original_command = getattr(self.theme_combo, '_command', None)
-                if original_command:
-                    switches_with_commands.append(('theme_combo', original_command))
-                    self.theme_combo.configure(command=None)
+                try:
+                    theme_combo_original_command = getattr(self.theme_combo, '_command', None)
+                    if theme_combo_original_command:
+                        # En lugar de configurar a None, usar un comando dummy
+                        self.theme_combo.configure(command=lambda x: None)
+                        self.logger.debug("🔄 Comando del ComboBox temporalmente desactivado")
+                except Exception as e:
+                    self.logger.warning(f"⚠️ No se pudo desactivar comando del ComboBox: {e}")
             
-            try:
-                # Forzar recarga de configuraciones desde archivo
-                if hasattr(self.app_settings, 'load_settings'):
-                    self.app_settings.load_settings()
-                    self.logger.info("✅ Configuraciones recargadas desde archivo")
-                else:
-                    self.logger.warning("⚠️ AppSettings no tiene método load_settings")
-                
-                # Actualizar variables de interfaz con valores actuales
-                settings_map = {
-                    'startup_var': 'startup_with_windows',
-                    'autostart_var': 'auto_start_server',
-                    'autostart_windows_var': 'auto_start_server_with_windows',
-                    'start_minimized_var': 'start_minimized',
-                    'minimize_tray_var': 'minimize_to_tray',
-                    'close_tray_var': 'close_to_tray',
-                    'always_ontop_var': 'always_on_top',
-                    'remember_position_var': 'remember_window_position',
-                    'auto_backup_var': 'auto_backup_on_start',
-                    'confirm_exit_var': 'confirm_exit',
-                    'auto_save_var': 'auto_save_config',
-                    'auto_updates_var': 'auto_check_updates',
-                    'notification_sound_var': 'notification_sound',
-                    'theme_var': 'theme_mode'
-                }
-                
-                successful_updates = 0
-                failed_updates = 0
-                
-                for var_name, setting_key in settings_map.items():
-                    if hasattr(self, var_name):
-                        try:
-                            current_value = self.app_settings.get_setting(setting_key)
-                            var_obj = getattr(self, var_name)
-                            
-                            # Verificar que la variable existe y tiene método set
-                            if hasattr(var_obj, 'set'):
-                                old_value = var_obj.get() if hasattr(var_obj, 'get') else "UNKNOWN"
-                                var_obj.set(current_value)
-                                successful_updates += 1
-                                
-                                # Log detallado para configuraciones críticas
-                                if setting_key in ['auto_start_server', 'auto_start_server_with_windows', 'startup_with_windows']:
-                                    self.logger.info(f"🔄 {setting_key}: {old_value} → {current_value}")
-                            else:
-                                self.logger.error(f"❌ Variable {var_name} no tiene método set()")
-                                failed_updates += 1
-                                
-                        except Exception as e:
-                            self.logger.error(f"❌ Error al actualizar {var_name} ({setting_key}): {e}")
-                            failed_updates += 1
-                    else:
-                        self.logger.warning(f"⚠️ Variable {var_name} no existe en el diálogo")
-                        failed_updates += 1
-                
-                self.logger.info(f"✅ Sincronización completada: {successful_updates} exitosas, {failed_updates} fallidas")
-                
-            finally:
-                # Reactivar los comandos de los switches
-                for switch_name, original_command in switches_with_commands:
+            # Forzar recarga de configuraciones desde archivo
+            if hasattr(self.app_settings, 'load_settings'):
+                self.app_settings.load_settings()
+                self.logger.info("✅ Configuraciones recargadas desde archivo")
+            else:
+                self.logger.warning("⚠️ AppSettings no tiene método load_settings")
+            
+            # Actualizar variables de interfaz con valores actuales
+            settings_map = {
+                'startup_var': 'startup_with_windows',
+                'autostart_var': 'auto_start_server',
+                'autostart_windows_var': 'auto_start_server_with_windows',
+                'auto_check_server_var': 'auto_check_server_health',
+                'auto_check_cluster_var': 'auto_check_cluster_health',
+                'start_minimized_var': 'start_minimized',
+                'minimize_tray_var': 'minimize_to_tray',
+                'close_tray_var': 'close_to_tray',
+                'always_ontop_var': 'always_on_top',
+                'remember_position_var': 'remember_window_position',
+                'auto_backup_var': 'auto_backup_on_start',
+                'confirm_exit_var': 'confirm_exit',
+                'auto_save_var': 'auto_save_config',
+                'auto_updates_var': 'auto_check_updates',
+                'notification_sound_var': 'notification_sound',
+                'theme_var': 'theme_mode'
+            }
+            
+            # Manejar intervalos especiales
+            server_interval = self.app_settings.get_setting('server_health_check_interval', 300) // 60  # Convertir segundos a minutos
+            cluster_interval = self.app_settings.get_setting('cluster_health_check_interval', 600) // 60  # Convertir segundos a minutos
+            
+            if hasattr(self, 'server_interval_var'):
+                self.server_interval_var.set(str(server_interval))
+            if hasattr(self, 'cluster_interval_var'):
+                self.cluster_interval_var.set(str(cluster_interval))
+            
+            successful_updates = 0
+            failed_updates = 0
+            
+            for var_name, setting_key in settings_map.items():
+                if hasattr(self, var_name):
                     try:
-                        switch_obj = getattr(self, switch_name)
-                        switch_obj.configure(command=original_command)
-                        self.logger.debug(f"🔄 Comando reactivado para {switch_name}")
+                        current_value = self.app_settings.get_setting(setting_key)
+                        var_obj = getattr(self, var_name)
+                        
+                        if hasattr(var_obj, 'set'):
+                            old_value = var_obj.get() if hasattr(var_obj, 'get') else "UNKNOWN"
+                            var_obj.set(current_value)
+                            successful_updates += 1
+                            
+                            # Log detallado para configuraciones críticas
+                            if setting_key in ['auto_start_server', 'auto_start_server_with_windows', 'startup_with_windows']:
+                                self.logger.info(f"🔄 {setting_key}: {old_value} → {current_value}")
+                        else:
+                            self.logger.error(f"❌ Variable {var_name} no tiene método set()")
+                            failed_updates += 1
+                            
                     except Exception as e:
-                        self.logger.error(f"❌ Error al reactivar comando de {switch_name}: {e}")
-                
+                        self.logger.error(f"❌ Error al actualizar {var_name} ({setting_key}): {e}")
+                        failed_updates += 1
+                else:
+                    self.logger.warning(f"⚠️ Variable {var_name} no existe en el diálogo")
+                    failed_updates += 1
+            
+            self.logger.info(f"✅ Sincronización completada: {successful_updates} exitosas, {failed_updates} fallidas")
+        
         except Exception as e:
             self.logger.error(f"❌ Error crítico al cargar configuraciones actuales: {e}")
             # Intentar recarga básica como fallback
@@ -860,6 +962,24 @@ class AdvancedSettingsDialog:
                     self.logger.info(f"🔄 Recarga básica: auto_start_server_with_windows = {value}")
             except Exception as fallback_error:
                 self.logger.error(f"❌ Recarga básica falló: {fallback_error}")
+        
+        finally:
+            # Reactivar los comandos de los switches
+            for switch_name, original_command in switches_with_commands:
+                try:
+                    switch_obj = getattr(self, switch_name)
+                    switch_obj.configure(command=original_command)
+                    self.logger.debug(f"🔄 Comando reactivado para {switch_name}")
+                except Exception as e:
+                    self.logger.error(f"❌ Error al reactivar comando de {switch_name}: {e}")
+            
+            # ✅ CORRECCIÓN: Reactivar comando del ComboBox
+            if hasattr(self, 'theme_combo') and theme_combo_original_command:
+                try:
+                    self.theme_combo.configure(command=theme_combo_original_command)
+                    self.logger.debug("🔄 Comando del ComboBox reactivado")
+                except Exception as e:
+                    self.logger.error(f"❌ Error al reactivar comando del ComboBox: {e}")
 
     def verify_settings_integrity(self):
         """Verificar la integridad de las configuraciones"""

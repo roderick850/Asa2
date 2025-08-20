@@ -134,7 +134,7 @@ hiddenimports = [
     'collections',
     'platform',
     
-    # Módulos de la aplicación
+    # Módulos de la aplicación - GUI
     'gui.main_window',
     'gui.dialogs.initial_setup',
     'gui.dialogs.advanced_settings_dialog',
@@ -160,6 +160,8 @@ hiddenimports = [
     'gui.panels.working_logs_panel',
     'gui.panels.test_logs_panel',
     'gui.panels.cluster_panel',
+    
+    # Módulos de la aplicación - Utils
     'utils.config_manager',
     'utils.config_profiles',
     'utils.cluster_manager',
@@ -171,6 +173,8 @@ hiddenimports = [
     'utils.ini_cleaner',
     'utils.dialogs',
     'utils.scheduled_commands',
+    'utils.health_monitor',
+    'utils.player_monitor',
 ]
 
 # Exclusiones

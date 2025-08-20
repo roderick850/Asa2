@@ -44,6 +44,11 @@ class AppSettings:
             "startup_with_windows": False,
             "auto_start_server": False,  # Auto-inicio cuando se abre manualmente
             "auto_start_server_with_windows": False,  # Auto-inicio cuando inicia con Windows
+            "auto_check_server_health": False,  # Verificar automáticamente si el servidor está activo y reiniciarlo si es necesario
+            "auto_check_cluster_health": False,  # Verificar automáticamente si todos los servidores del cluster están activos
+            "server_health_check_interval": 300,  # Intervalo de verificación en segundos (5 minutos por defecto)
+            "cluster_health_check_interval": 600,  # Intervalo de verificación del cluster en segundos (10 minutos por defecto)
+            "max_restart_attempts": 3,  # Máximo número de intentos de reinicio antes de desactivar la verificación
             "minimize_to_tray": True,  # Minimizar a bandeja en lugar de barra de tareas
             "always_on_top": False,
             "minimize_on_start": False,
