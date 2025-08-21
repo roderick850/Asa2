@@ -37,7 +37,7 @@ class RconPanel(ctk.CTkFrame):
         self.quick_tasks_file = "config/quick_rcon_tasks.json"
         
         # Inicializar GameAlertsManager
-        self.game_alerts = GameAlertsManager(config_manager, logger)
+        self.game_alerts = GameAlertsManager(logger, self)
         
         # Cargar tareas programadas y rápidas
         self.load_scheduled_tasks()
@@ -1411,19 +1411,18 @@ class RconPanel(ctk.CTkFrame):
     def refresh_server_info(self):
         """Actualizar información del servidor"""
         try:
-            # Obtener información básica del servidor
+            # Obtener información básica del servidor con comandos RCON válidos
             commands_info = [
                 ("ListPlayers", "👥 Jugadores Conectados:"),
-                ("GetGameTime", "⏰ Tiempo del Juego:"),
-                ("ShowWorldInfo", "🌍 Información del Mundo:"),
-                ("GetDinoCount", "🦕 Conteo de Dinosaurios:")
+                ("GetServerInfo", "ℹ️ Información del Servidor:"),  # Comando válido
+                ("SaveWorld", "💾 Estado del Mundo:"),  # Comando válido que también guarda
+                # Nota: GetGameTime, ShowWorldInfo y GetDinoCount no son comandos RCON válidos en ARK
             ]
             
             info_text = f"📊 Actualizado: {datetime.now().strftime('%H:%M:%S')}\n\n"
             
             for command, label in commands_info:
                 try:
-                    # Ejecutar comando y capturar resultado
                     result = self.execute_rcon_command_sync(command)
                     if result:
                         info_text += f"{label}\n{result}\n\n"
@@ -1469,10 +1468,10 @@ class RconPanel(ctk.CTkFrame):
             if not rcon_executable:
                 return "Ejecutable RCON no encontrado"
             
-            rcon_command = [
-                rcon_executable,
-                "-H", self.rcon_ip,
-                "-P", str(self.rcon_port),
+            # Construir comando
+            cmd = [
+                str(rcon_exe),
+                "-a", f"{self.rcon_ip}:{self.rcon_port}",
                 "-p", self.rcon_password,
                 command
             ]
@@ -1581,58 +1580,81 @@ class RconPanel(ctk.CTkFrame):
                 'taming_alerts': self.taming_alerts_switch.get()
             }
             
-            # Actualizar configuración en GameAlertsManager
-            self.game_alerts.update_config(config)
+            # Log para debug
+            self.logger.info(f"Guardando alertas: {config}")
             
-            # Guardar en config_manager
+            # Actualizar configuración en GameAlertsManager si existe
+            if hasattr(self, 'game_alerts') and self.game_alerts:
+                self.game_alerts.update_config(config)
+            
+            # Guardar en config_manager con valores booleanos explícitos
             for key, value in config.items():
-                self.config_manager.set("game_alerts", key, value)
+                # Asegurar que se guarde como string boolean para consistencia
+                self.config_manager.set("game_alerts", key, str(value).lower())
             
-            self.logger.info("Configuración de alertas guardada")
+            # Guardar la configuración inmediatamente
+            self.config_manager.save()
+            
+            self.logger.info("✅ Configuración de alertas guardada correctamente")
             
         except Exception as e:
-            self.logger.error(f"Error al guardar configuración de alertas: {e}")
+            self.logger.error(f"❌ Error al guardar configuración de alertas: {e}")
     
     def load_alerts_config(self):
         """Cargar configuración de alertas"""
         try:
-            # Cargar desde config_manager
-            connection_alerts = self.config_manager.get("game_alerts", "connection_alerts", True)
-            disconnection_alerts = self.config_manager.get("game_alerts", "disconnection_alerts", True)
-            player_death_alerts = self.config_manager.get("game_alerts", "player_death_alerts", True)
-            dino_death_alerts = self.config_manager.get("game_alerts", "dino_death_alerts", True)
-            taming_alerts = self.config_manager.get("game_alerts", "taming_alerts", True)
+            # Cargar desde config_manager con conversión correcta de tipos
+            connection_alerts = self._convert_to_bool(self.config_manager.get("game_alerts", "connection_alerts", True))
+            disconnection_alerts = self._convert_to_bool(self.config_manager.get("game_alerts", "disconnection_alerts", True))
+            player_death_alerts = self._convert_to_bool(self.config_manager.get("game_alerts", "player_death_alerts", True))
+            dino_death_alerts = self._convert_to_bool(self.config_manager.get("game_alerts", "dino_death_alerts", True))
+            taming_alerts = self._convert_to_bool(self.config_manager.get("game_alerts", "taming_alerts", True))
             
-            # Actualizar switches
-            if connection_alerts:
-                self.connection_alerts_switch.select()
-            else:
-                self.connection_alerts_switch.deselect()
-                
-            if disconnection_alerts:
-                self.disconnection_alerts_switch.select()
-            else:
-                self.disconnection_alerts_switch.deselect()
-                
-            if player_death_alerts:
-                self.player_death_alerts_switch.select()
-            else:
-                self.player_death_alerts_switch.deselect()
-                
-            if dino_death_alerts:
-                self.dino_death_alerts_switch.select()
-            else:
-                self.dino_death_alerts_switch.deselect()
-                
-            if taming_alerts:
-                self.taming_alerts_switch.select()
-            else:
-                self.taming_alerts_switch.deselect()
+            # Log para debug
+            self.logger.info(f"Cargando alertas: connection={connection_alerts}, disconnection={disconnection_alerts}, player_death={player_death_alerts}, dino_death={dino_death_alerts}, taming={taming_alerts}")
             
-            self.logger.info("Configuración de alertas cargada")
+            # Desactivar temporalmente los comandos para evitar bucles de guardado
+            original_commands = []
+            switches = [
+                (self.connection_alerts_switch, connection_alerts),
+                (self.disconnection_alerts_switch, disconnection_alerts),
+                (self.player_death_alerts_switch, player_death_alerts),
+                (self.dino_death_alerts_switch, dino_death_alerts),
+                (self.taming_alerts_switch, taming_alerts)
+            ]
+            
+            # Guardar comandos originales y desactivarlos temporalmente
+            for switch, _ in switches:
+                if hasattr(switch, '_command') and switch._command:
+                    original_commands.append(switch._command)
+                    switch.configure(command=None)
+                else:
+                    original_commands.append(None)
+            
+            # Actualizar switches sin ejecutar comandos
+            for i, (switch, value) in enumerate(switches):
+                if value:
+                    switch.select()
+                else:
+                    switch.deselect()
+            
+            # Restaurar comandos originales
+            for i, (switch, _) in enumerate(switches):
+                if original_commands[i]:
+                    switch.configure(command=original_commands[i])
+            
+            self.logger.info("✅ Configuración de alertas cargada exitosamente")
             
         except Exception as e:
-            self.logger.error(f"Error al cargar configuración de alertas: {e}")
+            self.logger.error(f"❌ Error al cargar configuración de alertas: {e}")
+    
+    def _convert_to_bool(self, value):
+        """Convertir valor a boolean manejando strings"""
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.lower() in ['true', '1', 'yes', 'on']
+        return bool(value)
     
     def test_alerts(self):
         """Probar el sistema de alertas enviando mensajes de prueba"""
