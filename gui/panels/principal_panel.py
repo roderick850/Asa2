@@ -160,7 +160,7 @@ class PrincipalPanel:
             text="Configuración Principal del Servidor", 
             font=("Arial", 16, "bold")
         )
-        title_label.pack(pady=(0, 10))
+        title_label.pack(pady=(0, 5))
         
         # Frame para configuración de cluster
         cluster_frame = ctk.CTkFrame(main_frame)

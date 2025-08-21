@@ -31,7 +31,7 @@ from .panels.cluster_panel import ClusterPanel
 
 class MainWindow:
 
-    APP_VERSION = "3.7"
+    APP_VERSION = "3.8.1"
     
     def __init__(self, root, config_manager, logger):
         """Inicializar la ventana principal"""
@@ -1387,6 +1387,8 @@ class MainWindow:
         # Actualizar contexto de mods
         if hasattr(self, 'mods_panel'):
             self.mods_panel.update_server_map_context(self.selected_server, map_name)
+        # Guardar última selección cuando cambia el mapa
+        self.save_last_server_map_selection()
     
     def refresh_servers_list(self):
         """Refresca la lista de servidores"""

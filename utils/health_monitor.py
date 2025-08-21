@@ -276,20 +276,6 @@ class HealthMonitor:
             
             self.logger.info(f"Reiniciando servidor: {selected_server} con mapa: {selected_map}")
             
-            # ✅ CORRECCIÓN: Obtener argumentos personalizados del servidor
-            server_args = []
-            if (self.main_window and 
-                hasattr(self.main_window, 'principal_panel') and 
-                hasattr(self.main_window.principal_panel, 'build_server_arguments')):
-                try:
-                    server_args = self.main_window.principal_panel.build_server_arguments()
-                    self.logger.info(f"Argumentos del servidor obtenidos: {len(server_args)} argumentos")
-                except Exception as e:
-                    self.logger.warning(f"Error al obtener argumentos del servidor: {e}")
-                    server_args = []
-            else:
-                self.logger.warning("No se pudo acceder a principal_panel para obtener argumentos")
-            
             # Callback para manejar el resultado del reinicio
             restart_success = {'value': False}
             restart_completed = threading.Event()
@@ -302,12 +288,11 @@ class HealthMonitor:
                     restart_success['value'] = False
                 restart_completed.set()
                 
-            # ✅ CORRECCIÓN: Usar el método de reinicio con argumentos personalizados
+            # Usar el método de reinicio del ServerManager con los parámetros correctos
             self.server_manager.restart_server(
                 callback=restart_callback,
                 server_name=selected_server,
                 map_name=selected_map,
-                custom_args=server_args,  # ← ARGUMENTOS PERSONALIZADOS AGREGADOS
                 capture_console=True,
                 force_stdin=True
             )

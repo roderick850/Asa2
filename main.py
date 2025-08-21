@@ -166,17 +166,117 @@ class ArkServerManager:
             for dir_name in essential_dirs:
                 dir_path = os.path.join(base_dir, dir_name)
                 try:
-                    os.makedirs(dir_path, exist_ok=True)
+                    # Crear directorio con permisos específicos para Windows
+                    if os.name == 'nt':  # Windows
+                        self._create_directory_with_windows_permissions(dir_path)
+                    else:
+                        os.makedirs(dir_path, exist_ok=True)
+                    
                     # Verificar que el directorio es accesible
                     if os.access(dir_path, os.W_OK):
                         print(f"✅ Directorio creado/verificado: {dir_name}")
                     else:
                         print(f"⚠️ Directorio sin permisos de escritura: {dir_name}")
+                        # Intentar corregir permisos en Windows
+                        if os.name == 'nt':
+                            self._fix_windows_permissions(dir_path)
+                            
                 except (OSError, PermissionError) as e:
                     print(f"❌ Error creando directorio {dir_name}: {e}")
-                    
+                    # Mostrar mensaje de ayuda específico para Windows
+                    if os.name == 'nt':
+                        self._show_windows_permission_help(dir_name, str(e))
+                        
         except Exception as e:
             print(f"❌ Error general creando directorios esenciales: {e}")
+    
+    def _create_directory_with_windows_permissions(self, dir_path):
+        """Crear directorio con permisos específicos para Windows"""
+        try:
+            os.makedirs(dir_path, exist_ok=True)
+            
+            # En Windows, intentar establecer permisos completos para el usuario actual
+            if os.name == 'nt':
+                import subprocess
+                import getpass
+                
+                username = getpass.getuser()
+                # Comando para dar permisos completos al usuario actual
+                cmd = f'icacls "{dir_path}" /grant "{username}":F /T'
+                
+                try:
+                    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                    if result.returncode == 0:
+                        print(f"✅ Permisos establecidos para {dir_path}")
+                    else:
+                        print(f"⚠️ No se pudieron establecer permisos automáticamente para {dir_path}")
+                except Exception as perm_error:
+                    print(f"⚠️ Error estableciendo permisos: {perm_error}")
+                    
+        except Exception as e:
+            raise e
+    
+    def _fix_windows_permissions(self, dir_path):
+        """Intentar corregir permisos en Windows"""
+        try:
+            import subprocess
+            import getpass
+            
+            username = getpass.getuser()
+            # Comando para dar permisos completos al usuario actual
+            cmd = f'icacls "{dir_path}" /grant "{username}":F /T'
+            
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            if result.returncode == 0:
+                print(f"✅ Permisos corregidos para {dir_path}")
+                return True
+            else:
+                print(f"❌ No se pudieron corregir permisos para {dir_path}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Error corrigiendo permisos: {e}")
+            return False
+    
+    def _show_windows_permission_help(self, dir_name, error_msg):
+        """Mostrar ayuda específica para problemas de permisos en Windows"""
+        help_message = f"""
+        ❌ ERROR DE PERMISOS EN WINDOWS - {dir_name.upper()}
+        
+        Error: {error_msg}
+        
+        SOLUCIONES POSIBLES:
+        
+        1. EJECUTAR COMO ADMINISTRADOR:
+           - Cierra la aplicación
+           - Haz clic derecho en el ejecutable
+           - Selecciona "Ejecutar como administrador"
+        
+        2. CAMBIAR UBICACIÓN:
+           - Mueve la aplicación a una carpeta como:
+             • C:\\ArkServerManager\\
+             • Documentos\\ArkServerManager\\
+        
+        3. CONFIGURAR PERMISOS MANUALMENTE:
+           - Haz clic derecho en la carpeta de la aplicación
+           - Propiedades → Seguridad → Editar
+           - Dar "Control total" a tu usuario
+        
+        4. DESACTIVAR ANTIVIRUS TEMPORALMENTE:
+           - Algunos antivirus bloquean la creación de carpetas
+           - Agrega la aplicación a las excepciones
+        """
+        
+        print(help_message)
+        
+        # También intentar crear un archivo de ayuda
+        try:
+            help_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "SOLUCION_PERMISOS_WINDOWS.txt")
+            with open(help_file, 'w', encoding='utf-8') as f:
+                f.write(help_message)
+            print(f"📄 Archivo de ayuda creado: {help_file}")
+        except:
+            pass
 
 def main():
     """Función principal"""

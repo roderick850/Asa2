@@ -47,13 +47,12 @@ class PlayerMonitor:
         self.player_left_callbacks = []
         self.player_count_callbacks = []
         
-        # Patrones regex para detectar eventos
-        # Formato: [16:24:46] [16:24:46] [2025.08.19-19.24.45:849][105]2025.08.19_19.24.45: Roderick850 [UniqueNetId:000288e061254539979667bfc309d848 Platform:None] joined this ARK!
+        # Patrones regex actualizados para detectar eventos (más flexibles)
         self.join_pattern = re.compile(
-            r'\[\d{2}:\d{2}:\d{2}\]\s*\[\d{2}:\d{2}:\d{2}\].*?:\s*(\w+)\s+\[UniqueNetId:([a-f0-9]+)\s+Platform:(\w+|None)\]\s+joined this ARK!'
+            r'(?:\[\d{2}:\d{2}:\d{2}\]\s*\[\d{2}:\d{2}:\d{2}\].*?:|\d{4}\.\d{2}\.\d{2}_\d{2}\.\d{2}\.\d{2}:)\s*(\w+)\s+\[UniqueNetId:([a-f0-9]+)\s+Platform:(\w+|None)\]\s+joined this ARK!'
         )
         self.left_pattern = re.compile(
-            r'\[\d{2}:\d{2}:\d{2}\]\s*\[\d{2}:\d{2}:\d{2}\].*?:\s*(\w+)\s+\[UniqueNetId:([a-f0-9]+)\s+Platform:(\w+|None)\]\s+left this ARK!'
+            r'(?:\[\d{2}:\d{2}:\d{2}\]\s*\[\d{2}:\d{2}:\d{2}\].*?:|\d{4}\.\d{2}\.\d{2}_\d{2}\.\d{2}\.\d{2}:)\s*(\w+)\s+\[UniqueNetId:([a-f0-9]+)\s+Platform:(\w+|None)\]\s+left this ARK!'
         )
         
         # Posiciones de archivo para cada servidor
@@ -73,8 +72,133 @@ class PlayerMonitor:
         if server_name not in self.file_positions:
             self.file_positions[server_name] = 0
             
+        # NUEVO: Procesar todo el log al agregar el servidor
+        if enabled:
+            self._process_full_log_on_startup(server_name, log_path)
+            
         if self.logger:
             self.logger.info(f"Servidor agregado al monitoreo de jugadores: {server_name}")
+    
+    def _process_full_log_on_startup(self, server_name: str, log_path: str):
+        """Procesar todo el archivo de log al inicio para reconstruir el estado actual"""
+        if not os.path.exists(log_path):
+            if self.logger:
+                self.logger.warning(f"Archivo de log no encontrado: {log_path}")
+            return
+            
+        try:
+            if self.logger:
+                self.logger.info(f"Procesando log completo para {server_name}: {log_path}")
+            
+            # Leer todo el archivo
+            with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                lines = f.readlines()
+                
+            if not lines:
+                if self.logger:
+                    self.logger.info(f"Archivo de log vacío para {server_name}")
+                return
+                
+            # Procesar todas las líneas para reconstruir el estado
+            join_events = {}
+            left_events = {}
+            
+            for line_num, line in enumerate(lines, 1):
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                # Buscar eventos de join
+                join_match = self.join_pattern.search(line)
+                if join_match:
+                    player_name, unique_id, platform = join_match.groups()
+                    join_events[player_name] = {
+                        'unique_id': unique_id,
+                        'platform': platform,
+                        'line_num': line_num,
+                        'line': line
+                    }
+                    continue
+                    
+                # Buscar eventos de left
+                left_match = self.left_pattern.search(line)
+                if left_match:
+                    player_name, unique_id, platform = left_match.groups()
+                    left_events[player_name] = {
+                        'unique_id': unique_id,
+                        'platform': platform,
+                        'line_num': line_num,
+                        'line': line
+                    }
+            
+            # Determinar jugadores actualmente conectados
+            # Un jugador está conectado si su último evento fue 'join'
+            currently_online = {}
+            
+            for player_name in join_events:
+                join_line = join_events[player_name]['line_num']
+                left_line = left_events.get(player_name, {}).get('line_num', 0)
+                
+                # Si el join es más reciente que el left (o no hay left), está conectado
+                if join_line > left_line:
+                    currently_online[player_name] = join_events[player_name]
+            
+            # Limpiar jugadores actuales del servidor
+            self.online_players[server_name] = {}
+            
+            # Agregar jugadores que están actualmente conectados
+            for player_name, player_data in currently_online.items():
+                timestamp = datetime.now()  # Usar timestamp actual
+                event = PlayerEvent(
+                    timestamp=timestamp,
+                    player_name=player_name,
+                    unique_id=player_data['unique_id'],
+                    platform=player_data['platform'],
+                    event_type='joined',
+                    server_name=server_name
+                )
+                self.online_players[server_name][player_name] = event
+            
+            # Establecer posición del archivo al final para monitoreo futuro
+            with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                f.seek(0, 2)  # Ir al final del archivo
+                self.file_positions[server_name] = f.tell()
+            
+            player_count = len(currently_online)
+            if self.logger:
+                self.logger.info(f"Procesamiento completo terminado para {server_name}: {player_count} jugadores conectados")
+                if currently_online:
+                    player_names = list(currently_online.keys())
+                    self.logger.info(f"Jugadores conectados: {', '.join(player_names)}")
+            
+            # Notificar callbacks del conteo inicial
+            for callback in self.player_count_callbacks:
+                try:
+                    callback(server_name, player_count)
+                except Exception as e:
+                    if self.logger:
+                        self.logger.error(f"Error en callback de conteo inicial: {e}")
+                        
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error procesando log completo de {server_name}: {e}")
+    
+    def start_monitoring(self):
+        """Iniciar monitoreo de logs"""
+        if self.monitoring:
+            return
+            
+        # NUEVO: Procesar logs completos de todos los servidores habilitados al iniciar
+        for server_name, config in self.monitored_servers.items():
+            if config['enabled']:
+                self._process_full_log_on_startup(server_name, config['log_path'])
+        
+        self.monitoring = True
+        self.monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
+        self.monitor_thread.start()
+        
+        if self.logger:
+            self.logger.info("Monitoreo de jugadores iniciado")
     
     def remove_server(self, server_name: str):
         """Remover servidor del monitoreo"""
@@ -138,18 +262,6 @@ class PlayerMonitor:
         for server_name, players in self.online_players.items():
             result[server_name] = list(players.keys())
         return result
-    
-    def start_monitoring(self):
-        """Iniciar monitoreo de logs"""
-        if self.monitoring:
-            return
-            
-        self.monitoring = True
-        self.monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
-        self.monitor_thread.start()
-        
-        if self.logger:
-            self.logger.info("Monitoreo de jugadores iniciado")
     
     def stop_monitoring(self):
         """Detener monitoreo de logs"""
