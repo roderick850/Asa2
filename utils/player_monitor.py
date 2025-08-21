@@ -17,6 +17,7 @@ import time
 from datetime import datetime
 from typing import Dict, List, Callable, Optional, Set
 from dataclasses import dataclass
+from .game_alerts_manager import GameAlertsManager
 
 @dataclass
 class PlayerEvent:
@@ -31,7 +32,7 @@ class PlayerEvent:
 class PlayerMonitor:
     """Monitor de jugadores en línea basado en logs del servidor"""
     
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, rcon_panel=None):
         self.logger = logger
         self.monitoring = False
         self.monitor_thread = None
@@ -46,6 +47,9 @@ class PlayerMonitor:
         self.player_join_callbacks = []
         self.player_left_callbacks = []
         self.player_count_callbacks = []
+        
+        # Inicializar sistema de alertas con los parámetros recibidos
+        self.game_alerts = GameAlertsManager(logger=logger, rcon_panel=rcon_panel)
         
         # Patrones regex actualizados para detectar eventos (más flexibles)
         self.join_pattern = re.compile(
@@ -324,6 +328,10 @@ class PlayerMonitor:
     
     def _process_log_line(self, server_name: str, line: str):
         """Procesar una línea del log"""
+        # Procesar línea para alertas del juego
+        if hasattr(self, 'game_alerts'):
+            self.game_alerts.process_log_line(server_name, line)
+        
         # Buscar eventos de join
         join_match = self.join_pattern.search(line)
         if join_match:

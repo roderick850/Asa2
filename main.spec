@@ -175,6 +175,7 @@ hiddenimports = [
     'utils.scheduled_commands',
     'utils.health_monitor',
     'utils.player_monitor',
+    'utils.game_alerts_manager',  # Nuevo módulo agregado
 ]
 
 # Exclusiones

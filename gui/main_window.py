@@ -31,7 +31,7 @@ from .panels.cluster_panel import ClusterPanel
 
 class MainWindow:
 
-    APP_VERSION = "3.8.1"
+    APP_VERSION = "3.8.3"
     
     def __init__(self, root, config_manager, logger):
         """Inicializar la ventana principal"""
@@ -57,11 +57,8 @@ class MainWindow:
         # Inicializar logger de eventos del servidor
         self.server_event_logger = ServerEventLogger("default")
         
-        # Inicializar monitor de jugadores
-        self.player_monitor = PlayerMonitor()
-        self.player_monitor.register_callback('join', self.on_player_join)
-        self.player_monitor.register_callback('left', self.on_player_left)
-        self.player_monitor.register_callback('count_changed', self.on_player_count_changed)
+        # NOTA: PlayerMonitor se inicializará en create_tabview después de crear rcon_panel
+        self.player_monitor = None
         
         # Inicializar monitor de salud
         self.health_monitor = None
@@ -489,6 +486,12 @@ class MainWindow:
         self.console_panel = ConsolePanel(self.tab_console_content, self.config_manager, self.logger, self)
         self.logs_panel = WorkingLogsPanel(self.tab_logs_content, self.config_manager, self.logger, self)
         self.ini_config_panel = IniConfigPanel(self.tab_ini_config_content, self.config_manager, self.logger, self)
+        
+        # NUEVO: Inicializar PlayerMonitor después de crear rcon_panel
+        self.player_monitor = PlayerMonitor(logger=self.logger, rcon_panel=self.rcon_panel)
+        self.player_monitor.register_callback('join', self.on_player_join)
+        self.player_monitor.register_callback('left', self.on_player_left)
+        self.player_monitor.register_callback('count_changed', self.on_player_count_changed)
         
         # Configurar el server_manager principal para que apunte al del server_panel
         self.server_manager = self.server_panel.server_manager
@@ -2826,10 +2829,18 @@ Versión de la app: {self.APP_VERSION}
             log_path = os.path.join(server_path, "ShooterGame", "Saved", "Logs", "ShooterGame.log")
             
             if os.path.exists(os.path.dirname(log_path)):
+                # Verificar si el servidor está realmente ejecutándose antes de iniciar el monitoreo
+                if hasattr(self, 'server_panel') and self.server_panel and self.server_panel.server_manager:
+                    if not self.server_panel.server_manager.is_server_running():
+                        self.logger.info(f"🎮 Servidor {server_name} no está ejecutándose, omitiendo monitoreo de jugadores")
+                        # Limpiar servidores anteriores pero no iniciar monitoreo
+                        self.player_monitor.stop_monitoring()
+                        return
+                
                 # Limpiar servidores anteriores
                 self.player_monitor.stop_monitoring()
                 
-                # Agregar el servidor actual
+                # Agregar el servidor actual solo si está ejecutándose
                 self.player_monitor.add_server(server_name, log_path)
                 self.player_monitor.start_monitoring()
                 self.logger.info(f"🎮 Monitoreo de jugadores iniciado para servidor: {server_name}")

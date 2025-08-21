@@ -7,6 +7,8 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import schedule
 import time
+# Agregar importación del GameAlertsManager
+from utils.game_alerts_manager import GameAlertsManager
 
 
 class RconPanel(ctk.CTkFrame):
@@ -33,6 +35,9 @@ class RconPanel(ctk.CTkFrame):
         # Variables para tareas rápidas personalizables
         self.quick_tasks = []
         self.quick_tasks_file = "config/quick_rcon_tasks.json"
+        
+        # Inicializar GameAlertsManager
+        self.game_alerts = GameAlertsManager(config_manager, logger)
         
         # Cargar tareas programadas y rápidas
         self.load_scheduled_tasks()
@@ -262,6 +267,9 @@ class RconPanel(ctk.CTkFrame):
         
         # === MONITOREO DEL SERVIDOR ===
         self.create_monitoring_section()
+        
+        # === ALERTAS DE JUEGO ===
+        self.create_game_alerts_section()
     
     def load_rcon_config(self):
         """Cargar configuración RCON guardada"""
@@ -380,14 +388,9 @@ class RconPanel(ctk.CTkFrame):
             self.logger.error(f"Error al cambiar tipo de mensaje: {e}")
     
     def get_message_type(self):
-        """Obtener el tipo de mensaje configurado"""
-        try:
-            if hasattr(self, 'message_type_option'):
-                return self.message_type_option.get()
-            else:
-                return self.config_manager.get("rcon", "message_type", "serverchat")
-        except:
-            return "serverchat"  # Default seguro
+        """Obtener el tipo de mensaje configurado para alertas"""
+        # Por defecto usar serverchat, que es más confiable que broadcast
+        return 'serverchat'
     
     def get_rcon_enabled(self):
         """Obtener si RCON está habilitado para argumentos de inicio"""
@@ -455,7 +458,7 @@ class RconPanel(ctk.CTkFrame):
                 self.update_password_info()
                 
                 # Intentar ejecutar un comando simple
-                result = self.execute_rcon_command("GetServerInfo")
+                result = self._execute_rcon_command("GetServerInfo")
                 
                 if result and "error" not in result.lower():
                     self.is_connected = True
@@ -475,6 +478,28 @@ class RconPanel(ctk.CTkFrame):
         threading.Thread(target=_test, daemon=True).start()
     
     def execute_rcon_command(self, command):
+        """Ejecutar comando RCON (método público para GameAlertsManager)"""
+        try:
+            if not self.is_connected:
+                self.logger.warning("RCON no está conectado, intentando conectar...")
+                if not self.test_connection():
+                    self.logger.error("No se pudo conectar a RCON para enviar alerta")
+                    return False
+            
+            # Ejecutar el comando
+            result = self._execute_rcon_command(command)
+            if result:
+                self.logger.info(f"Comando RCON ejecutado exitosamente: {command}")
+                return True
+            else:
+                self.logger.error(f"Error ejecutando comando RCON: {command}")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Error en execute_rcon_command: {e}")
+            return False
+    
+    def _execute_rcon_command(self, command):
         """Ejecutar comando RCON usando el ejecutable en la carpeta rcon"""
         # Log del intento de ejecución
         if hasattr(self, 'main_window') and hasattr(self.main_window, 'add_log_message'):
@@ -587,7 +612,7 @@ class RconPanel(ctk.CTkFrame):
                 self.update_password_info()
                 
                 self.add_result(f"▶️ Ejecutando: {command}")
-                result = self.execute_rcon_command(command)
+                result = self._execute_rcon_command(command)
                 
                 if result:
                     self.add_result(f"📋 Resultado:\n{result}")
@@ -1088,6 +1113,70 @@ class RconPanel(ctk.CTkFrame):
         # Configurar grid weights para que se expandan
         monitoring_frame.grid_rowconfigure(1, weight=1)
     
+    def create_game_alerts_section(self):
+        """Crear sección de configuración de alertas de juego"""
+        # Frame principal para alertas de juego
+        alerts_frame = ctk.CTkFrame(self.main_scrollable_frame)
+        alerts_frame.grid(row=7, column=0, sticky="ew", padx=5, pady=5)
+        alerts_frame.grid_columnconfigure(0, weight=1)
+        
+        # Título
+        alerts_title = ctk.CTkLabel(alerts_frame, text="🚨 Alertas de Juego", 
+                                   font=ctk.CTkFont(size=14, weight="bold"))
+        alerts_title.grid(row=0, column=0, pady=(10, 5))
+        
+        # Frame para switches de alertas
+        switches_frame = ctk.CTkFrame(alerts_frame)
+        switches_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
+        switches_frame.grid_columnconfigure((0, 1), weight=1)
+        
+        # Switch para alertas de conexión
+        self.connection_alerts_switch = ctk.CTkSwitch(switches_frame, 
+                                                     text="Alertas de Conexión",
+                                                     command=self.save_alerts_config)
+        self.connection_alerts_switch.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        
+        # Switch para alertas de desconexión
+        self.disconnection_alerts_switch = ctk.CTkSwitch(switches_frame, 
+                                                         text="Alertas de Desconexión",
+                                                         command=self.save_alerts_config)
+        self.disconnection_alerts_switch.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+        
+        # Switch para alertas de muerte de jugadores
+        self.player_death_alerts_switch = ctk.CTkSwitch(switches_frame, 
+                                                        text="Alertas de Muerte de Jugadores",
+                                                        command=self.save_alerts_config)
+        self.player_death_alerts_switch.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+        
+        # Switch para alertas de muerte de dinos
+        self.dino_death_alerts_switch = ctk.CTkSwitch(switches_frame, 
+                                                      text="Alertas de Muerte de Dinos",
+                                                      command=self.save_alerts_config)
+        self.dino_death_alerts_switch.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+        
+        # Switch para alertas de tameo
+        self.taming_alerts_switch = ctk.CTkSwitch(switches_frame, 
+                                                  text="Alertas de Tameo",
+                                                  command=self.save_alerts_config)
+        self.taming_alerts_switch.grid(row=2, column=0, padx=10, pady=5, sticky="w")
+        
+        # Frame para botones
+        buttons_frame = ctk.CTkFrame(alerts_frame, fg_color="transparent")
+        buttons_frame.grid(row=2, column=0, pady=10)
+        
+        # Botón para probar alertas
+        self.test_alerts_btn = ctk.CTkButton(buttons_frame, text="🧪 Probar Alertas", 
+                                            command=self.test_alerts, width=120)
+        self.test_alerts_btn.pack(side="left", padx=5)
+        
+        # Botón para cargar configuración
+        self.load_alerts_btn = ctk.CTkButton(buttons_frame, text="📂 Cargar Config", 
+                                            command=self.load_alerts_config, width=120)
+        self.load_alerts_btn.pack(side="left", padx=5)
+        
+        # Cargar configuración inicial
+        self.load_alerts_config()
+    
     # Métodos para programación de tareas
     def start_scheduler(self):
         """Iniciar el programador de tareas"""
@@ -1480,6 +1569,96 @@ class RconPanel(ctk.CTkFrame):
             
         except Exception as e:
              print(f"Error agregando alerta: {str(e)}")
+    
+    def save_alerts_config(self, *args):
+        """Guardar configuración de alertas"""
+        try:
+            config = {
+                'connection_alerts': self.connection_alerts_switch.get(),
+                'disconnection_alerts': self.disconnection_alerts_switch.get(),
+                'player_death_alerts': self.player_death_alerts_switch.get(),
+                'dino_death_alerts': self.dino_death_alerts_switch.get(),
+                'taming_alerts': self.taming_alerts_switch.get()
+            }
+            
+            # Actualizar configuración en GameAlertsManager
+            self.game_alerts.update_config(config)
+            
+            # Guardar en config_manager
+            for key, value in config.items():
+                self.config_manager.set("game_alerts", key, value)
+            
+            self.logger.info("Configuración de alertas guardada")
+            
+        except Exception as e:
+            self.logger.error(f"Error al guardar configuración de alertas: {e}")
+    
+    def load_alerts_config(self):
+        """Cargar configuración de alertas"""
+        try:
+            # Cargar desde config_manager
+            connection_alerts = self.config_manager.get("game_alerts", "connection_alerts", True)
+            disconnection_alerts = self.config_manager.get("game_alerts", "disconnection_alerts", True)
+            player_death_alerts = self.config_manager.get("game_alerts", "player_death_alerts", True)
+            dino_death_alerts = self.config_manager.get("game_alerts", "dino_death_alerts", True)
+            taming_alerts = self.config_manager.get("game_alerts", "taming_alerts", True)
+            
+            # Actualizar switches
+            if connection_alerts:
+                self.connection_alerts_switch.select()
+            else:
+                self.connection_alerts_switch.deselect()
+                
+            if disconnection_alerts:
+                self.disconnection_alerts_switch.select()
+            else:
+                self.disconnection_alerts_switch.deselect()
+                
+            if player_death_alerts:
+                self.player_death_alerts_switch.select()
+            else:
+                self.player_death_alerts_switch.deselect()
+                
+            if dino_death_alerts:
+                self.dino_death_alerts_switch.select()
+            else:
+                self.dino_death_alerts_switch.deselect()
+                
+            if taming_alerts:
+                self.taming_alerts_switch.select()
+            else:
+                self.taming_alerts_switch.deselect()
+            
+            self.logger.info("Configuración de alertas cargada")
+            
+        except Exception as e:
+            self.logger.error(f"Error al cargar configuración de alertas: {e}")
+    
+    def test_alerts(self):
+        """Probar el sistema de alertas enviando mensajes de prueba"""
+        try:
+            if not self.is_connected:
+                self.add_result("❌ Error: No hay conexión RCON activa")
+                return
+            
+            # Enviar mensajes de prueba limpios sin prefijos
+            test_messages = [
+                "Jugador de prueba se ha conectado al servidor",
+                "Jugador de prueba se ha desconectado del servidor", 
+                "Jugador de prueba fue eliminado por un Raptor",
+                "Jugador de prueba ha tameado un Parasaur - Nivel 15"
+            ]
+            
+            for message in test_messages:
+                command = f"serverchat {message}"
+                self.execute_rcon_command(command)
+                time.sleep(1)  # Pequeña pausa entre mensajes
+            
+            self.add_result("✅ Pruebas de alertas enviadas")
+            
+        except Exception as e:
+            self.logger.error(f"Error al probar alertas: {e}")
+            self.add_result(f"❌ Error al probar alertas: {e}")
     
     def on_task_type_change_old(self, event=None):
         """Método obsoleto - reemplazado por el nuevo sistema unificado"""
