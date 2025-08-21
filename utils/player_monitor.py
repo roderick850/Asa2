@@ -48,8 +48,12 @@ class PlayerMonitor:
         self.player_left_callbacks = []
         self.player_count_callbacks = []
         
-        # Inicializar sistema de alertas con los parámetros recibidos
-        self.game_alerts = GameAlertsManager(logger=logger, rcon_panel=rcon_panel)
+        # Guardar referencia al rcon_panel para acceder a su GameAlertsManager
+        self.rcon_panel = rcon_panel
+        self.logger = logger
+        
+        # GameAlertsManager se obtiene dinámicamente del rcon_panel cuando se necesite
+        self.game_alerts = None
         
         # Patrones regex actualizados para detectar eventos (más flexibles)
         self.join_pattern = re.compile(
@@ -328,9 +332,11 @@ class PlayerMonitor:
     
     def _process_log_line(self, server_name: str, line: str):
         """Procesar una línea del log"""
-        # Procesar línea para alertas del juego
-        if hasattr(self, 'game_alerts'):
-            self.game_alerts.process_log_line(server_name, line)
+        # Procesar línea para alertas del juego usando el GameAlertsManager del rcon_panel
+        if (self.rcon_panel and 
+            hasattr(self.rcon_panel, 'game_alerts') and 
+            self.rcon_panel.game_alerts):
+            self.rcon_panel.game_alerts.process_log_line(server_name, line)
         
         # Buscar eventos de join
         join_match = self.join_pattern.search(line)

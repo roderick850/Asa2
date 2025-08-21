@@ -25,44 +25,47 @@ class GameAlertsManager:
         self.alert_config = {
             'player_join': {
                 'enabled': True,
-                'message': '🟢 {character_name} se ha conectado al servidor',
+                'message': '{character_name} se ha conectado al servidor',
                 'color': 'green'
             },
             'player_leave': {
                 'enabled': True,
-                'message': '🔴 {character_name} se ha desconectado del servidor',
+                'message': '{character_name} se ha desconectado del servidor',
                 'color': 'red'
             },
             'player_death': {
                 'enabled': True,
-                'message': '💀 {character_name} ha muerto',
+                'message': '{character_name} ha muerto',
                 'color': 'yellow'
             },
             'dino_death': {
                 'enabled': True,
-                'message': '🦕💀 {dino_name} (Nivel {dino_level}) de la tribu {tribe_name} ha muerto',
+                'message': '{dino_name} (Nivel {dino_level}) de {tribe_name} fue asesinado por {killer_name} (Nivel {killer_level})',
                 'color': 'orange'
             },
             'dino_taming': {
                 'enabled': True,
-                'message': '🦕✅ {character_name} ha tameado un {dino_name} (Nivel {dino_level})',
+                'message': '{character_name} ha tameado un {dino_name} (Nivel {dino_level})',
                 'color': 'cyan'
             }
         }
         
         # Patrones regex para detectar eventos
         self.patterns = {
-            # Patrón corregido para conexiones - coincide con el formato real
-            'player_join': re.compile(r'\[(\d{2}:\d{2}:\d{2})\].*?(\w+)\s+\[UniqueNetId:([a-f0-9]+)\s+Platform:(\w+|None)\]\s+joined this ARK!'),
+            # Patrones corregidos para conexiones - NUEVO formato con timestamp YYYY.MM.DD_HH.MM.SS
+            'player_join': re.compile(r'(\d{4}\.\d{2}\.\d{2}_\d{2}\.\d{2}\.\d{2}):\s*(\w+)\s+\[UniqueNetId:([a-f0-9]+)\s+Platform:(\w+|None)\]\s+joined this ARK!'),
             
-            # Patrón corregido para desconexiones
-            'player_leave': re.compile(r'\[(\d{2}:\d{2}:\d{2})\].*?(\w+)\s+\[UniqueNetId:([a-f0-9]+)\s+Platform:(\w+|None)\]\s+left this ARK!'),
+            # Patrón corregido para desconexiones con timestamp YYYY.MM.DD_HH.MM.SS
+            'player_leave': re.compile(r'(\d{4}\.\d{2}\.\d{2}_\d{2}\.\d{2}\.\d{2}):\s*(\w+)\s+\[UniqueNetId:([a-f0-9]+)\s+Platform:(\w+|None)\]\s+left this ARK!'),
             
             # Patrones para muerte de jugador y dinos (ajustados al formato real)
             'player_death': re.compile(r'\[(\d{2}:\d{2}:\d{2})\].*?Tribe (.+?), ID (\d+): Day \d+, \d{2}:\d{2}:\d{2}: (.+?) was killed!'),
             
-            # Patrón para muerte de dino - CORREGIDO para formato: 2025.08.21_17.21.08: S-Allosaurus - Lvl 67 (S-Allosaurus) (Tribu de Humano) was killed by...
-            'dino_death': re.compile(r'(\d{4}\.\d{2}\.\d{2}_\d{2}\.\d{2}\.\d{2}):\s*(.+?)\s*-\s*Lvl\s+(\d+)\s*\((.+?)\)\s*\((.+?)\)\s*was killed by'),
+            # Patrón para muerte de dino CON asesino - MEJORADO para capturar también el asesino
+            'dino_death': re.compile(r'(\d{4}\.\d{2}\.\d{2}_\d{2}\.\d{2}\.\d{2}):\s*(.+?)\s*-\s*Lvl\s+(\d+)\s*\((.+?)\)\s*\((.+?)\)\s*was killed by\s*(?:a\s+)?(.+?)\s*-\s*Lvl\s+(\d+)\s*\(\)'),
+            
+            # Patrón para muerte de dino SIN asesino (hambre, etc.)
+            'dino_death_simple': re.compile(r'(\d{4}\.\d{2}\.\d{2}_\d{2}\.\d{2}\.\d{2}):\s*(.+?)\s*-\s*Lvl\s+(\d+)\s*\((.+?)\)\s*\((.+?)\)\s*was killed!'),
             
             # Patrón para tameo - CORREGIDO para formato 2025.08.21_17.13.43:
             'dino_taming': re.compile(r'(\d{4}\.\d{2}\.\d{2}_\d{2}\.\d{2}\.\d{2}):\s*(.+?)\s+(?:of\s+Tribe\s+.+?\s+)?Tamed\s+(?:a|an)\s+(.+?)\s*-\s*Lvl\s+(\d+)')
@@ -137,7 +140,7 @@ class GameAlertsManager:
             
             # Verificar muerte de dino
             elif match := self.patterns['dino_death'].search(line):
-                timestamp_str, dino_name, dino_level, dino_species, tribe_name = match.groups()
+                timestamp_str, dino_name, dino_level, dino_species, tribe_name, killer_name, killer_level = match.groups()
                 timestamp = self._parse_timestamp(timestamp_str)
                 
                 event = GameEvent(
@@ -150,7 +153,34 @@ class GameAlertsManager:
                         'dino_name': dino_name.strip(),
                         'dino_level': int(dino_level),
                         'dino_species': dino_species.strip(),
-                        'tribe_name': tribe_name.strip()
+                        'tribe_name': tribe_name.strip(),
+                        'killer_name': killer_name.strip(),
+                        'killer_level': int(killer_level),
+                        'death_type': 'killed_by'  # Muerte con asesino identificado
+                    },
+                    server_name=server_name
+                )
+                self._handle_event(event)
+            
+            # Verificar muerte de dino SIN asesino (hambre, etc.)
+            elif match := self.patterns['dino_death_simple'].search(line):
+                timestamp_str, dino_name, dino_level, dino_species, tribe_name = match.groups()
+                timestamp = self._parse_timestamp(timestamp_str)
+                
+                event = GameEvent(
+                    timestamp=timestamp,
+                    event_type='dino_death',  # Mismo tipo de evento para usar la misma configuración
+                    player_name='',
+                    character_name='Desconocido',  # No hay info de jugador específico
+                    unique_id='',
+                    details={
+                        'dino_name': dino_name.strip(),
+                        'dino_level': int(dino_level),
+                        'dino_species': dino_species.strip(),
+                        'tribe_name': tribe_name.strip(),
+                        'killer_name': 'Desconocido',  # Sin asesino conocido
+                        'killer_level': 0,  # Sin nivel de asesino
+                        'death_type': 'natural'  # Muerte natural (hambre, etc.)
                     },
                     server_name=server_name
                 )
@@ -202,7 +232,12 @@ class GameAlertsManager:
             # Verificar si la alerta está habilitada
             if event.event_type in self.alert_config:
                 alert_config = self.alert_config[event.event_type]
-                if alert_config.get('enabled', False):
+                enabled = alert_config.get('enabled', False)
+                
+                if self.logger:
+                    self.logger.debug(f"Evento {event.event_type}: enabled={enabled}")
+                
+                if enabled:
                     # Generar mensaje de alerta
                     message = self._generate_alert_message(event)
                     if message:
@@ -211,6 +246,9 @@ class GameAlertsManager:
                         
                         if self.logger:
                             self.logger.info(f"Alerta enviada: {event.event_type} - {message}")
+                else:
+                    if self.logger:
+                        self.logger.debug(f"Alerta {event.event_type} deshabilitada - no se envía")
                             
         except Exception as e:
             if self.logger:
@@ -246,11 +284,23 @@ class GameAlertsManager:
                     'tribe_id': event.details.get('tribe_id', '')
                 })
             
-            # Para muerte de dino, agregar especies si está disponible
+            # Para muerte de dino, agregar especies y asesino si está disponible
             if event.event_type == 'dino_death':
+                death_type = event.details.get('death_type', 'natural')
+                killer_name = event.details.get('killer_name', 'Desconocido')
+                killer_level = event.details.get('killer_level', 0)
+                
                 format_vars.update({
-                    'dino_species': event.details.get('dino_species', '')
+                    'dino_species': event.details.get('dino_species', ''),
+                    'killer_name': killer_name,
+                    'killer_level': killer_level
                 })
+                
+                # Usar mensaje diferente según el tipo de muerte
+                if death_type == 'natural':
+                    # Muerte natural (hambre, etc.) - mensaje simplificado
+                    message_template = '{dino_name} (Nivel {dino_level}) de {tribe_name} ha muerto'
+                # Si es 'killed_by', usar el template original con asesino
             
             # Formatear mensaje
             message = message_template.format(**format_vars)
@@ -269,14 +319,11 @@ class GameAlertsManager:
                     self.logger.warning("No hay panel RCON disponible para enviar alerta")
                 return
             
-            # Obtener color para el evento
-            color = self.alert_config.get(event_type, {}).get('color', 'white')
+            # Limpiar cualquier código RichColor del mensaje
+            clean_message = self._clean_rich_color_from_message(message)
             
-            # Agregar color al mensaje
-            colored_message = self._add_color_to_message(message, color)
-            
-            # Construir comando RCON
-            rcon_command = f'ServerChat {colored_message}'
+            # Construir comando RCON sin colores
+            rcon_command = f'ServerChat {clean_message}'
             
             # Ejecutar comando
             if hasattr(self.rcon_panel, 'execute_rcon_command'):
@@ -292,21 +339,13 @@ class GameAlertsManager:
             if self.logger:
                 self.logger.error(f"Error enviando alerta RCON: {e}")
     
-    def _add_color_to_message(self, message: str, color: str) -> str:
-        """Agregar código de color al mensaje"""
-        color_codes = {
-            'red': '<RichColor Color="1,0,0,1">',
-            'green': '<RichColor Color="0,1,0,1">',
-            'blue': '<RichColor Color="0,0,1,1">',
-            'yellow': '<RichColor Color="1,1,0,1">',
-            'cyan': '<RichColor Color="0,1,1,1">',
-            'magenta': '<RichColor Color="1,0,1,1">',
-            'orange': '<RichColor Color="1,0.5,0,1">',
-            'white': '<RichColor Color="1,1,1,1">'
-        }
-        
-        color_code = color_codes.get(color.lower(), color_codes['white'])
-        return f'{color_code}{message}</RichColor>'
+    def _clean_rich_color_from_message(self, message: str) -> str:
+        """Limpiar cualquier código RichColor de un mensaje"""
+        import re
+        # Remover cualquier código RichColor que pueda estar en el mensaje
+        cleaned = re.sub(r'<RichColor[^>]*>', '', message)
+        cleaned = re.sub(r'</RichColor>', '', cleaned)
+        return cleaned.strip()
     
     def _parse_timestamp(self, timestamp_str: str) -> datetime:
         """Parsear timestamp del formato de ARK"""
@@ -474,6 +513,13 @@ class GameAlertsManager:
                         enabled_raw = config_manager.get("game_alerts", config_key, True)
                         enabled = self._convert_to_bool(enabled_raw)
                         self.alert_config[event_type]['enabled'] = enabled
+                        
+                        # Limpiar mensaje de cualquier código RichColor que pueda estar guardado
+                        if 'message' in self.alert_config[event_type]:
+                            original_message = self.alert_config[event_type]['message']
+                            cleaned_message = self._clean_rich_color_from_message(original_message)
+                            self.alert_config[event_type]['message'] = cleaned_message
+                        
                         if self.logger:
                             self.logger.debug(f"Cargado {event_type}: enabled={enabled} (raw: {enabled_raw})")
                             
