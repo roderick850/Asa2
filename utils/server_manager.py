@@ -268,9 +268,26 @@ class ServerManager:
             return False
 
     def get_server_status(self):
-        """Obtiene el estado actual del servidor - Optimizado"""
-        # Usar el método optimizado is_server_running
-        if self.is_server_running():
+        """Obtiene el estado actual del servidor - Optimizado con detección de cambios"""
+        previous_running = self.server_running
+        current_running = self.is_server_running()
+        
+        # Detectar cambio de estado (servidor se cerró externamente)
+        if previous_running and not current_running:
+            self.logger.info("🔍 Detectado: Servidor se cerró externamente")
+            self.server_fully_started = False
+            self.server_process = None
+            self.uptime_start = None
+            
+            # Notificar cambio a la UI si hay callback disponible
+            if hasattr(self, '_status_change_callback') and self._status_change_callback:
+                try:
+                    self._status_change_callback("Detenido")
+                except Exception as e:
+                    self.logger.error(f"Error notificando cambio de estado: {e}")
+        
+        # Determinar estado actual
+        if current_running:
             if self.server_fully_started:
                 return "Ejecutándose"
             else:
@@ -279,6 +296,10 @@ class ServerManager:
             # No hay servidor ejecutándose
             self.server_fully_started = False
             return "Detenido"
+    
+    def set_status_change_callback(self, callback):
+        """Establecer callback para notificar cambios de estado"""
+        self._status_change_callback = callback
     
     def get_uptime(self):
         """Obtiene el tiempo de actividad del servidor"""

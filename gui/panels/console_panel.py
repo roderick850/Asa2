@@ -35,13 +35,36 @@ class ConsolePanel:
         self.queue_processor_running = False
         
         # Referencia al server_manager para acceder a la consola
-        if main_window and hasattr(main_window, 'server_panel'):
-            self.server_manager = main_window.server_panel.server_manager
-        else:
-            from utils.server_manager import ServerManager
-            self.server_manager = ServerManager(config_manager)
+        self.server_manager = None
+        self._initialize_server_manager()
         
         self.create_widgets()
+    
+    def _initialize_server_manager(self):
+        """Inicializar la referencia al server_manager de forma segura"""
+        try:
+            # Intentar obtener server_manager del main_window
+            if self.main_window and hasattr(self.main_window, 'server_panel') and hasattr(self.main_window.server_panel, 'server_manager'):
+                self.server_manager = self.main_window.server_panel.server_manager
+                self.logger.info("✅ ConsolePanel: Usando ServerManager compartido del server_panel")
+            elif self.main_window and hasattr(self.main_window, 'server_manager'):
+                self.server_manager = self.main_window.server_manager
+                self.logger.info("✅ ConsolePanel: Usando ServerManager del main_window")
+            else:
+                # Fallback: crear instancia propia (no ideal pero funcional)
+                from utils.server_manager import ServerManager
+                self.server_manager = ServerManager(self.config_manager)
+                self.logger.warning("⚠️ ConsolePanel: Creando instancia propia de ServerManager (fallback)")
+        except Exception as e:
+            self.logger.error(f"Error inicializando ServerManager en ConsolePanel: {e}")
+            # Fallback de emergencia
+            try:
+                from utils.server_manager import ServerManager
+                self.server_manager = ServerManager(self.config_manager)
+                self.logger.warning("⚠️ ConsolePanel: Usando fallback de emergencia para ServerManager")
+            except Exception as fallback_error:
+                self.logger.error(f"Error crítico: No se pudo inicializar ServerManager: {fallback_error}")
+                self.server_manager = None
         
     def create_widgets(self):
         """Crear los widgets del panel de consola"""
@@ -462,6 +485,7 @@ class ConsolePanel:
                                         # Dividir en líneas y agregar cada una
                                         lines = existing_content.split('\n')
                                         lines_added = 0
+                                        server_startup_detected = False
                                         for line in lines:
                                             line = line.strip()
                                             if line:
@@ -469,6 +493,15 @@ class ConsolePanel:
                                                 formatted_line = f"[{timestamp}] {line}"
                                                 self.add_console_message(formatted_line)
                                                 lines_added += 1
+                                                
+                                                # Detectar cuando el servidor ha completado el inicio (contenido existente)
+                                                if "Server has completed startup and is now advertising for join" in line:
+                                                    server_startup_detected = True
+                                        
+                                        # Si detectamos startup completo en contenido existente, notificar
+                                        if server_startup_detected:
+                                            self.logger.info("🔍 Servidor startup completo detectado en contenido existente")
+                                            self._notify_server_active()
                                     
                                     # Ahora posicionarse al final para futuras lecturas
                                     f.seek(0, 2)
@@ -556,12 +589,22 @@ class ConsolePanel:
                                         else:
                                             lines_to_show = all_lines
                                         
+                                        server_startup_detected = False
                                         for line in lines_to_show:
                                             line = line.strip()
                                             if line:
                                                 timestamp = datetime.now().strftime("%H:%M:%S")
                                                 formatted_line = f"[{timestamp}] {line}"
                                                 self.add_console_message(formatted_line)
+                                                
+                                                # Detectar cuando el servidor ha completado el inicio (contenido existente)
+                                                if "Server has completed startup and is now advertising for join" in line:
+                                                    server_startup_detected = True
+                                        
+                                        # Si detectamos startup completo en contenido existente, notificar
+                                        if server_startup_detected:
+                                            self.logger.info("🔍 Servidor startup completo detectado en contenido existente (fallback)")
+                                            self._notify_server_active()
                                         
                                         # Ahora posicionarse al final para futuras lecturas
                                         f.seek(0, 2)
@@ -777,6 +820,98 @@ class ConsolePanel:
         except Exception as e:
             self.logger.error(f"Error notificando estado activo del servidor: {e}")
     
+    def reset_log_position(self):
+        """Resetear posición del archivo de log para detectar nuevo servidor iniciado"""
+        try:
+            self.logger.info("🔄 Reseteando posición de archivo de log para nuevo startup")
+            
+            # Limpiar la consola para mostrar solo el nuevo contenido
+            self.clear_console()
+            
+            # Resetear variables principales
+            self._content_loaded = False
+            self._last_file_position = None
+            self._current_log_file = None
+            
+            # También resetear variables específicas de servidores en cluster
+            attrs_to_remove = []
+            for attr_name in dir(self):
+                if (attr_name.startswith('_last_file_position_') or 
+                    attr_name.startswith('_current_log_file_') or 
+                    attr_name.startswith('_content_loaded_')):
+                    attrs_to_remove.append(attr_name)
+            
+            for attr_name in attrs_to_remove:
+                if hasattr(self, attr_name):
+                    delattr(self, attr_name)
+            
+            self.add_console_message("🔄 Consola reseteada para detectar nuevo servidor")
+            self.add_console_message("⏳ Esperando nueva sesión del servidor...")
+            
+            # Forzar una actualización inmediata del contenido
+            self._force_refresh_log_content()
+            
+        except Exception as e:
+            self.logger.error(f"Error reseteando posición de archivo: {e}")
+    
+    def _force_refresh_log_content(self):
+        """Forzar actualización inmediata del contenido del log"""
+        try:
+            # Obtener el archivo de log más reciente
+            game_log_path = self._get_latest_game_log()
+            if game_log_path and os.path.exists(game_log_path):
+                self.logger.info(f"🔄 Forzando lectura del archivo: {game_log_path}")
+                
+                with open(game_log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    # Leer las últimas 20 líneas para detectar nuevo startup rápidamente
+                    f.seek(0, 2)  # Ir al final
+                    file_size = f.tell()
+                    
+                    # Leer desde una posición razonable hacia atrás
+                    start_pos = max(0, file_size - 5000)  # Últimos 5KB aprox
+                    f.seek(start_pos)
+                    
+                    lines = f.readlines()
+                    
+                    # Tomar las últimas 20 líneas
+                    recent_lines = lines[-20:] if len(lines) > 20 else lines
+                    
+                    server_startup_detected = False
+                    
+                    for line in recent_lines:
+                        line = line.strip()
+                        if line:
+                            timestamp = datetime.now().strftime("%H:%M:%S")
+                            formatted_line = f"[{timestamp}] {line}"
+                            self.add_console_message(formatted_line)
+                            
+                            # Detectar startup completo inmediatamente
+                            if "Server has completed startup and is now advertising for join" in line:
+                                server_startup_detected = True
+                    
+                    # Si detectamos startup, notificar inmediatamente
+                    if server_startup_detected:
+                        self.logger.info("🔍 Startup completo detectado en refresh forzado")
+                        self._notify_server_active()
+                    
+                    # Establecer la posición al final para futuras lecturas
+                    self._last_file_position = f.tell()
+                    self._current_log_file = game_log_path
+                    self._content_loaded = True
+                    
+        except Exception as e:
+            self.logger.error(f"Error en refresh forzado del log: {e}")
+    
+    def clear_console(self):
+        """Limpiar la consola"""
+        try:
+            if hasattr(self, 'console_output') and self.console_output:
+                self.console_output.configure(state="normal")
+                self.console_output.delete("1.0", "end")
+                self.console_output.configure(state="disabled")
+        except Exception as e:
+            self.logger.error(f"Error limpiando consola: {e}")
+
     def force_reload_content(self):
         """Forzar la recarga del contenido del archivo de log"""
         try:

@@ -31,7 +31,7 @@ from .panels.cluster_panel import ClusterPanel
 
 class MainWindow:
 
-    APP_VERSION = "3.8.3"
+    APP_VERSION = "3.8.5"
     
     def __init__(self, root, config_manager, logger):
         """Inicializar la ventana principal"""
@@ -517,6 +517,10 @@ class MainWindow:
         # Mostrar la pestaña inicial
         # Inicializar con la pestaña Principal activa
         self.tabview.set("Principal")
+        
+        # Inicializar monitoreo automático del estado del servidor
+        # (Se hace aquí porque necesita que server_panel esté creado)
+        self._initialize_server_status_monitor()
         
     def create_logs_bar(self):
         """Crear barra de logs siempre visible en la parte inferior"""
@@ -1059,6 +1063,10 @@ class MainWindow:
                 color = "yellow"
             elif status == "Activo":
                 color = "green"
+            elif status == "Ejecutándose":
+                color = "green"  # Verde para servidor ejecutándose
+            elif status == "Detenido":
+                color = "red"
             elif status == "Error":
                 color = "red"
             elif status == "Verificando...":
@@ -2928,6 +2936,69 @@ Versión de la app: {self.APP_VERSION}
                 
         except Exception as e:
             self.logger.error(f"Error inicializando monitor de salud: {e}")
+    
+    def _initialize_server_status_monitor(self):
+        """Inicializar monitoreo automático del estado del servidor"""
+        try:
+            self.status_monitoring_active = True
+            self.last_known_status = "Detenido"
+            
+            # Configurar callback en el server_manager para cambios de estado
+            if hasattr(self, 'server_panel') and hasattr(self.server_panel, 'server_manager'):
+                self.server_panel.server_manager.set_status_change_callback(
+                    self._on_server_status_change
+                )
+            
+            # Iniciar monitoreo periódico
+            self._start_status_monitoring()
+            self.logger.info("✅ Monitoreo de estado del servidor iniciado")
+            
+        except Exception as e:
+            self.logger.error(f"Error inicializando monitoreo de estado: {e}")
+    
+    def _start_status_monitoring(self):
+        """Iniciar el bucle de monitoreo del estado del servidor"""
+        def monitor_status():
+            if not self.status_monitoring_active:
+                return
+                
+            try:
+                if hasattr(self, 'server_panel') and hasattr(self.server_panel, 'server_manager'):
+                    current_status = self.server_panel.server_manager.get_server_status()
+                    
+                    # Solo actualizar UI si el estado cambió
+                    if current_status != self.last_known_status:
+                        self.last_known_status = current_status
+                        self._safe_schedule_ui_update(lambda: self.update_server_status(current_status))
+                        
+                        # Mostrar en logs si el servidor se cerró externamente
+                        if current_status == "Detenido":
+                            self.add_log_message("⚠️ Servidor detectado como detenido")
+                        elif current_status == "Ejecutándose":
+                            self.add_log_message("✅ Servidor detectado como ejecutándose")
+                
+            except Exception as e:
+                self.logger.error(f"Error en monitoreo de estado: {e}")
+            
+            # Programar próxima verificación en 5 segundos
+            if self.status_monitoring_active:
+                self._safe_schedule_ui_update(lambda: self.root.after(5000, monitor_status))
+        
+        # Iniciar monitoreo
+        monitor_status()
+    
+    def _on_server_status_change(self, new_status):
+        """Callback llamado cuando cambia el estado del servidor"""
+        try:
+            self.last_known_status = new_status
+            self._safe_schedule_ui_update(lambda: self.update_server_status(new_status))
+            self.add_log_message(f"🔄 Estado del servidor cambió a: {new_status}")
+        except Exception as e:
+            self.logger.error(f"Error procesando cambio de estado: {e}")
+    
+    def stop_status_monitoring(self):
+        """Detener el monitoreo del estado del servidor"""
+        self.status_monitoring_active = False
             
     def _start_health_monitoring_if_enabled(self):
         """Iniciar monitoreo automático si está habilitado en configuración"""

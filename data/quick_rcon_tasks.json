@@ -1,0 +1,22 @@
+[
+  {
+    "name": "📢 Broadcast",
+    "command": "broadcast Mensaje del administrador",
+    "color": "blue"
+  },
+  {
+    "name": "💾 Guardar Mundo",
+    "command": "saveworld",
+    "color": "green"
+  },
+  {
+    "name": "📋 Lista Jugadores",
+    "command": "listplayers",
+    "color": "orange"
+  },
+  {
+    "name": "⏰ Tiempo",
+    "command": "time",
+    "color": "purple"
+  }
+]

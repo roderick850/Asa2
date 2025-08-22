@@ -44,10 +44,21 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         # Lista de backups realizados
         self.backup_history = []
         
+        # Para trackear cambios en la ruta de backup
+        self._last_backup_path = ""
+        
         self.create_widgets()
         self.pack(fill="both", expand=True)
         self.load_all_server_configs()
         self.load_backup_history()
+        
+        # Inicializar tracking de ruta después de crear widgets
+        if hasattr(self, 'backup_path_entry'):
+            self._last_backup_path = self.backup_path_entry.get().strip()
+            
+            # Escaneo inicial de la ruta actual para detectar backups existentes
+            if self._last_backup_path:
+                self.after(1000, lambda: self._on_backup_path_changed(self._last_backup_path))
         
         # Iniciar scheduler si está habilitado (con retraso para asegurar que la UI esté lista)
         self._safe_schedule_ui_update(lambda: self.after(3000, self.check_auto_backup))  # 3 segundos de retraso
@@ -612,14 +623,24 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         """Seleccionar carpeta de backup"""
         folder = filedialog.askdirectory(title="Seleccionar carpeta para backups")
         if folder:
+            old_path = self.backup_path_entry.get()
             self.backup_path_entry.delete(0, "end")
             self.backup_path_entry.insert(0, folder)
+            
+            # Si la ruta cambió, actualizar lista de backups
+            if old_path != folder:
+                self._on_backup_path_changed(folder)
     
     def set_default_backup_path(self):
         """Establecer la ruta de backup por defecto"""
+        old_path = self.backup_path_entry.get()
         default_path = self.get_default_backup_path()
         self.backup_path_entry.delete(0, "end")
         self.backup_path_entry.insert(0, default_path)
+        
+        # Si la ruta cambió, actualizar lista de backups
+        if old_path != default_path:
+            self._on_backup_path_changed(default_path)
         
         # Mostrar confirmación
         self.show_ctk_info(
@@ -675,6 +696,15 @@ class AdvancedBackupPanel(ctk.CTkFrame):
     
     def on_config_change(self, *args):
         """Callback cuando cambia cualquier configuración"""
+        # Detectar si cambió la ruta de backup
+        if hasattr(self, 'backup_path_entry') and hasattr(self, '_last_backup_path'):
+            current_path = self.backup_path_entry.get().strip()
+            if current_path != self._last_backup_path:
+                self._last_backup_path = current_path
+                if current_path:  # Solo si no está vacío
+                    # Actualizar lista de backups después de un pequeño retraso
+                    self.after(500, lambda: self._on_backup_path_changed(current_path))
+        
         if hasattr(self, 'current_server') and self.current_server:
             # Guardar automáticamente la configuración del servidor actual
             self.save_server_config(self.current_server)
@@ -683,6 +713,213 @@ class AdvancedBackupPanel(ctk.CTkFrame):
         """Toggle auto backup y guardar configuración"""
         self.toggle_auto_backup()
         self.on_config_change()
+    
+    def _on_backup_path_changed(self, new_path):
+        """Callback cuando cambia la ruta de backup"""
+        try:
+            self.logger.info(f"🔄 Ruta de backup cambiada a: {new_path}")
+            
+            # Escanear la nueva carpeta para encontrar backups existentes
+            self._scan_backup_directory(new_path)
+            
+            # Actualizar la lista visual
+            self.refresh_backup_history()
+            
+            self.logger.info(f"✅ Lista de backups actualizada para nueva ruta")
+            
+        except Exception as e:
+            self.logger.error(f"Error al actualizar backups para nueva ruta: {e}")
+    
+    def _scan_backup_directory(self, backup_path):
+        """Escanear directorio de backup para encontrar backups existentes"""
+        try:
+            if not backup_path or not os.path.exists(backup_path):
+                self.logger.warning(f"Ruta de backup no existe: {backup_path}")
+                self.backup_history = []
+                return
+            
+            self.logger.info(f"🔍 Escaneando directorio de backup: {backup_path}")
+            
+            # Lista para almacenar los backups encontrados
+            found_backups = []
+            
+            # Buscar archivos y carpetas que parezcan backups
+            for item in os.listdir(backup_path):
+                item_path = os.path.join(backup_path, item)
+                
+                # Buscar archivos .zip o carpetas que parezcan backups
+                if self._is_backup_file(item_path):
+                    backup_info = self._extract_backup_info(item_path)
+                    if backup_info:
+                        found_backups.append(backup_info)
+            
+            # Actualizar la lista de backups
+            self.backup_history = found_backups
+            
+            # Guardar el historial actualizado
+            self.save_backup_history()
+            
+            self.logger.info(f"📦 Encontrados {len(found_backups)} backups en la nueva ruta")
+            
+        except Exception as e:
+            self.logger.error(f"Error escaneando directorio de backup: {e}")
+            self.backup_history = []
+    
+    def _is_backup_file(self, file_path):
+        """Determinar si un archivo o carpeta es un backup"""
+        if not os.path.exists(file_path):
+            return False
+        
+        name = os.path.basename(file_path)
+        
+        # Buscar patrones típicos de backup
+        backup_patterns = [
+            # Archivos ZIP
+            lambda n: n.endswith('.zip'),
+            # Carpetas que contengan nombre de servidor y fecha
+            lambda n: any(server in n.lower() for server in ['ark', 'server', 'backup']),
+            # Patrones con fechas
+            lambda n: any(char.isdigit() for char in n) and ('_' in n or '-' in n)
+        ]
+        
+        return any(pattern(name) for pattern in backup_patterns)
+    
+    def _extract_backup_info(self, backup_path):
+        """Extraer información de un backup encontrado"""
+        try:
+            name = os.path.basename(backup_path)
+            
+            # Obtener información del archivo/carpeta
+            stat = os.stat(backup_path)
+            size = stat.st_size if os.path.isfile(backup_path) else self._get_directory_size(backup_path)
+            date = datetime.fromtimestamp(stat.st_mtime)
+            
+            # Tratar de extraer el nombre del servidor del nombre del backup
+            server_name = self._extract_server_name(name)
+            
+            backup_info = {
+                "name": name,
+                "server": server_name,
+                "path": backup_path,
+                "date": date.isoformat(),
+                "size": size,
+                "compressed": name.endswith('.zip'),
+                "type": "existente"  # Marcar como backup existente encontrado
+            }
+            
+            return backup_info
+            
+        except Exception as e:
+            self.logger.error(f"Error extrayendo información de backup {backup_path}: {e}")
+            return None
+    
+    def _extract_server_name(self, backup_name):
+        """Extraer nombre del servidor del nombre del backup"""
+        try:
+            # Remover extensión
+            name = backup_name.replace('.zip', '')
+            
+            # Buscar patrones comunes: servidor_fecha_hora
+            parts = name.split('_')
+            if len(parts) >= 2:
+                # El primer parte suele ser el nombre del servidor
+                return parts[0]
+            
+            # Si no hay guiones bajos, buscar otros separadores
+            parts = name.split('-')
+            if len(parts) >= 2:
+                return parts[0]
+            
+            # Si no se puede determinar, usar "Unknown"
+            return "Unknown"
+            
+        except Exception:
+            return "Unknown"
+    
+    def _get_directory_size(self, directory):
+        """Calcular tamaño total de un directorio"""
+        try:
+            total_size = 0
+            for dirpath, dirnames, filenames in os.walk(directory):
+                for filename in filenames:
+                    filepath = os.path.join(dirpath, filename)
+                    if os.path.exists(filepath):
+                        total_size += os.path.getsize(filepath)
+            return total_size
+        except Exception:
+            return 0
+    
+    def _safe_open_folder(self, folder_path):
+        """Abrir carpeta de forma segura en Windows"""
+        try:
+            # Normalizar el path para Windows
+            normalized_path = os.path.normpath(folder_path)
+            
+            # Verificar que la carpeta existe
+            if not os.path.exists(normalized_path):
+                raise FileNotFoundError(f"La carpeta no existe: {normalized_path}")
+            
+            # Método 1: Usar startfile (más confiable en Windows)
+            try:
+                os.startfile(normalized_path)
+                self.logger.info(f"📁 Carpeta abierta exitosamente: {normalized_path}")
+                return  # IMPORTANTE: Salir aquí si fue exitoso
+            except Exception as startfile_error:
+                self.logger.warning(f"startfile falló: {startfile_error}")
+            
+            # Método 2: Solo si el primero falló - Usar subprocess con explorer
+            try:
+                import subprocess
+                # Usar comillas para manejar espacios en la ruta
+                cmd = f'explorer "{normalized_path}"'
+                subprocess.run(cmd, shell=True, check=True)
+                self.logger.info(f"📁 Carpeta abierta con explorer: {normalized_path}")
+                return  # IMPORTANTE: Salir aquí si fue exitoso
+            except Exception as explorer_error:
+                self.logger.warning(f"explorer falló: {explorer_error}")
+            
+            # Método 3: Solo como último recurso
+            try:
+                import subprocess
+                subprocess.Popen(['explorer', normalized_path])
+                self.logger.info(f"📁 Carpeta abierta con Popen: {normalized_path}")
+                return  # IMPORTANTE: Salir aquí si fue exitoso
+            except Exception as popen_error:
+                self.logger.error(f"Popen falló: {popen_error}")
+            
+            # Si todos los métodos fallan
+            raise Exception("Todos los métodos de apertura fallaron")
+            
+        except Exception as e:
+            error_msg = f"No se pudo abrir la carpeta: {e}"
+            self.logger.error(error_msg)
+            self.show_ctk_error("Error al abrir carpeta", error_msg)
+    
+    def _safe_open_file_location(self, file_path):
+        """Abrir ubicación de archivo de forma segura en Windows"""
+        try:
+            # Normalizar el path para Windows
+            normalized_path = os.path.normpath(file_path)
+            
+            # Usar subprocess con comando explorer /select
+            import subprocess
+            subprocess.run(['explorer', '/select,', normalized_path], shell=True, check=True)
+            
+            self.logger.info(f"📁 Ubicación abierta exitosamente: {normalized_path}")
+            
+        except Exception as e:
+            # Fallback: abrir la carpeta padre
+            try:
+                parent_folder = os.path.dirname(file_path)
+                if os.path.exists(parent_folder):
+                    self._safe_open_folder(parent_folder)
+                    self.logger.info(f"📁 Abrió carpeta padre como fallback: {parent_folder}")
+                else:
+                    raise Exception(f"La carpeta padre no existe: {parent_folder}")
+                    
+            except Exception as fallback_error:
+                self.logger.error(f"Error en apertura de ubicación: explorer={e}, fallback={fallback_error}")
+                raise Exception(f"No se pudo abrir la ubicación del archivo: {file_path}")
     
     def start_scheduler(self):
         """Iniciar programador de backups automáticos"""
@@ -1026,7 +1263,8 @@ class AdvancedBackupPanel(ctk.CTkFrame):
                 self._safe_schedule_ui_update(lambda: self.progress_label.configure(text="Comprimiendo backup..."))
                 zip_path = backup_path + ".zip"
                 self._compress_backup(actual_backup_path, zip_path)
-                shutil.rmtree(actual_backup_path)  # Eliminar carpeta temporal
+                # Eliminar carpeta temporal con manejo robusto de errores
+                self._safe_cleanup_temp_directory(actual_backup_path)
                 final_path = zip_path
                 if hasattr(self.main_window, 'add_log_message'):
                     self._safe_schedule_ui_update(lambda: self.main_window.add_log_message("✅ Backup comprimido correctamente"))
@@ -1110,6 +1348,52 @@ class AdvancedBackupPanel(ctk.CTkFrame):
                     file_path = os.path.join(root, file)
                     arc_name = os.path.relpath(file_path, source_dir)
                     zipf.write(file_path, arc_name)
+    
+    def _safe_cleanup_temp_directory(self, temp_dir_path):
+        """Limpiar directorio temporal de forma segura con reintentos"""
+        if not temp_dir_path or not os.path.exists(temp_dir_path):
+            return
+            
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            try:
+                shutil.rmtree(temp_dir_path)
+                self.logger.info(f"🧹 Directorio temporal limpiado exitosamente: {temp_dir_path}")
+                return
+            except PermissionError as e:
+                self.logger.warning(f"⚠️ Error de permisos limpiando directorio temporal (intento {attempt + 1}/{max_attempts}): {e}")
+                if attempt < max_attempts - 1:
+                    # Esperar un poco y reintentar
+                    import time
+                    time.sleep(0.5)
+                    continue
+            except OSError as e:
+                self.logger.warning(f"⚠️ Error del sistema limpiando directorio temporal (intento {attempt + 1}/{max_attempts}): {e}")
+                if attempt < max_attempts - 1:
+                    time.sleep(0.5)
+                    continue
+            except Exception as e:
+                self.logger.error(f"❌ Error inesperado limpiando directorio temporal (intento {attempt + 1}/{max_attempts}): {e}")
+                if attempt < max_attempts - 1:
+                    time.sleep(0.5)
+                    continue
+        
+        # Si llegamos aquí, todos los intentos fallaron
+        try:
+            # Último intento con ignore_errors=True
+            shutil.rmtree(temp_dir_path, ignore_errors=True)
+            if not os.path.exists(temp_dir_path):
+                self.logger.info(f"🧹 Limpieza forzada exitosa: {temp_dir_path}")
+            else:
+                self.logger.error(f"❌ No se pudo limpiar directorio temporal después de {max_attempts} intentos: {temp_dir_path}")
+                # Registrar contenido para debugging
+                try:
+                    files = os.listdir(temp_dir_path)
+                    self.logger.error(f"📁 Contenido del directorio no eliminado: {files}")
+                except:
+                    pass
+        except Exception as final_error:
+            self.logger.error(f"❌ Error crítico en limpieza final: {final_error}")
     
     def _verify_backup(self, backup_path):
         """Verificar integridad del backup"""
@@ -1513,12 +1797,14 @@ class AdvancedBackupPanel(ctk.CTkFrame):
     def open_backup_location(self, backup):
         """Abrir ubicación del backup"""
         try:
-            if os.path.exists(backup['path']):
-                import subprocess
-                subprocess.Popen(f'explorer /select,"{backup["path"]}"')
+            backup_path = backup['path']
+            if os.path.exists(backup_path):
+                self._safe_open_file_location(backup_path)
             else:
+                self.logger.warning(f"Backup no existe: {backup_path}")
                 self.show_ctk_error("Archivo no encontrado", "El backup no existe en la ubicación registrada")
         except Exception as e:
+            self.logger.error(f"Error abriendo ubicación del backup: {e}")
             self.show_ctk_error("Error", f"No se pudo abrir la ubicación: {e}")
     
     def clean_old_backups(self):
@@ -1536,14 +1822,15 @@ class AdvancedBackupPanel(ctk.CTkFrame):
     
     def open_backup_folder(self):
         """Abrir carpeta de backups"""
-        backup_path = self.backup_path_entry.get()
+        backup_path = self.backup_path_entry.get().strip()
         if backup_path and os.path.exists(backup_path):
             try:
-                import subprocess
-                subprocess.Popen(f'explorer "{backup_path}"')
+                self._safe_open_folder(backup_path)
             except Exception as e:
+                self.logger.error(f"Error abriendo carpeta de backup: {e}")
                 self.show_ctk_error("Error", f"No se pudo abrir la carpeta: {e}")
         else:
+            self.logger.warning(f"Carpeta de backup no existe: {backup_path}")
             self.show_ctk_error("Carpeta no encontrada", "La carpeta de backup no existe")
     
     def load_backup_config(self):
@@ -1709,11 +1996,16 @@ class AdvancedBackupPanel(ctk.CTkFrame):
             
             # Actualizar widgets con configuración del servidor
             if hasattr(self, 'backup_path_entry'):
+                old_path = self.backup_path_entry.get()
                 self.backup_path_entry.delete(0, "end")
                 backup_path = config.get("backup_path", self.get_default_backup_path())
                 if not backup_path:
                     backup_path = self.get_default_backup_path()
                 self.backup_path_entry.insert(0, backup_path)
+                
+                # Si la ruta cambió, escanear nueva carpeta
+                if old_path != backup_path:
+                    self._on_backup_path_changed(backup_path)
             
             if hasattr(self, 'auto_backup_var'):
                 self.auto_backup_var.set(config.get("auto_backup", False))
