@@ -1,0 +1,15 @@
+2025-08-21 22:26:20 - ArkServerManager - WARNING - No hay panel RCON disponible para enviar alerta
+2025-08-21 22:26:20 - ArkServerManager - INFO - Alerta enviada: dino_taming - Humano ha tameado un Ankylosaurus (Nivel 142)
+2025-08-21 22:27:00 - ArkServerManager - INFO - Cargando alertas: connection=True, disconnection=True, player_death=True, dino_death=True, taming=True
+2025-08-21 22:27:00 - ArkServerManager - INFO - ✅ Configuración de alertas cargada exitosamente
+2025-08-21 22:27:00 - ArkServerManager - WARNING - RCON no está conectado, intentando conectar...
+2025-08-21 22:27:00 - ArkServerManager - ERROR - No se pudo conectar a RCON para enviar alerta
+2025-08-21 22:27:00 - ArkServerManager - INFO - Alerta enviada: dino_taming - Humano ha tameado un Ankylosaurus (Nivel 142)
+2025-08-21 22:31:50 - ArkServerManager - INFO - Cargando alertas: connection=True, disconnection=True, player_death=True, dino_death=True, taming=True
+2025-08-21 22:31:50 - ArkServerManager - INFO - ✅ Configuración de alertas cargada exitosamente
+2025-08-21 22:31:50 - ArkServerManager - INFO - 🎮 Intentando enviar alerta dino_taming: ServerChat Humano ha tameado un Ankylosaurus (Nivel 142)
+2025-08-21 22:31:50 - ArkServerManager - WARNING - ⚠️ RCON marcado como desconectado, pero intentando enviar: ServerChat Humano ha tameado un Ankylosaurus (Nivel 142)
+2025-08-21 22:31:50 - ArkServerManager - INFO - Ejecutando comando RCON: rcon\rcon.exe -a 127.0.0.1:27020 -p  [comando oculto]
+2025-08-21 22:31:50 - ArkServerManager - ERROR - ❌ Error ejecutando comando RCON: ServerChat Humano ha tameado un Ankylosaurus (Nivel 142) - Resultado: ❌ Error: cli: config: parse file: read file: open rcon.yaml: The system cannot find the file specified.
+2025-08-21 22:31:50 - ArkServerManager - ERROR - ❌ Falló el envío de alerta dino_taming
+2025-08-21 22:31:50 - ArkServerManager - INFO - Alerta enviada: dino_taming - Humano ha tameado un Ankylosaurus (Nivel 142)

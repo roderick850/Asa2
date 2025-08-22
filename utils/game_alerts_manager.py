@@ -316,7 +316,7 @@ class GameAlertsManager:
         try:
             if not self.rcon_panel:
                 if self.logger:
-                    self.logger.warning("No hay panel RCON disponible para enviar alerta")
+                    self.logger.warning("⚠️ No hay panel RCON disponible para enviar alerta")
                 return
             
             # Limpiar cualquier código RichColor del mensaje
@@ -325,19 +325,25 @@ class GameAlertsManager:
             # Construir comando RCON sin colores
             rcon_command = f'ServerChat {clean_message}'
             
+            if self.logger:
+                self.logger.info(f"🎮 Intentando enviar alerta {event_type}: {rcon_command}")
+            
             # Ejecutar comando
             if hasattr(self.rcon_panel, 'execute_rcon_command'):
                 result = self.rcon_panel.execute_rcon_command(rcon_command)
-                if self.logger:
-                    self.logger.debug(f"Comando RCON ejecutado: {rcon_command}")
-                    self.logger.debug(f"Resultado: {result}")
+                if result:
+                    if self.logger:
+                        self.logger.info(f"✅ Alerta {event_type} enviada exitosamente")
+                else:
+                    if self.logger:
+                        self.logger.error(f"❌ Falló el envío de alerta {event_type}")
             else:
                 if self.logger:
                     self.logger.warning("Panel RCON no tiene método execute_rcon_command")
                     
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Error enviando alerta RCON: {e}")
+                self.logger.error(f"❌ Error enviando alerta RCON {event_type}: {e}")
     
     def _clean_rich_color_from_message(self, message: str) -> str:
         """Limpiar cualquier código RichColor de un mensaje"""

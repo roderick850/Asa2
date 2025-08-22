@@ -480,23 +480,27 @@ class RconPanel(ctk.CTkFrame):
     def execute_rcon_command(self, command):
         """Ejecutar comando RCON (método público para GameAlertsManager)"""
         try:
+            # SIEMPRE intentar ejecutar el comando, independientemente del estado de conexión
+            # Si no está conectado, _execute_rcon_command manejará el error
             if not self.is_connected:
-                self.logger.warning("RCON no está conectado, intentando conectar...")
-                if not self.test_connection():
-                    self.logger.error("No se pudo conectar a RCON para enviar alerta")
-                    return False
+                self.logger.warning(f"⚠️ RCON marcado como desconectado, pero intentando enviar: {command}")
             
             # Ejecutar el comando
             result = self._execute_rcon_command(command)
-            if result:
-                self.logger.info(f"Comando RCON ejecutado exitosamente: {command}")
+            if result and "error" not in result.lower():
+                self.logger.info(f"✅ Comando RCON ejecutado exitosamente: {command}")
+                # Marcar como conectado si el comando fue exitoso
+                self.is_connected = True
                 return True
             else:
-                self.logger.error(f"Error ejecutando comando RCON: {command}")
+                self.logger.error(f"❌ Error ejecutando comando RCON: {command} - Resultado: {result}")
+                # Marcar como desconectado si falló
+                self.is_connected = False
                 return False
                 
         except Exception as e:
-            self.logger.error(f"Error en execute_rcon_command: {e}")
+            self.logger.error(f"❌ Error en execute_rcon_command: {e}")
+            self.is_connected = False
             return False
     
     def _execute_rcon_command(self, command):
