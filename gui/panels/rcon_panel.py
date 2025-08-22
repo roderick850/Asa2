@@ -34,7 +34,13 @@ class RconPanel(ctk.CTkFrame):
         
         # Variables para tareas rápidas personalizables
         self.quick_tasks = []
-        self.quick_tasks_file = "config/quick_rcon_tasks.json"
+        
+        # Obtener ruta segura para archivo de configuración
+        try:
+            config_dir = self.config_manager.get_data_directory() if hasattr(self.config_manager, 'get_data_directory') else "config"
+            self.quick_tasks_file = os.path.join(config_dir, "quick_rcon_tasks.json")
+        except:
+            self.quick_tasks_file = "config/quick_rcon_tasks.json"
         
         # Inicializar GameAlertsManager
         self.game_alerts = GameAlertsManager(logger, self)
@@ -1699,8 +1705,17 @@ class RconPanel(ctk.CTkFrame):
     def load_quick_tasks_config(self):
         """Cargar configuración de tareas rápidas desde archivo"""
         try:
-            # Asegurar que el directorio config existe
-            os.makedirs("config", exist_ok=True)
+            # Asegurar que el directorio config existe (usando sistema seguro)
+            config_dir = os.path.dirname(self.quick_tasks_file)
+            try:
+                os.makedirs(config_dir, exist_ok=True)
+            except (OSError, PermissionError):
+                # Si falla, usar directorio temporal
+                import tempfile
+                temp_dir = tempfile.mkdtemp(prefix="ArkSM_rcon_config_")
+                self.quick_tasks_file = os.path.join(temp_dir, "quick_rcon_tasks.json")
+                if self.logger:
+                    self.logger.warning(f"RconPanel: Usando directorio temporal para tareas: {temp_dir}")
             
             if os.path.exists(self.quick_tasks_file):
                 with open(self.quick_tasks_file, 'r', encoding='utf-8') as f:
@@ -1721,7 +1736,18 @@ class RconPanel(ctk.CTkFrame):
     def save_quick_tasks_config(self):
         """Guardar configuración de tareas rápidas"""
         try:
-            os.makedirs("config", exist_ok=True)
+            # Asegurar que el directorio existe (usando sistema seguro)
+            config_dir = os.path.dirname(self.quick_tasks_file)
+            try:
+                os.makedirs(config_dir, exist_ok=True)
+            except (OSError, PermissionError):
+                # Si falla, usar directorio temporal
+                import tempfile
+                temp_dir = tempfile.mkdtemp(prefix="ArkSM_rcon_config_")
+                self.quick_tasks_file = os.path.join(temp_dir, "quick_rcon_tasks.json")
+                if self.logger:
+                    self.logger.warning(f"RconPanel: Usando directorio temporal para guardar: {temp_dir}")
+            
             with open(self.quick_tasks_file, 'w', encoding='utf-8') as f:
                 json.dump(self.quick_tasks, f, indent=2, ensure_ascii=False)
         except Exception as e:

@@ -74,7 +74,15 @@ class ScheduledCommandsManager:
         self.history_file = os.path.join(data_dir, "command_history.json")
         
         # Asegurar que el directorio existe
-        os.makedirs(data_dir, exist_ok=True)
+        try:
+            os.makedirs(data_dir, exist_ok=True)
+        except (OSError, PermissionError):
+            # Si falla, usar directorio temporal
+            import tempfile
+            temp_dir = tempfile.mkdtemp(prefix="ArkSM_scheduled_")
+            self.tasks_file = os.path.join(temp_dir, "scheduled_tasks.json")
+            self.history_file = os.path.join(temp_dir, "command_history.json")
+            print(f"⚠️ ScheduledCommands: Usando directorio temporal: {temp_dir}")
         
         self.scheduled_commands: List[ScheduledCommand] = []
         self.command_history: List[Dict] = []

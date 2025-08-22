@@ -81,14 +81,34 @@ class ModsPanel(ctk.CTkFrame):
                 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             
             data_dir = os.path.join(base_dir, "data")
-            os.makedirs(data_dir, exist_ok=True)
-            return data_dir
+            try:
+                os.makedirs(data_dir, exist_ok=True)
+                return data_dir
+            except (OSError, PermissionError):
+                # Si falla, usar directorio temporal
+                import tempfile
+                temp_dir = tempfile.mkdtemp(prefix="ArkSM_mods_data_")
+                if self.logger:
+                    self.logger.warning(f"ModsPanel: Usando directorio temporal para datos: {temp_dir}")
+                else:
+                    print(f"⚠️ ModsPanel: Usando directorio temporal para datos: {temp_dir}")
+                return temp_dir
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Error al obtener directorio de datos: {e}")
             fallback_dir = os.path.join(os.path.dirname(__file__), "..", "..", "data")
-            os.makedirs(fallback_dir, exist_ok=True)
-            return fallback_dir
+            try:
+                os.makedirs(fallback_dir, exist_ok=True)
+                return fallback_dir
+            except (OSError, PermissionError):
+                # Como último recurso, usar directorio temporal
+                import tempfile
+                emergency_dir = tempfile.mkdtemp(prefix="ArkSM_mods_emergency_")
+                if self.logger:
+                    self.logger.error(f"ModsPanel: Usando directorio de emergencia: {emergency_dir}")
+                else:
+                    print(f"🆘 ModsPanel: Usando directorio de emergencia: {emergency_dir}")
+                return emergency_dir
     
     def refresh_initial_tabs(self):
         """Refrescar pestañas con contenido inicial"""

@@ -31,7 +31,14 @@ class AppSettings:
         
         # Crear directorio data si no existe
         data_dir = os.path.dirname(self.settings_file)
-        os.makedirs(data_dir, exist_ok=True)
+        try:
+            os.makedirs(data_dir, exist_ok=True)
+        except (OSError, PermissionError):
+            # Si falla, usar directorio temporal
+            import tempfile
+            temp_dir = tempfile.mkdtemp(prefix="ArkSM_settings_")
+            self.settings_file = os.path.join(temp_dir, "app_settings.json")
+            print(f"⚠️ AppSettings: Usando directorio temporal: {temp_dir}")
         
         # Log de la ruta para debugging
         self.logger.debug(f"AppSettings: Ruta del archivo de configuraciones: {self.settings_file}")
@@ -95,7 +102,12 @@ class AppSettings:
         """Guardar configuraciones a archivo con logging robusto"""
         try:
             # Crear directorio si no existe
-            os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
+            data_dir = os.path.dirname(self.settings_file)
+            try:
+                os.makedirs(data_dir, exist_ok=True)
+            except (OSError, PermissionError):
+                # Si el directorio no se puede crear, el archivo ya debería estar en un directorio temporal
+                pass
             
             # Log antes de guardar
             self.logger.info("💾 Iniciando guardado de configuraciones...")

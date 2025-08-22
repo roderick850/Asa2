@@ -11,8 +11,20 @@ class ConfigProfileManager:
     
     def __init__(self, logger=None):
         self.logger = logger
-        self.profiles_dir = Path("data/config_profiles")
-        self.profiles_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Crear directorio de perfiles de forma segura
+        try:
+            self.profiles_dir = Path("data/config_profiles")
+            self.profiles_dir.mkdir(parents=True, exist_ok=True)
+        except (OSError, PermissionError) as e:
+            # Si falla, usar directorio temporal
+            import tempfile
+            temp_dir = Path(tempfile.mkdtemp(prefix="ArkSM_profiles_"))
+            self.profiles_dir = temp_dir
+            if logger:
+                logger.warning(f"Usando directorio temporal para perfiles: {temp_dir}")
+            else:
+                print(f"⚠️ Usando directorio temporal para perfiles: {temp_dir}")
         
         # Archivo de metadatos de perfiles
         self.profiles_metadata_file = self.profiles_dir / "profiles_metadata.json"

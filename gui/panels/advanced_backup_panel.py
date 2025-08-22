@@ -1621,8 +1621,9 @@ class AdvancedBackupPanel(ctk.CTkFrame):
     def save_backup_history(self):
         """Guardar historial de backups"""
         try:
-            os.makedirs("data", exist_ok=True)
-            with open("data/backup_history.json", 'w', encoding='utf-8') as f:
+            # Usar método centralizado para obtener ruta de datos
+            history_file = self.config_manager.get_data_file_path("backup_history.json")
+            with open(history_file, 'w', encoding='utf-8') as f:
                 json.dump(self.backup_history, f, indent=2)
                 
         except Exception as e:
@@ -1804,8 +1805,9 @@ class AdvancedBackupPanel(ctk.CTkFrame):
     def save_all_server_configs(self):
         """Guardar todas las configuraciones de servidores"""
         try:
-            os.makedirs("data", exist_ok=True)
-            with open("data/backup_server_configs.json", 'w', encoding='utf-8') as f:
+            # Usar método centralizado para obtener ruta de datos
+            config_file = self.config_manager.get_data_file_path("backup_server_configs.json")
+            with open(config_file, 'w', encoding='utf-8') as f:
                 json.dump(self.server_configs, f, indent=2)
                 
         except Exception as e:

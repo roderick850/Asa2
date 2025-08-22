@@ -15,9 +15,8 @@ class AdvancedRestartPanel(ctk.CTkFrame):
         self.main_window = main_window
         self.current_server_name = None
         
-        # Archivos de configuración
-        self.restart_config_file = "data/restart_config.json"
-        self.restart_history_file = "data/restart_history.json"
+        # Archivos de configuración - usar rutas dinámicas
+        # Se inicializarán usando el config_manager más adelante
         self.restart_configs = {}  # {server_name: {config_data}}
         self.restart_history = {}  # {server_name: [{restart_info}]}
         
@@ -1471,10 +1470,10 @@ class AdvancedRestartPanel(ctk.CTkFrame):
             
             self.restart_configs[server_name] = config
             
-            # Crear directorio si no existe
-            os.makedirs("data", exist_ok=True)
+            # Usar método centralizado para obtener ruta de datos
+            config_file = self.config_manager.get_data_file_path("restart_config.json")
             
-            with open(self.restart_config_file, 'w', encoding='utf-8') as f:
+            with open(config_file, 'w', encoding='utf-8') as f:
                 json.dump(self.restart_configs, f, indent=2, ensure_ascii=False)
             
             self.logger.info(f"Configuración de reinicios guardada para {server_name}")
@@ -1490,8 +1489,9 @@ class AdvancedRestartPanel(ctk.CTkFrame):
     def load_all_restart_configs(self):
         """Cargar todas las configuraciones de reinicios"""
         try:
-            if os.path.exists(self.restart_config_file):
-                with open(self.restart_config_file, 'r', encoding='utf-8') as f:
+            config_file = self.config_manager.get_data_file_path("restart_config.json")
+            if os.path.exists(config_file):
+                with open(config_file, 'r', encoding='utf-8') as f:
                     self.restart_configs = json.load(f)
         except Exception as e:
             self.logger.error(f"Error cargando configuraciones de reinicios: {e}")
@@ -1500,8 +1500,9 @@ class AdvancedRestartPanel(ctk.CTkFrame):
     def save_restart_history(self):
         """Guardar historial de reinicios"""
         try:
-            os.makedirs("data", exist_ok=True)
-            with open(self.restart_history_file, 'w', encoding='utf-8') as f:
+            # Usar método centralizado para obtener ruta de datos
+            history_file = self.config_manager.get_data_file_path("restart_history.json")
+            with open(history_file, 'w', encoding='utf-8') as f:
                 json.dump(self.restart_history, f, indent=2, ensure_ascii=False)
         except Exception as e:
             self.logger.error(f"Error guardando historial de reinicios: {e}")
@@ -1509,8 +1510,9 @@ class AdvancedRestartPanel(ctk.CTkFrame):
     def load_restart_history(self):
         """Cargar historial de reinicios"""
         try:
-            if os.path.exists(self.restart_history_file):
-                with open(self.restart_history_file, 'r', encoding='utf-8') as f:
+            history_file = self.config_manager.get_data_file_path("restart_history.json")
+            if os.path.exists(history_file):
+                with open(history_file, 'r', encoding='utf-8') as f:
                     self.restart_history = json.load(f)
         except Exception as e:
             self.logger.error(f"Error cargando historial de reinicios: {e}")

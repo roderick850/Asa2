@@ -38,9 +38,55 @@ class ConfigManager:
     def get_data_file_path(self, filename):
         """Obtener ruta completa para archivos en la carpeta data"""
         data_dir = os.path.join(self.base_dir, "data")
-        os.makedirs(data_dir, exist_ok=True)
-        return os.path.join(data_dir, filename)
+        self._ensure_data_directory(data_dir)
         
+        # Verificar si hay una ruta temporal disponible
+        try:
+            import main
+            if hasattr(main, '_safe_dir_manager'):
+                safe_data_dir = main._safe_dir_manager.get_safe_path(data_dir)
+                return os.path.join(safe_data_dir, filename)
+        except:
+            pass
+        
+        return os.path.join(data_dir, filename)
+    
+    def get_data_directory(self):
+        """Obtener directorio de datos con manejo de permisos mejorado"""
+        data_dir = os.path.join(self.base_dir, "data")
+        self._ensure_data_directory(data_dir)
+        
+        # Verificar si hay una ruta temporal disponible
+        try:
+            import main
+            if hasattr(main, '_safe_dir_manager'):
+                safe_data_dir = main._safe_dir_manager.get_safe_path(data_dir)
+                return safe_data_dir
+        except:
+            pass
+        
+        return data_dir
+    
+    def _ensure_data_directory(self, data_dir):
+        """Crear directorio de datos usando método seguro"""
+        try:
+            # Intentar crear directorio normalmente
+            os.makedirs(data_dir, exist_ok=True)
+            
+            # Verificar que sea accesible
+            if os.access(data_dir, os.W_OK):
+                return data_dir
+            else:
+                raise PermissionError("Directorio no escribible")
+                
+        except (OSError, PermissionError) as e:
+            # Si falla, usar directorio temporal como alternativa
+            import tempfile
+            temp_data_dir = tempfile.mkdtemp(prefix="ArkSM_data_")
+            print(f"⚠️ ConfigManager: Usando directorio temporal para datos: {temp_data_dir}")
+            return temp_data_dir
+    
+
     def load_config(self):
         """Cargar configuración desde archivo preservando formato original"""
         try:

@@ -6,6 +6,57 @@ from pathlib import Path
 # Agregar el directorio raíz al path para importar módulos
 sys.path.append(str(Path(__file__).parent))
 
+# SOLUCIÓN FINAL: Sistema global de directorios seguros con caché
+import os
+import tempfile
+
+class SafeDirectoryManager:
+    """Gestor global de directorios con fallback automático"""
+    
+    def __init__(self):
+        self.temp_directories = {}  # Cache de directorios temporales
+        self.original_makedirs = os.makedirs
+        
+    def safe_makedirs(self, path, mode=0o777, exist_ok=False):
+        """Versión segura con fallback automático a directorios temporales"""
+        try:
+            # Intentar crear directorio normalmente
+            result = self.original_makedirs(path, mode=mode, exist_ok=exist_ok)
+            return result
+        except (OSError, PermissionError) as e:
+            # Verificar si es un directorio de la aplicación
+            path_str = str(path).lower()
+            app_dirs = ['data', 'logs', 'config', 'backups', 'exports']
+            
+            if any(app_dir in path_str for app_dir in app_dirs):
+                # Crear directorio temporal y guardarlo en caché
+                normalized_path = os.path.normpath(path)
+                
+                if normalized_path not in self.temp_directories:
+                    dir_name = os.path.basename(path) or "app_data"
+                    temp_dir = tempfile.mkdtemp(prefix=f"ArkSM_{dir_name}_")
+                    self.temp_directories[normalized_path] = temp_dir
+                    print(f"⚠️ Permisos: {dir_name} → {temp_dir}")
+                
+                # No lanzar error, dejar que continúe con el directorio temporal
+                return None
+            else:
+                # Si no es directorio de la app, relanzar error original
+                raise e
+    
+    def get_safe_path(self, original_path):
+        """Obtener ruta segura (temporal si es necesario)"""
+        normalized_path = os.path.normpath(original_path)
+        return self.temp_directories.get(normalized_path, original_path)
+
+# Crear instancia global
+_safe_dir_manager = SafeDirectoryManager()
+
+# Parchar os.makedirs
+os.makedirs = _safe_dir_manager.safe_makedirs
+
+print("🔧 Sistema de directorios globalmente seguro activado")
+
 from gui.main_window import MainWindow
 from gui.dialogs.initial_setup import InitialSetupDialog
 from utils.config_manager import ConfigManager
@@ -17,23 +68,42 @@ class ArkServerManager:
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
         
-        # Crear carpetas esenciales temprano para evitar errores de permisos
-        self._ensure_essential_directories()
+        print("🚀 Iniciando Ark Server Manager...")
         
-        # Inicializar configuraciones con manejo de errores
+        # Obtener directorio base
+        if hasattr(sys, '_MEIPASS'):
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        print(f"📁 Directorio base: {base_dir}")
+        
+        # Crear carpetas esenciales (ahora usando el sistema seguro)
+        self._ensure_essential_directories_simple()
+        
+        # Inicializar configuraciones con manejo de errores robusto
         try:
             self.config_manager = ConfigManager()
             self.config_manager.load_config()  # Cargar explícitamente
             self.logger = Logger()
             self.logger.info("Sistema de configuración inicializado correctamente")
+            print("✅ Sistema de configuración inicializado")
         except Exception as e:
             # Crear logger básico para reportar error
             import logging
             logging.basicConfig(level=logging.ERROR)
             logging.error(f"Error crítico al inicializar configuración: {e}")
+            print(f"⚠️ Error en configuración, usando valores por defecto: {e}")
             # Continuar con configuración por defecto
-            self.config_manager = ConfigManager()
-            self.logger = Logger()
+            try:
+                self.config_manager = ConfigManager()
+                self.logger = Logger()
+                print("✅ Sistema de configuración inicializado en modo fallback")
+            except Exception as fallback_error:
+                print(f"❌ Error crítico en modo fallback: {fallback_error}")
+                # Crear configuración mínima para que la app pueda continuar
+                self.config_manager = None
+                self.logger = None
         
         # Crear ventana principal
         self.root = ctk.CTk()
@@ -144,6 +214,9 @@ class ArkServerManager:
     
     def _ensure_essential_directories(self):
         """Crear directorios esenciales al inicio para evitar errores de permisos"""
+        success = True
+        failed_dirs = []
+        
         try:
             # Obtener directorio base de la aplicación
             if hasattr(sys, '_MEIPASS'):
@@ -162,6 +235,8 @@ class ArkServerManager:
                 'exports'
             ]
             
+            print(f"📁 Verificando directorios esenciales en: {base_dir}")
+            
             # Crear cada directorio si no existe
             for dir_name in essential_dirs:
                 dir_path = os.path.join(base_dir, dir_name)
@@ -174,21 +249,37 @@ class ArkServerManager:
                     
                     # Verificar que el directorio es accesible
                     if os.access(dir_path, os.W_OK):
-                        print(f"✅ Directorio creado/verificado: {dir_name}")
+                        print(f"✅ Directorio OK: {dir_name}")
                     else:
-                        print(f"⚠️ Directorio sin permisos de escritura: {dir_name}")
+                        print(f"⚠️ Sin permisos de escritura: {dir_name}")
                         # Intentar corregir permisos en Windows
                         if os.name == 'nt':
-                            self._fix_windows_permissions(dir_path)
+                            if self._fix_windows_permissions(dir_path):
+                                print(f"✅ Permisos corregidos: {dir_name}")
+                            else:
+                                failed_dirs.append(dir_name)
+                                success = False
+                        else:
+                            failed_dirs.append(dir_name)
+                            success = False
                             
                 except (OSError, PermissionError) as e:
-                    print(f"❌ Error creando directorio {dir_name}: {e}")
+                    print(f"❌ Error con directorio {dir_name}: {e}")
+                    failed_dirs.append(dir_name)
+                    success = False
+                    
                     # Mostrar mensaje de ayuda específico para Windows
                     if os.name == 'nt':
                         self._show_windows_permission_help(dir_name, str(e))
+            
+            if failed_dirs:
+                print(f"⚠️ Directorios con problemas: {', '.join(failed_dirs)}")
                         
         except Exception as e:
             print(f"❌ Error general creando directorios esenciales: {e}")
+            success = False
+        
+        return success
     
     def _create_directory_with_windows_permissions(self, dir_path):
         """Crear directorio con permisos específicos para Windows"""
@@ -277,6 +368,49 @@ class ArkServerManager:
             print(f"📄 Archivo de ayuda creado: {help_file}")
         except:
             pass
+    
+    def _ensure_essential_directories_simple(self):
+        """Crear directorios esenciales usando el sistema seguro"""
+        essential_dirs = ['data', 'logs', 'config', 'backups', 'exports']
+        
+        print("📁 Creando directorios esenciales...")
+        
+        # Obtener directorio base
+        if hasattr(sys, '_MEIPASS'):
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        for dir_name in essential_dirs:
+            try:
+                # El sistema global manejará automáticamente los errores
+                dir_path = os.path.join(base_dir, dir_name)
+                os.makedirs(dir_path, exist_ok=True)
+                
+                # Verificar si se usó un directorio temporal
+                safe_path = _safe_dir_manager.get_safe_path(dir_path)
+                if safe_path != dir_path:
+                    print(f"⚠️ {dir_name}: Usando directorio temporal")
+                else:
+                    print(f"✅ {dir_name}: OK")
+                    
+            except Exception as e:
+                print(f"❌ Error crítico con directorio {dir_name}: {e}")
+        
+        print("✅ Directorios esenciales procesados")
+    
+    def _show_permission_warning(self):
+        """Mostrar advertencia sobre problemas de permisos"""
+        print("\n" + "="*60)
+        print("⚠️  ADVERTENCIA: PROBLEMAS DE PERMISOS DETECTADOS")
+        print("="*60)
+        print("La aplicación puede no funcionar correctamente.")
+        print("Se intentará usar directorios temporales alternativos.")
+        print("Para una experiencia óptima, considera:")
+        print("  1. Ejecutar como administrador")
+        print("  2. Mover la aplicación a una ubicación con permisos")
+        print("  3. Verificar configuración del antivirus")
+        print("="*60 + "\n")
 
 def main():
     """Función principal"""

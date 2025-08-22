@@ -229,7 +229,7 @@ class IniConfigPanel(ctk.CTkFrame):
             "bForceCanRideFliers": "bforcecanridefliers",
             "ForceAllowCaveFlyers": "forceallowcaveflyers",
             "AllowFlyingStaminaRecovery": "allowflyingstaminarecovery",
-            "bAllowFlyerCarryPvE": "ballowflyercarrypve",
+            "AllowFlyerCarryPvE": "allowflyercarrypve",
             "bFlyerPlatformAllowUnalignedDinoBasing": "bflyerplatformallowunaligneddinobasing",
             "TamedDinoCharacterFoodDrainMultiplier": "tameddinocharacterfooddrainmultiplier",
             "TamedDinoTorporDrainMultiplier": "tameddinotorpordrainmultiplier",
@@ -403,7 +403,7 @@ class IniConfigPanel(ctk.CTkFrame):
             "bForceCanRideFliers": "False",
             "ForceAllowCaveFlyers": "False",
             "AllowFlyingStaminaRecovery": "False",
-            "bAllowFlyerCarryPvE": "True",
+            "AllowFlyerCarryPvE": "True",
             "bFlyerPlatformAllowUnalignedDinoBasing": "False",
             "TamedDinoCharacterFoodDrainMultiplier": "1.0",
             "TamedDinoTorporDrainMultiplier": "1.0",
@@ -502,7 +502,7 @@ class IniConfigPanel(ctk.CTkFrame):
             "bAutoDestroyOldStructuresMultiplier": "1.0",
             "PvPStructureDecay": "False",
             "bDisableStructureDecayPvE": "False",
-            "bAllowFlyerCarryPvE": "True",
+            "AllowFlyerCarryPvE": "True",
             "bDisablePvEGamma": "False",
             "OxygenSwimSpeedStatMultiplier": "1.0",
             "PlatformSaddleBuildAreaBoundsMultiplier": "1.0",
@@ -1046,38 +1046,21 @@ class IniConfigPanel(ctk.CTkFrame):
                 ("HarvestAmountMultiplier", "Multiplicador de cantidad de recolección", "float"),
                 ("HarvestHealthMultiplier", "Multiplicador de salud de recolección", "float"),
                 ("ResourcesRespawnPeriodMultiplier", "Multiplicador de período de respawn de recursos", "float"),
-                ("ResourceNoReplenishRadiusStructures", "Radio de no reabastecimiento de recursos - estructuras", "float"),
                 ("StructurePreventResourceRadiusMultiplier", "Multiplicador de radio de prevención de recursos por estructuras", "float"),
                 ("UseOptimizedHarvestingHealth", "Usar salud de recolección optimizada", "bool"),
                 ("ClampResourceHarvestDamage", "Limitar daño de recolección de recursos", "bool")
             ]
         elif category == "BreedingAndReproduction":
             fields = [
-                ("BabyImprintingStatScaleMultiplier", "Multiplicador de estadísticas de impronta", "float"),
-                ("BabyImprintAmountMultiplier", "Multiplicador de cantidad de impronta", "float"),
                 ("BabyMatureSpeedMultiplier", "Multiplicador de velocidad de maduración", "float"),
-                ("BabyCuddleIntervalMultiplier", "Multiplicador de intervalo de mimos", "float"),
-                ("BabyCuddleGracePeriodMultiplier", "Escala cuánto tiempo después de retrasar el abrazo con el bebé antes de que la calidad de la impresión comience a disminuir", "float"),
-                ("BabyCuddleLoseImprintQualitySpeedMultiplier", "Escala la rapidez con la que disminuye la calidad de impresión después del período de gracia si aún no se ha acurrucado con el bebé.", "float"),
-                ("BabyFoodConsumptionSpeedMultiplier", "Multiplicador de consumo de comida de bebés", "float"),
                 ("DisableImprintDinoBuff", "Deshabilitar buff de impronta de dinos", "bool")
             ]
         elif category == "TamingAndDinos":
             fields = [
-                ("PassiveTameIntervalMultiplier", "Multiplicador de intervalo de domesticación pasiva", "float"),
-                ("bDisableDinoRiding", "Deshabilitar montar dinos", "bool"),
-                ("bDisableDinoTaming", "Deshabilitar domesticación de dinos", "bool"),
-                ("bUseTameLimitForStructuresOnly", "Usar límite de domesticación solo para estructuras", "bool"),
                 ("bForceCanRideFliers", "Forzar poder montar voladores", "bool"),
                 ("ForceAllowCaveFlyers", "Forzar permitir voladores en cuevas", "bool"),
                 ("bAllowFlyingStaminaRecovery", "Permitir recuperación de stamina volando", "bool"),
-                ("bAllowFlyerCarryPvE", "Permitir carga de voladores en PvE", "bool"),
-                ("bFlyerPlatformAllowUnalignedDinoBasing", "Permitir dinos no alineados en plataforma de voladores", "bool"),
-                ("TamedDinoCharacterFoodDrainMultiplier", "Multiplicador de drenaje de comida de dinos domesticados", "float"),
-                ("TamedDinoTorporDrainMultiplier", "Multiplicador de drenaje de torpor de dinos domesticados", "float"),
-                ("WildDinoCharacterFoodDrainMultiplier", "Multiplicador de drenaje de comida de dinos salvajes", "float"),
-                ("WildDinoTorporDrainMultiplier", "Multiplicador de drenaje de torpor de dinos salvajes", "float"),
-                ("DinoCharacterFoodDrainMultiplier", "Multiplicador de drenaje de comida de personaje dino", "float"),
+                ("AllowFlyerCarryPvE", "Permitir carga de voladores en PvE", "bool"),
                 ("DinoCharacterStaminaDrainMultiplier", "Multiplicador de drenaje de stamina de personaje dino", "float"),
                 ("DinoCharacterHealthRecoveryMultiplier", "Multiplicador de recuperación de salud de personaje dino", "float"),
                 ("PlayerCharacterWaterDrainMultiplier", "Multiplicador de drenaje de agua del jugador", "float"),
@@ -1392,6 +1375,16 @@ class IniConfigPanel(ctk.CTkFrame):
             ]
         elif category == "TamingAndDinos":
             fields = [
+                ("PassiveTameIntervalMultiplier", "Intervalo de Domesticación Pasiva", "Multiplicador de intervalo de domesticación pasiva", "float"),
+                ("bDisableDinoRiding", "Deshabilitar Montar Dinos", "Deshabilitar la capacidad de montar dinos", "bool"),
+                ("bDisableDinoTaming", "Deshabilitar Domesticación", "Deshabilitar la domesticación de dinos", "bool"),
+                ("bUseTameLimitForStructuresOnly", "Límite de Domesticación Solo Estructuras", "Usar límite de domesticación solo para estructuras", "bool"),
+                ("bFlyerPlatformAllowUnalignedDinoBasing", "Plataforma Volador Dinos No Alineados", "Permitir dinos no alineados en plataforma de voladores", "bool"),
+                ("TamedDinoCharacterFoodDrainMultiplier", "Drenaje Comida Dinos Domesticados", "Multiplicador de drenaje de comida de dinos domesticados", "float"),
+                ("TamedDinoTorporDrainMultiplier", "Drenaje Torpor Dinos Domesticados", "Multiplicador de drenaje de torpor de dinos domesticados", "float"),
+                ("WildDinoCharacterFoodDrainMultiplier", "Drenaje Comida Dinos Salvajes", "Multiplicador de drenaje de comida de dinos salvajes", "float"),
+                ("WildDinoTorporDrainMultiplier", "Drenaje Torpor Dinos Salvajes", "Multiplicador de drenaje de torpor de dinos salvajes", "float"),
+                ("DinoCharacterFoodDrainMultiplier", "Drenaje Comida Personaje Dino", "Multiplicador de drenaje de comida de personaje dino", "float"),
                 ("TamedDinoRidingWaitTime", "Tiempo de espera para montar dino domesticado", "float"),
                 ("bAllowFlyerSpeedLeveling", "Permitir nivelar velocidad de voladores", "bool"),
                 ("DestroyTamesOverLevelClamp", "Destruir domesticados sobre límite de nivel", "int"),

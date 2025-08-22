@@ -1687,8 +1687,9 @@ class PrincipalPanel:
     def save_all_server_configs(self):
         """Guardar todas las configuraciones de servidores"""
         try:
-            os.makedirs("data", exist_ok=True)
-            with open("data/principal_server_configs.json", 'w', encoding='utf-8') as f:
+            # Usar método centralizado para obtener ruta de datos
+            config_file = self.config_manager.get_data_file_path("principal_server_configs.json")
+            with open(config_file, 'w', encoding='utf-8') as f:
                 json.dump(self.server_configs, f, indent=2, ensure_ascii=False)
         except Exception as e:
             self.logger.error(f"Error al guardar configuraciones de servidores: {e}")
@@ -1808,8 +1809,8 @@ class PrincipalPanel:
             self.config_manager.set("cluster", "prevent_upload_dinos", cluster_config["prevent_upload_dinos"])
             
             # También guardar en archivo JSON separado
-            os.makedirs("data", exist_ok=True)
-            with open("data/cluster_config.json", 'w', encoding='utf-8') as f:
+            config_file = self.config_manager.get_data_file_path("cluster_config.json")
+            with open(config_file, 'w', encoding='utf-8') as f:
                 json.dump(cluster_config, f, indent=2, ensure_ascii=False)
                 
         except Exception as e:
