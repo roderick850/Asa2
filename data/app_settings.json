@@ -2,7 +2,7 @@
   "startup_with_windows": false,
   "auto_start_server": false,
   "auto_start_server_with_windows": true,
-  "auto_check_server_health": true,
+  "auto_check_server_health": false,
   "auto_check_cluster_health": false,
   "server_health_check_interval": 60,
   "cluster_health_check_interval": 600,

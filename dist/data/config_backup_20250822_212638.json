@@ -1,0 +1,32 @@
+{
+  "app_settings": {
+    "startup_with_windows": false,
+    "auto_start_server": false,
+    "auto_start_server_with_windows": true,
+    "auto_check_server_health": false,
+    "auto_check_cluster_health": false,
+    "server_health_check_interval": 60,
+    "cluster_health_check_interval": 600,
+    "max_restart_attempts": 3,
+    "minimize_to_tray": false,
+    "always_on_top": false,
+    "minimize_on_start": false,
+    "close_to_tray": true,
+    "auto_check_updates": false,
+    "start_minimized": false,
+    "remember_window_position": false,
+    "auto_backup_on_start": true,
+    "confirm_exit": true,
+    "hide_console": false,
+    "theme_mode": "dark",
+    "auto_save_config": true,
+    "notification_sound": false,
+    "window_x": 78,
+    "window_y": 78,
+    "window_width": 1200,
+    "window_height": 800,
+    "selected_server_on_start": null,
+    "selected_map_on_start": null
+  },
+  "backup_timestamp": "20250822_212638"
+}

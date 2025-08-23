@@ -1895,172 +1895,220 @@ class MainWindow:
             show_error("Error", f"Error al abrir carpeta del servidor:\n{e}")
     
     def export_config(self):
-        """Exportar configuración del servidor"""
+        """Exportar configuración completa de la aplicación"""
         try:
-            if not self.selected_server:
-                show_warning("Sin servidor", "Por favor, selecciona un servidor primero.")
-                return
-            
-            from tkinter import filedialog
+            from tkinter import filedialog, messagebox
             import json
-            import shutil
             from datetime import datetime
             
-            # Seleccionar carpeta de destino
-            export_folder = filedialog.askdirectory(
-                title="Seleccionar carpeta para exportar configuración",
-                initialdir=os.path.expanduser("~/Desktop")
-            )
+            # Seleccionar ubicación para exportar
+            file_path = filedialog.asksaveasfilename(
+                title="Exportar configuración completa",
+                defaultextension=".json",
+                filetypes=[("Archivos de configuración", "*.json"), ("Todos los archivos", "*.*")],
+                initialfile=f"ArkServerManager_Config_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            )       
             
-            if not export_folder:
+            if not file_path:
                 return
-            
-            self.add_log_message("📦 Iniciando exportación de configuración...")
-            
-            # Crear carpeta de exportación con timestamp
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            config_export_folder = os.path.join(export_folder, f"ARK_Config_{self.selected_server}_{timestamp}")
-            os.makedirs(config_export_folder, exist_ok=True)
-            
-            # Obtener ruta del servidor
-            root_path = self.config_manager.get("server", "root_path", "")
-            server_path = os.path.join(root_path, self.selected_server)
-            
-            # Archivos y carpetas a exportar
-            items_to_export = [
-                ("ShooterGame/Saved/Config/WindowsServer/GameUserSettings.ini", "GameUserSettings.ini"),
-                ("ShooterGame/Saved/Config/WindowsServer/Game.ini", "Game.ini"),
-                ("ShooterGame/Saved/Config/WindowsServer/Engine.ini", "Engine.ini"),
-                ("ShooterGame/Saved/SavedArks/", "SavedArks/"),
-            ]
-            
-            exported_items = []
-            
-            for source_rel, dest_name in items_to_export:
-                source_path = os.path.join(server_path, source_rel)
-                dest_path = os.path.join(config_export_folder, dest_name)
                 
-                try:
-                    if os.path.isfile(source_path):
-                        shutil.copy2(source_path, dest_path)
-                        exported_items.append(dest_name)
-                        self.add_log_message(f"📄 Exportado: {dest_name}")
-                    elif os.path.isdir(source_path):
-                        shutil.copytree(source_path, dest_path, dirs_exist_ok=True)
-                        exported_items.append(dest_name)
-                        self.add_log_message(f"📁 Exportado: {dest_name}")
-                except Exception as e:
-                    self.add_log_message(f"⚠️ Error al exportar {dest_name}: {e}")
+            self.add_log_message("📦 Iniciando exportación de configuración completa...")
             
-            # Crear archivo de información
-            info_data = {
-                "export_timestamp": timestamp,
-                "server_name": self.selected_server,
-                "exported_items": exported_items,
-                "app_version": self.APP_VERSION
+            # Recopilar todas las configuraciones
+            export_data = {
+                "export_info": {
+                    "timestamp": datetime.now().isoformat(),
+                    "app_version": self.APP_VERSION,
+                    "export_type": "complete_configuration"
+                },
+                "app_settings": self.app_settings.get_all_settings(),
+                "server_config": {},
+                "cluster_config": {}
             }
             
-            info_file = os.path.join(config_export_folder, "export_info.json")
-            with open(info_file, 'w', encoding='utf-8') as f:
-                json.dump(info_data, f, indent=2, ensure_ascii=False)
-            
-            self.add_log_message(f"✅ Exportación completada: {len(exported_items)} elementos exportados")
-            
-            if ask_yes_no("Exportación completada", f"Configuración exportada exitosamente a:\n{config_export_folder}\n\n¿Quieres abrir la carpeta?"):
-                if platform.system() == "Windows":
-                    os.startfile(config_export_folder)
-                    
-        except Exception as e:
-            self.logger.error(f"Error al exportar configuración: {e}")
-            show_error("Error", f"Error al exportar configuración:\n{e}")
-    
-    def import_config(self):
-        """Importar configuración del servidor"""
-        try:
-            if not self.selected_server:
-                show_warning("Sin servidor", "Por favor, selecciona un servidor primero.")
-                return
-            
-            from tkinter import filedialog
-            import json
-            import shutil
-            
-            # Advertencia
-            if not ask_yes_no("Importar configuración", "⚠️ ADVERTENCIA: Esta operación sobrescribirá la configuración actual del servidor.\n\n¿Estás seguro de que quieres continuar?"):
-                return
-            
-            # Seleccionar carpeta de configuración exportada
-            import_folder = filedialog.askdirectory(
-                title="Seleccionar carpeta de configuración a importar",
-                initialdir=os.path.expanduser("~/Desktop")
+            # Exportar configuraciones del servidor
+            try:
+                # Obtener todas las secciones del config_manager
+                config_sections = ["server", "cluster", "backup", "monitoring", "rcon", "game_alerts"]
+                
+                for section in config_sections:
+                    try:
+                        section_data = {}
+                        # Obtener todas las opciones de la sección
+                        if hasattr(self.config_manager.config, 'items'):
+                            if self.config_manager.config.has_section(section):
+                                section_data = dict(self.config_manager.config.items(section))
+                        export_data["server_config"][section] = section_data
+                    except Exception as e:
+                        self.logger.warning(f"No se pudo exportar sección {section}: {e}")
+                        export_data["server_config"][section] = {}
+                        
+            except Exception as e:
+                self.logger.warning(f"Error al exportar configuraciones del servidor: {e}")
+                
+            # Exportar configuraciones del cluster si está disponible
+            try:
+                if hasattr(self, 'cluster_panel') and self.cluster_panel:
+                    cluster_data = {
+                        "cluster_mode": getattr(self.cluster_panel, 'cluster_mode', False),
+                        "servers": getattr(self.cluster_panel, 'servers', {})
+                    }
+                    export_data["cluster_config"] = cluster_data
+            except Exception as e:
+                self.logger.warning(f"Error al exportar configuraciones del cluster: {e}")
+                
+            # Guardar archivo de configuración
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(export_data, f, indent=2, ensure_ascii=False)
+                
+            self.add_log_message(f"✅ Configuración exportada exitosamente: {file_path}")
+            show_info(
+                self.root,
+                "Exportación Exitosa", 
+                f"La configuración se ha exportado correctamente.\n\nArchivo: {os.path.basename(file_path)}\n\nPuedes usar este archivo para importar la configuración en otro equipo."
             )
             
-            if not import_folder:
-                return
+        except Exception as e:
+            error_msg = f"Error al exportar configuración: {str(e)}"
+            self.logger.error(error_msg)
+            self.add_log_message(f"❌ {error_msg}")
+            show_error(self.root, "Error de Exportación", error_msg)
+    
+    def import_config(self):
+        """Importar configuración completa de la aplicación"""
+        try:
+            from tkinter import filedialog, messagebox
+            import json
+            from datetime import datetime
             
-            # Verificar que es una exportación válida
-            info_file = os.path.join(import_folder, "export_info.json")
-            if not os.path.exists(info_file):
-                show_error("Error", "La carpeta seleccionada no contiene una exportación válida.\nBusca una carpeta que contenga 'export_info.json'.")
+            # Advertencia antes de importar
+            if not ask_yes_no(
+                self.root,
+                "Confirmar Importación", 
+                "⚠️ ADVERTENCIA: Esta operación sobrescribirá la configuración actual.\n\n" +
+                "Se recomienda hacer una copia de seguridad antes de continuar.\n\n" +
+                "¿Deseas continuar con la importación?"
+            ):
                 return
+                
+            # Seleccionar archivo de configuración
+            file_path = filedialog.askopenfilename(
+                title="Importar configuración",
+                filetypes=[("Archivos de configuración", "*.json"), ("Todos los archivos", "*.*")]
+            )
             
+            if not file_path:
+                return
+                
             self.add_log_message("📥 Iniciando importación de configuración...")
             
-            # Leer información de la exportación
-            with open(info_file, 'r', encoding='utf-8') as f:
-                import_info = json.load(f)
-            
-            self.add_log_message(f"📋 Importando desde: {import_info.get('server_name', 'Desconocido')} ({import_info.get('export_timestamp', 'Fecha desconocida')})")
-            
-            # Obtener ruta del servidor actual
-            root_path = self.config_manager.get("server", "root_path", "")
-            server_path = os.path.join(root_path, self.selected_server)
-            
-            # Crear backup de la configuración actual
-            backup_folder = os.path.join(server_path, "ConfigBackup_" + datetime.now().strftime("%Y%m%d_%H%M%S"))
-            os.makedirs(backup_folder, exist_ok=True)
-            
-            # Archivos a importar
-            files_to_import = [
-                ("GameUserSettings.ini", "ShooterGame/Saved/Config/WindowsServer/GameUserSettings.ini"),
-                ("Game.ini", "ShooterGame/Saved/Config/WindowsServer/Game.ini"),
-                ("Engine.ini", "ShooterGame/Saved/Config/WindowsServer/Engine.ini"),
-            ]
-            
-            imported_count = 0
-            
-            for source_name, dest_rel in files_to_import:
-                source_path = os.path.join(import_folder, source_name)
-                dest_path = os.path.join(server_path, dest_rel)
-                backup_path = os.path.join(backup_folder, source_name)
+            # Crear respaldo de la configuración actual
+            try:
+                backup_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                backup_file = f"config_backup_{backup_timestamp}.json"
+                backup_path = os.path.join(os.path.dirname(self.app_settings.settings_file), backup_file)
                 
+                # Exportar configuración actual como respaldo
+                current_config = {
+                    "app_settings": self.app_settings.get_all_settings(),
+                    "backup_timestamp": backup_timestamp
+                }
+                
+                with open(backup_path, 'w', encoding='utf-8') as f:
+                    json.dump(current_config, f, indent=2, ensure_ascii=False)
+                    
+                self.add_log_message(f"💾 Respaldo creado: {backup_file}")
+                
+            except Exception as e:
+                self.logger.warning(f"No se pudo crear respaldo: {e}")
+                
+            # Cargar archivo de configuración
+            with open(file_path, 'r', encoding='utf-8') as f:
+                import_data = json.load(f)
+                
+            # Validar formato del archivo
+            if "export_info" not in import_data:
+                raise ValueError("El archivo no parece ser una exportación válida de configuración")
+                
+            # Importar configuraciones de la aplicación
+            if "app_settings" in import_data:
                 try:
-                    if os.path.exists(source_path):
-                        # Hacer backup del archivo actual
-                        if os.path.exists(dest_path):
-                            shutil.copy2(dest_path, backup_path)
-                        
-                        # Crear directorio de destino si no existe
-                        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-                        
-                        # Copiar nuevo archivo
-                        shutil.copy2(source_path, dest_path)
-                        imported_count += 1
-                        self.add_log_message(f"📄 Importado: {source_name}")
-                        
+                    imported_settings = import_data["app_settings"]
+                    
+                    # Validar y aplicar configuraciones
+                    valid_settings = {}
+                    for key, value in imported_settings.items():
+                        if key in self.app_settings.default_settings:
+                            valid_settings[key] = value
+                        else:
+                            self.logger.warning(f"Configuración desconocida ignorada: {key}")
+                            
+                    # Aplicar configuraciones válidas
+                    self.app_settings.settings.update(valid_settings)
+                    self.app_settings.save_settings()
+                    
+                    self.add_log_message(f"✅ Configuraciones de aplicación importadas ({len(valid_settings)} elementos)")
+                    
                 except Exception as e:
-                    self.add_log_message(f"⚠️ Error al importar {source_name}: {e}")
+                    self.logger.error(f"Error al importar configuraciones de aplicación: {e}")
+                    
+            # Importar configuraciones del servidor
+            if "server_config" in import_data:
+                try:
+                    server_config = import_data["server_config"]
+                    
+                    for section, section_data in server_config.items():
+                        if section_data:  # Solo si hay datos
+                            try:
+                                # Asegurar que la sección existe
+                                if not self.config_manager.config.has_section(section):
+                                    self.config_manager.config.add_section(section)
+                                    
+                                # Importar opciones de la sección
+                                for key, value in section_data.items():
+                                    self.config_manager.config.set(section, key, str(value))
+                                    
+                            except Exception as e:
+                                self.logger.warning(f"Error al importar sección {section}: {e}")
+                                
+                    # Guardar configuraciones del servidor
+                    self.config_manager.save()
+                    self.add_log_message(f"✅ Configuraciones del servidor importadas ({len(server_config)} secciones)")
             
-            if imported_count > 0:
-                self.add_log_message(f"✅ Importación completada: {imported_count} archivos importados")
-                self.add_log_message(f"💾 Backup guardado en: {backup_folder}")
-                show_info("Importación completada", f"Se importaron {imported_count} archivos de configuración.\n\nBackup guardado en:\n{backup_folder}")
-            else:
-                show_warning("Sin archivos", "No se encontraron archivos válidos para importar.")
+                except Exception as e:
+                    self.logger.error(f"Error al importar configuraciones del servidor: {e}")
+            
+            # Marcar que se realizó una importación para forzar actualización completa al reiniciar
+            self.config_manager.set("app", "force_complete_refresh", "true")
+            self.config_manager.save()
+                    
+            # Mostrar información de la importación
+            export_info = import_data.get("export_info", {})
+            info_msg = f"Configuración importada exitosamente.\n\n"
+            
+            if "timestamp" in export_info:
+                info_msg += f"Fecha de exportación: {export_info['timestamp']}\n"
+            if "app_version" in export_info:
+                info_msg += f"Versión de origen: {export_info['app_version']}\n"
+                
+            info_msg += "\n⚠️ Se recomienda reiniciar la aplicación para aplicar todos los cambios."
+            
+            self.add_log_message("✅ Importación completada exitosamente")
+            show_info(self.root, "Importación Exitosa", info_msg)
+            
+            # Preguntar si desea reiniciar
+            if ask_yes_no(
+                self.root,
+                "Reiniciar Aplicación", 
+                "¿Deseas reiniciar la aplicación ahora para aplicar todos los cambios?"
+            ):
+                self.restart_application()
                 
         except Exception as e:
-            self.logger.error(f"Error al importar configuración: {e}")
-            show_error("Error", f"Error al importar configuración:\n{e}")
+            error_msg = f"Error al importar configuración: {str(e)}"
+            self.logger.error(error_msg)
+            self.add_log_message(f"❌ {error_msg}")
+            show_error(self.root, "Error de Importación", error_msg)
     
     def update_steamcmd(self):
         """Actualizar SteamCMD"""
@@ -2212,6 +2260,72 @@ Versión de la app: {self.APP_VERSION}
             self.logger.error(f"Error al limpiar iconos de bandeja: {e}")
             show_error("Error", f"Error al limpiar iconos duplicados:\n{e}")
     
+    def restart_application(self):
+        """Reiniciar la aplicación"""
+        try:
+            import sys
+            import subprocess
+            import os
+            
+            self.add_log_message("🔄 Reiniciando aplicación...")
+            
+            # Guardar configuraciones antes de reiniciar
+            self.app_settings.save_settings()
+            self.config_manager.save_config()
+            
+            # Cerrar sistema de bandeja si existe
+            if hasattr(self, 'system_tray') and self.system_tray:
+                try:
+                    self.system_tray.stop()
+                except Exception:
+                    pass
+            
+            # Preparar comando de reinicio
+            if getattr(sys, 'frozen', False):
+                # Si es un ejecutable compilado
+                executable = sys.executable
+            else:
+                # Si es desarrollo
+                executable = sys.executable
+                script_path = os.path.abspath(sys.argv[0])
+                
+            # Crear proceso de reinicio con un pequeño delay
+            if getattr(sys, 'frozen', False):
+                # Para ejecutable compilado
+                restart_cmd = f'timeout /t 2 /nobreak > nul && "{executable}"'
+            else:
+                # Para desarrollo
+                restart_cmd = f'timeout /t 2 /nobreak > nul && "{executable}" "{script_path}"'
+            
+            # Ejecutar comando de reinicio en background
+            if os.name == 'nt':  # Windows
+                subprocess.Popen(restart_cmd, shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
+            else:  # Linux/Mac
+                subprocess.Popen(restart_cmd, shell=True)
+            
+            # Cerrar la aplicación actual completamente
+            self.root.after(100, self._force_close_application)
+            
+        except Exception as e:
+            self.logger.error(f"Error al reiniciar aplicación: {e}")
+            show_error(self.root, "Error", f"No se pudo reiniciar automáticamente.\nPor favor, reinicia manualmente la aplicación.")
+    
+    def _force_close_application(self):
+        """Forzar el cierre completo de la aplicación"""
+        try:
+            # Cerrar ventana principal
+            self.root.quit()
+            self.root.destroy()
+            
+            # Terminar proceso si es necesario
+            import os
+            os._exit(0)
+            
+        except Exception as e:
+            self.logger.error(f"Error al cerrar aplicación: {e}")
+            import os
+            os._exit(1)
+    
     def auto_start_server(self):
         """Auto-iniciar el servidor al iniciar la aplicación"""
         try:
@@ -2343,17 +2457,24 @@ Versión de la app: {self.APP_VERSION}
         try:
             self.logger.info("🔄 Cargando última configuración...")
             
+            # Verificar si se necesita una actualización completa después de importar configuración
+            force_refresh = self.config_manager.get("app", "force_complete_refresh", "false")
+            if force_refresh == "true":
+                # Limpiar la marca
+                self.config_manager.set("app", "force_complete_refresh", "false")
+                self.config_manager.save_config()
+                self.logger.info("🔄 Activando actualización completa después de importar configuración")
+                # MEJORA: Forzar recarga completa de todos los componentes
+                self.add_log_message("🔄 Aplicando configuración importada...")
+            
             # Verificar configuraciones de auto-inicio
             auto_start_manual = self.app_settings.get_setting("auto_start_server")
             auto_start_windows = self.app_settings.get_setting("auto_start_server_with_windows")
-            # self.logger.info(f"📋 Auto-inicio manual: {auto_start_manual}")  # Optimizado: reducir ruido
-            # self.logger.info(f"🖥️ Auto-inicio con Windows: {auto_start_windows}")  # Optimizado: reducir ruido
             
             # Cargar último servidor
             last_server = self.config_manager.get("app", "last_server", "")
             if last_server:
                 self.selected_server = last_server
-                # self.logger.info(f"🖥️ Último servidor cargado: {last_server}")  # Optimizado: reducir ruido
             else:
                 self.logger.warning("⚠️ No hay servidor guardado en configuración")
             
@@ -2361,27 +2482,144 @@ Versión de la app: {self.APP_VERSION}
             last_map = self.config_manager.get("app", "last_map", "")
             if last_map:
                 self.selected_map = last_map
-                # self.logger.info(f"🗺️ Último mapa cargado: {last_map}")  # Optimizado: reducir ruido
             else:
                 self.logger.warning("⚠️ No hay mapa guardado en configuración")
             
-            # Notificar a los paneles que se cargó la configuración
+            # MEJORA: Forzar actualización completa de la interfaz
             if last_server and hasattr(self, 'server_panel'):
-                # Programar actualización del panel después de que se inicialice completamente
-                try:
+                if force_refresh == "true":
+                    # Programar actualización más agresiva después de importar configuración
+                    self.root.after(100, lambda: self._force_complete_ui_refresh(last_server, last_map))
                     self.root.after(500, lambda: self.update_panels_with_config(last_server, last_map))
-                except Exception:
-                    pass
+                    self.root.after(1000, lambda: self._verify_configuration_loaded(last_server, last_map))
+                else:
+                    # Programar múltiples actualizaciones para asegurar que todo se cargue
+                    self.root.after(300, lambda: self._force_complete_ui_refresh(last_server, last_map))
+                    self.root.after(800, lambda: self.update_panels_with_config(last_server, last_map))
+                    self.root.after(1200, lambda: self._verify_configuration_loaded(last_server, last_map))
+                    # MEJORA: Actualización adicional para asegurar que todos los paneles se actualicen
+                    self.root.after(1500, lambda: self.update_panels_with_config(last_server, last_map))
                 
         except Exception as e:
             self.logger.error(f"❌ Error al cargar última configuración: {e}")
     
+    def _force_complete_ui_refresh(self, server_name, map_name):
+        """Forzar actualización completa de la interfaz"""
+        try:
+            self.logger.info(f"🔄 Forzando actualización completa de UI para {server_name}")
+            
+            # 1. Refrescar lista de servidores
+            if hasattr(self, 'server_panel'):
+                self.server_panel.refresh_servers_list()
+            
+            # 2. Actualizar dropdown de servidores en la interfaz principal
+            if hasattr(self, 'server_dropdown') and server_name:
+                current_values = self.server_dropdown.cget("values")
+                if current_values and server_name in current_values:
+                    self.server_dropdown.set(server_name)
+                    self.on_server_selected(server_name)
+            
+            # 3. Forzar carga de configuraciones en el panel principal
+            if hasattr(self, 'principal_panel') and server_name:
+                self.principal_panel.update_server_info(server_name, map_name)
+                # Forzar recarga de configuraciones guardadas
+                if hasattr(self.principal_panel, 'load_saved_config'):
+                    self.principal_panel.load_saved_config()
+                if hasattr(self.principal_panel, 'load_from_gameusersettings'):
+                    self.principal_panel.load_from_gameusersettings()
+            
+            # 4. MEJORA: Actualizar configuraciones de la aplicación en la interfaz
+            self._apply_imported_app_settings()
+            
+            # 5. MEJORA: Forzar actualización de todos los paneles dependientes
+            if server_name:
+                # Actualizar panel de configuración
+                if hasattr(self, 'server_config_panel'):
+                    if hasattr(self.server_config_panel, 'update_server_selection'):
+                        self.server_config_panel.update_server_selection(server_name)
+                    if hasattr(self.server_config_panel, 'refresh_config'):
+                        self.server_config_panel.refresh_config()
+                
+                # Actualizar panel de backup
+                if hasattr(self, 'backup_panel'):
+                    if hasattr(self.backup_panel, 'update_server_selection'):
+                        self.backup_panel.update_server_selection(server_name)
+                    if hasattr(self.backup_panel, 'refresh_backup_list'):
+                        self.backup_panel.refresh_backup_list()
+            
+            self.logger.info("✅ Actualización completa de UI completada")
+            
+        except Exception as e:
+            self.logger.error(f"Error en _force_complete_ui_refresh: {e}")
+    
+    def _verify_configuration_loaded(self, server_name, map_name):
+        """Verificar que la configuración se cargó correctamente"""
+        try:
+            self.logger.info("🔍 Verificando configuración cargada...")
+            
+            # Verificar que la ruta raíz esté configurada
+            root_path = self.config_manager.get("server", "root_path", "")
+            if root_path:
+                self.add_log_message(f"✅ Ruta raíz cargada: {root_path}")
+            else:
+                self.add_log_message("⚠️ Ruta raíz no configurada")
+                
+            # Verificar que el servidor esté seleccionado
+            if self.selected_server:
+                self.add_log_message(f"✅ Servidor seleccionado: {self.selected_server}")
+            else:
+                self.add_log_message("⚠️ No hay servidor seleccionado")
+                
+            # Verificar que el mapa esté seleccionado
+            if self.selected_map:
+                self.add_log_message(f"✅ Mapa seleccionado: {self.selected_map}")
+            else:
+                self.add_log_message("⚠️ No hay mapa seleccionado")
+                
+            # Verificar configuraciones de la aplicación
+            theme = self.app_settings.get_setting("theme_mode", "system")
+            auto_start = self.app_settings.get_setting("auto_start_server", False)
+            auto_start_windows = self.app_settings.get_setting("auto_start_server_with_windows", False)
+            
+            self.add_log_message(f"✅ Configuraciones de aplicación cargadas:")
+            self.add_log_message(f"   - Tema: {theme}")
+            self.add_log_message(f"   - Auto-inicio: {auto_start}")
+            self.add_log_message(f"   - Auto-inicio con Windows: {auto_start_windows}")
+            
+            # Verificar argumentos de inicio
+            startup_args = self.config_manager.get("server", "startup_args", "")
+            if startup_args:
+                self.add_log_message(f"✅ Argumentos de inicio: {startup_args[:50]}...")
+            else:
+                self.add_log_message("⚠️ No hay argumentos de inicio configurados")
+            
+            # MEJORA: Verificar configuraciones específicas del servidor
+            if server_name:
+                server_path = os.path.join(self.config_manager.get("server", "root_path", ""), server_name)
+                if os.path.exists(server_path):
+                    self.add_log_message(f"✅ Ruta del servidor verificada: {server_path}")
+                else:
+                    self.add_log_message(f"⚠️ Ruta del servidor no encontrada: {server_path}")
+            
+            # MEJORA: Verificar configuraciones de paneles
+            panel_count = 0
+            for panel_name in ['principal_panel', 'server_panel', 'mods_panel', 'backup_panel', 'monitoring_panel', 'ini_config_panel']:
+                if hasattr(self, panel_name):
+                    panel_count += 1
+            self.add_log_message(f"✅ Paneles inicializados: {panel_count}/6")
+            
+            self.logger.info("✅ Verificación de configuración completada")
+            
+        except Exception as e:
+            self.logger.error(f"Error en verificación de configuración: {e}")
+    
     def update_panels_with_config(self, server_name, map_name):
         """Actualizar paneles con la configuración cargada"""
         try:
+            self.logger.info(f"🔄 Actualizando paneles con servidor: {server_name}, mapa: {map_name}")
+            
             # Actualizar panel de servidor
             if hasattr(self, 'server_panel') and server_name:
-                # Simular selección de servidor (esto debería actualizar las listas)
                 if hasattr(self.server_panel, 'on_server_selected'):
                     self.server_panel.on_server_selected(server_name)
                 
@@ -2389,26 +2627,59 @@ Versión de la app: {self.APP_VERSION}
             if hasattr(self, 'principal_panel') and server_name and map_name:
                 if hasattr(self.principal_panel, 'update_server_info'):
                     self.principal_panel.update_server_info(server_name, map_name)
+                # MEJORA: Forzar recarga de todas las configuraciones
+                if hasattr(self.principal_panel, 'load_saved_config'):
+                    self.principal_panel.load_saved_config()
+                if hasattr(self.principal_panel, 'load_from_gameusersettings'):
+                    self.principal_panel.load_from_gameusersettings()
+                # MEJORA: Actualizar argumentos de inicio
+                if hasattr(self.principal_panel, 'refresh_startup_args'):
+                    self.principal_panel.refresh_startup_args()
             
-            # Configurar monitoreo de jugadores para el servidor seleccionado
+            # MEJORA: Actualizar todos los paneles que dependen del servidor
+            if server_name:
+                # Actualizar panel de configuración
+                if hasattr(self, 'server_config_panel'):
+                    if hasattr(self.server_config_panel, 'update_server_selection'):
+                        self.server_config_panel.update_server_selection(server_name)
+                    if hasattr(self.server_config_panel, 'load_server_config'):
+                        self.server_config_panel.load_server_config(server_name)
+                
+                # Actualizar panel de mods
+                if hasattr(self, 'mods_panel'):
+                    if hasattr(self.mods_panel, 'update_server_map_context'):
+                        self.mods_panel.update_server_map_context(server_name, map_name)
+                    if hasattr(self.mods_panel, 'refresh_mod_list'):
+                        self.mods_panel.refresh_mod_list()
+                
+                # Actualizar panel de backup
+                if hasattr(self, 'backup_panel'):
+                    if hasattr(self.backup_panel, 'update_server_selection'):
+                        self.backup_panel.update_server_selection(server_name)
+                    if hasattr(self.backup_panel, 'refresh_backup_list'):
+                        self.backup_panel.refresh_backup_list()
+                
+                # Actualizar panel de monitoreo
+                if hasattr(self, 'monitoring_panel'):
+                    if hasattr(self.monitoring_panel, 'update_server_selection'):
+                        self.monitoring_panel.update_server_selection(server_name)
+            
+            # MEJORA: Configurar monitoreo de jugadores para el servidor seleccionado
             if server_name:
                 root_path = self.config_manager.get("server", "root_path", "")
-                self.logger.info(f"🔍 DEBUG: Configurando monitoreo para {server_name}, root_path: {root_path}")
                 if root_path:
                     server_path = os.path.join(root_path, server_name)
-                    self.logger.info(f"🔍 DEBUG: Server path: {server_path}, exists: {os.path.exists(server_path)}")
                     if os.path.exists(server_path):
-                        self.logger.info(f"🔍 DEBUG: Llamando setup_single_server_player_monitoring para {server_name}")
                         self.setup_single_server_player_monitoring(server_name, server_path)
                     else:
                         self.logger.warning(f"⚠️ Ruta del servidor no existe: {server_path}")
                 else:
                     self.logger.warning(f"⚠️ Root path no configurado para monitoreo de jugadores")
                     
-            self.logger.info(f"Paneles actualizados con servidor: {server_name}, mapa: {map_name}")
+            self.logger.info(f"✅ Paneles actualizados con servidor: {server_name}, mapa: {map_name}")
             
         except Exception as e:
-            self.logger.error(f"Error al actualizar paneles: {e}")
+            self.logger.error(f"Error al actualizar paneles con configuración: {e}")
     
     def auto_start_server_if_configured(self):
         """Auto-iniciar el servidor si está configurado para hacerlo"""
@@ -3029,3 +3300,60 @@ Versión de la app: {self.APP_VERSION}
                 self.add_log_message("🔄 Monitoreo de salud reiniciado")
         except Exception as e:
             self.logger.error(f"Error reiniciando monitoreo de salud: {e}")
+    
+    def _apply_imported_app_settings(self):
+        """Aplicar configuraciones de aplicación importadas a la interfaz"""
+        try:
+            self.logger.info("🔄 Aplicando configuraciones de aplicación importadas...")
+            
+            # Aplicar tema
+            theme_mode = self.app_settings.get_setting("theme_mode", "system")
+            if hasattr(ctk, 'set_appearance_mode'):
+                ctk.set_appearance_mode(theme_mode)
+                self.logger.info(f"✅ Tema aplicado: {theme_mode}")
+            
+            # Aplicar configuraciones de auto-inicio
+            auto_start_server = self.app_settings.get_setting("auto_start_server", False)
+            auto_start_windows = self.app_settings.get_setting("auto_start_server_with_windows", False)
+            
+            # Actualizar controles de auto-inicio si existen
+            if hasattr(self, 'principal_panel'):
+                if hasattr(self.principal_panel, 'auto_start_var'):
+                    self.principal_panel.auto_start_var.set(auto_start_server)
+                if hasattr(self.principal_panel, 'auto_start_windows_var'):
+                    self.principal_panel.auto_start_windows_var.set(auto_start_windows)
+            
+            # Aplicar otras configuraciones de interfaz
+            minimize_to_tray = self.app_settings.get_setting("minimize_to_tray", True)
+            close_to_tray = self.app_settings.get_setting("close_to_tray", True)
+            
+            # Actualizar posición de ventana si está habilitado
+            if self.app_settings.get_setting("remember_window_position"):
+                geometry = self.app_settings.get_window_geometry()
+                self.root.geometry(geometry)
+            
+            # Actualizar configuración de ventana siempre visible
+            if self.app_settings.get_setting("always_on_top"):
+                self.root.attributes('-topmost', True)
+            else:
+                self.root.attributes('-topmost', False)
+            
+            # Reiniciar sistema de bandeja si es necesario
+            if (minimize_to_tray or close_to_tray):
+                if hasattr(self, 'system_tray') and self.system_tray:
+                    self.system_tray.restart_tray()
+            
+            # Reiniciar monitoreo de salud si está habilitado
+            if hasattr(self, 'health_monitor') and self.health_monitor:
+                self.restart_health_monitoring()
+            
+            # MEJORA: Forzar actualización de todos los paneles después de aplicar configuraciones
+            if hasattr(self, 'selected_server') and self.selected_server:
+                self.root.after(500, lambda: self.update_panels_with_config(self.selected_server, getattr(self, 'selected_map', None)))
+            
+            self.logger.info("✅ Configuraciones de aplicación aplicadas")
+            self.add_log_message("✅ Configuraciones importadas aplicadas correctamente")
+            
+        except Exception as e:
+            self.logger.error(f"Error al aplicar configuraciones de aplicación: {e}")
+            self.add_log_message(f"⚠️ Error aplicando algunas configuraciones: {e}")

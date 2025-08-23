@@ -1,0 +1,40 @@
+{
+  "cluster_id": "my_ark_cluster",
+  "cluster_name": "Mi Cluster ARK",
+  "servers": {
+    "island": {
+      "name": "The Island",
+      "map": "TheIsland_WP",
+      "port": 7777,
+      "query_port": 27015,
+      "rcon_port": 32330,
+      "priority": 1,
+      "auto_start": true,
+      "transfer_allowed": true
+    }
+  },
+  "shared_settings": {
+    "cluster_directory_override": "MyClusterSaves",
+    "prevent_download_survivors": false,
+    "prevent_download_items": false,
+    "prevent_download_dinos": false,
+    "prevent_upload_survivors": false,
+    "prevent_upload_items": false,
+    "prevent_upload_dinos": false,
+    "max_tribute_characters": 5,
+    "max_tribute_dinos": 10,
+    "max_tribute_items": 50
+  },
+  "backup_settings": {
+    "coordinated_backup": true,
+    "backup_schedule": "0 2 * * *",
+    "retention_days": 7,
+    "compress_backups": true
+  },
+  "monitoring": {
+    "check_interval": 30,
+    "restart_on_crash": true,
+    "max_restart_attempts": 3,
+    "notification_webhook": ""
+  }
+}
